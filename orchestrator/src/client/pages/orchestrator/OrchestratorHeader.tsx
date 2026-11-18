@@ -1,7 +1,14 @@
 import { PageHeader, StatusIndicator } from "@client/components/layout";
 import type { JobSource } from "@shared/types.js";
 import type React from "react";
-import { FileText, Loader2, Search, Square, X } from "@/components/icons";
+import {
+  FileText,
+  LayoutDashboard,
+  Loader2,
+  Search,
+  Square,
+  X,
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 interface OrchestratorHeaderProps {
@@ -79,11 +86,9 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
 
   return (
     <PageHeader
-      icon={() => (
-        <img src="/favicon.png" alt="" className="size-8 rounded-lg" />
-      )}
-      title="Job Ops"
-      subtitle="Orchestrator"
+      icon={LayoutDashboard}
+      title="Jobs"
+      subtitle="Find, review and apply to roles"
       navOpen={navOpen}
       onNavOpenChange={onNavOpenChange}
       statusIndicator={

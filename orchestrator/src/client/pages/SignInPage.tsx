@@ -197,8 +197,13 @@ export function SignInPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.08),_transparent_45%),linear-gradient(180deg,_rgba(15,23,42,0.02),_transparent_30%)] px-4 py-16">
-      <div className="mx-auto flex min-h-[70vh] max-w-md items-center">
-        <Card className="w-full border-border/60 bg-background/95 shadow-xl">
+      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center gap-6">
+        <img
+          src="/favicon.png"
+          alt=""
+          className="size-11 self-center rounded-xl shadow-md"
+        />
+        <Card className="w-full border-border bg-card shadow-xl">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl tracking-tight">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
