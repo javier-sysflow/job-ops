@@ -9,6 +9,7 @@ import {
 import { GripVertical } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Tip } from "@/client/components/Tip";
 import { trackProductEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -196,6 +197,7 @@ export function DesignResumeDock({
   draft,
   onUpdateResumeJson,
 }: DesignResumeIconRailProps) {
+  const { t } = useTranslation("resumeStudio");
   const railRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const mouseY = useMotionValue(Number.POSITIVE_INFINITY);
@@ -436,7 +438,7 @@ export function DesignResumeDock({
         onWheel={handleWheel}
         className="pointer-events-auto relative h-full min-h-0 w-[64px] overflow-x-visible overflow-y-clip overscroll-contain rounded-2xl border border-border/80 bg-card/95 shadow-2xl shadow-background/50 backdrop-blur supports-[backdrop-filter]:bg-card/85"
         role="toolbar"
-        aria-label="Resume Studio sections"
+        aria-label={t("dock.label")}
       >
         <motion.div
           ref={contentRef}

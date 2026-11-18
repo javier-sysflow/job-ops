@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { DragEvent } from "react";
 import { useId, useMemo, useRef, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Tip } from "@/client/components/Tip";
 import {
   AlertDialog,
@@ -26,7 +27,13 @@ import { Input } from "@/components/ui/input";
 import { bucketCount, trackProductEvent } from "@/lib/analytics";
 import { clampInt, cn } from "@/lib/utils";
 import { DesignResumeSection } from "./DesignResumeSection";
-import type { ItemDefinition } from "./definitions";
+import {
+  getItemDefinitionDescription,
+  getItemDefinitionSingularTitle,
+  getItemDefinitionTitle,
+  type ItemDefinition,
+} from "./definitions";
+import type { ResumeStudioKey } from "./ItemDialog";
 import { getByPath, toBoolean, toText } from "./utils";
 
 const itemActionClassName =
@@ -123,34 +130,33 @@ export type ProjectPolicyConfig = {
 
 const projectModeOptions: Array<{
   mode: ProjectTailoringMode;
-  label: string;
-  shortLabel: string;
-  tooltip: string;
+  labelKey: ResumeStudioKey;
+  shortLabelKey: ResumeStudioKey;
+  tooltipKey: ResumeStudioKey;
   icon: typeof EyeOff;
   activeClassName: string;
 }> = [
   {
     mode: "manual",
-    label: "Don't include",
-    shortLabel: "Don't include",
-    tooltip: "Never send this project to AI or show it in tailored resumes",
+    labelKey: "resumeStudio:listSection.modes.manual.label",
+    shortLabelKey: "resumeStudio:listSection.modes.manual.label",
+    tooltipKey: "resumeStudio:listSection.modes.manual.tooltip",
     icon: EyeOff,
     activeClassName: "border-border/70 bg-muted/55 text-muted-foreground",
   },
   {
     mode: "ai-selectable",
-    label: "AI can select",
-    shortLabel: "AI can select",
-    tooltip: "Let Job Tailoring select it when relevant to the job description",
+    labelKey: "resumeStudio:listSection.modes.aiSelectable.label",
+    shortLabelKey: "resumeStudio:listSection.modes.aiSelectable.label",
+    tooltipKey: "resumeStudio:listSection.modes.aiSelectable.tooltip",
     icon: Bot,
     activeClassName: "border-sky-400/35 bg-sky-500/12 text-sky-300",
   },
   {
     mode: "must-include",
-    label: "Must include",
-    shortLabel: "Must include",
-    tooltip:
-      "Always send this project to relevant AI contexts and include it in tailored resumes",
+    labelKey: "resumeStudio:listSection.modes.mustInclude.label",
+    shortLabelKey: "resumeStudio:listSection.modes.mustInclude.label",
+    tooltipKey: "resumeStudio:listSection.modes.mustInclude.tooltip",
     icon: LockKeyhole,
     activeClassName: "border-amber-200/35 bg-amber-300/12 text-amber-200",
   },
@@ -169,6 +175,7 @@ function ProjectTailoringModeControls({
   onModeChange: (mode: ProjectTailoringMode) => void;
   selectedMode: ProjectTailoringMode;
 }) {
+  const { t } = useTranslation(["resumeStudio", "common"]);
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
       <div className="flex max-w-full flex-wrap gap-1.5">
@@ -181,14 +188,17 @@ function ProjectTailoringModeControls({
               key={option.mode}
               asChild
               clickBehavior="none"
-              content={option.tooltip}
+              content={t(option.tooltipKey)}
               contentClassName="max-w-60 text-center"
               delayDuration={150}
             >
               <button
                 type="button"
                 aria-pressed={active}
-                aria-label={`Set ${projectName} inclusion to ${option.label}`}
+                aria-label={t("listSection.setMode", {
+                  project: projectName,
+                  mode: t(option.labelKey),
+                })}
                 disabled={disabled}
                 className={cn(
                   "inline-flex h-7 min-w-0 items-center gap-1.5 rounded-md border px-2 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
@@ -199,7 +209,7 @@ function ProjectTailoringModeControls({
                 onClick={() => onModeChange(option.mode)}
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" />
-                <span>{option.shortLabel}</span>
+                <span>{t(option.shortLabelKey)}</span>
               </button>
             </Tip>
           );
@@ -207,7 +217,9 @@ function ProjectTailoringModeControls({
       </div>
       <div className="min-h-4">
         {isSaving ? (
-          <span className="text-[11px] text-muted-foreground">Saving...</span>
+          <span className="text-[11px] text-muted-foreground">
+            {t("listSection.saving")}
+          </span>
         ) : null}
       </div>
     </div>
@@ -231,10 +243,11 @@ function DesignResumeListItemCard({
   onProjectModeChange,
   projectPolicy,
 }: DesignResumeListItemCardProps) {
+  const { t } = useTranslation(["resumeStudio", "common"]);
   const isHidden = toBoolean(item.hidden, false);
   const primaryLabel = toText(
     getByPath(item, definition.primaryField),
-    "Untitled",
+    t("listSection.untitled"),
   );
   const secondaryLabel = getItemPreview(item, definition);
   const itemId = toText(item.id);
@@ -274,7 +287,7 @@ function DesignResumeListItemCard({
         <button
           type="button"
           draggable
-          aria-label={`Drag ${primaryLabel} to reorder`}
+          aria-label={t("listSection.dragToReorder", { label: primaryLabel })}
           className="flex h-9 w-6 cursor-grab touch-none items-center justify-center rounded-md pt-1 text-muted-foreground/70 transition-colors hover:bg-accent/50 hover:text-foreground active:cursor-grabbing"
           onDragStart={(event) => onDragStart(event, index)}
           onDragEnd={onDragEnd}
@@ -308,7 +321,7 @@ function DesignResumeListItemCard({
                 ) : (
                   <Eye className="h-3.5 w-3.5" />
                 )}
-                {isHidden ? "Hidden" : "Visible"}
+                {isHidden ? t("listSection.hidden") : t("listSection.visible")}
               </button>
             ) : null}
           </div>
@@ -332,7 +345,9 @@ function DesignResumeListItemCard({
                 onClick={() => onEdit(index)}
               >
                 <Pencil className="h-4 w-4 text-blue-400" />
-                <span className={itemActionLabelClassName}>Edit</span>
+                <span className={itemActionLabelClassName}>
+                  {t("common:actions.edit")}
+                </span>
               </Button>
               {showHideAction ? (
                 <>
@@ -349,7 +364,7 @@ function DesignResumeListItemCard({
                       <EyeOff className="h-4 w-4" />
                     )}
                     <span className={itemActionLabelClassName}>
-                      {isHidden ? "Show" : "Hide"}
+                      {isHidden ? t("listSection.show") : t("listSection.hide")}
                     </span>
                   </Button>
                 </>
@@ -362,7 +377,9 @@ function DesignResumeListItemCard({
                 onClick={() => onRemove(index)}
               >
                 <Trash2 className="h-4 w-4" />
-                <span className={itemActionLabelClassName}>Remove</span>
+                <span className={itemActionLabelClassName}>
+                  {t("common:actions.remove")}
+                </span>
               </Button>
             </div>
           </div>
@@ -380,6 +397,7 @@ export function DesignResumeListSectionContent({
   onUpdateItems,
   projectPolicy,
 }: DesignResumeListSectionProps) {
+  const { t } = useTranslation(["resumeStudio", "common"]);
   const [pendingRemovalIndex, setPendingRemovalIndex] = useState<number | null>(
     null,
   );
@@ -396,7 +414,7 @@ export function DesignResumeListSectionContent({
     pendingRemovalItem
       ? getByPath(pendingRemovalItem, definition.primaryField)
       : null,
-    "this item",
+    t("listSection.thisItem"),
   );
 
   const confirmRemoval = () => {
@@ -500,18 +518,18 @@ export function DesignResumeListSectionContent({
           <div className="flex items-center gap-4">
             <div>
               <div className="text-sm font-medium text-foreground">
-                {items.length} item{items.length === 1 ? "" : "s"}
+                {t("listSection.itemCount", { count: items.length })}
               </div>
               <div className="text-xs text-muted-foreground">
                 {definition.key === "projects"
-                  ? "Add entries, reorder them, or choose when each one appears."
-                  : "Add entries, reorder them, or hide the ones you do not want to show."}
+                  ? t("listSection.hintProjects")
+                  : t("listSection.hint")}
               </div>
             </div>
 
             <Button type="button" variant="outline" onClick={onAdd}>
               <Plus className="mr-2 h-4 w-4" />
-              Add
+              {t("common:actions.add")}
             </Button>
           </div>
           {showProjectPolicyControls ? (
@@ -519,14 +537,11 @@ export function DesignResumeListSectionContent({
               <Tip
                 asChild
                 content={
-                  <>
-                    Set the desired number of projects in tailored resumes.{" "}
-                    <br />
-                    <br /> Must-include projects count toward this target.{" "}
-                    <br />
-                    <br /> Setting it to 0 prevents automatic project selection
-                    unless projects are marked Must include.
-                  </>
+                  <Trans
+                    t={t}
+                    i18nKey="listSection.targetProjectsTip"
+                    components={{ br: <br /> }}
+                  />
                 }
                 contentClassName="max-w-96 text-center"
               >
@@ -534,7 +549,7 @@ export function DesignResumeListSectionContent({
                   htmlFor={maxProjectsInputId}
                   className="text-xs font-medium text-muted-foreground w-full"
                 >
-                  Target projects in tailored resumes
+                  {t("listSection.targetProjects")}
                 </label>
               </Tip>
 
@@ -568,7 +583,7 @@ export function DesignResumeListSectionContent({
 
         {items.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
-            No items yet.
+            {t("listSection.empty")}
           </div>
         ) : (
           <ul className="space-y-3">
@@ -616,21 +631,24 @@ export function DesignResumeListSectionContent({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Remove {definition.singularTitle.toLowerCase()}?
+              {t("listSection.removeTitle", {
+                item: getItemDefinitionSingularTitle(definition).toLowerCase(),
+              })}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove {pendingRemovalLabel} from your Resume Studio.
-              You can add it again later, but this change will be saved.
+              {t("listSection.removeDescription", {
+                label: pendingRemovalLabel,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={confirmRemoval}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Remove
+              {t("common:actions.remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -647,12 +665,15 @@ export function DesignResumeListSection({
   isDragTarget,
   ...props
 }: DesignResumeListSectionProps) {
+  const { t } = useTranslation(["resumeStudio", "common"]);
   return (
     <DesignResumeSection
       value={props.definition.key}
-      title={props.definition.title}
-      subtitle={props.definition.description}
-      badge={props.items.length === 0 ? "Empty" : `${props.items.length}`}
+      title={getItemDefinitionTitle(props.definition)}
+      subtitle={getItemDefinitionDescription(props.definition)}
+      badge={
+        props.items.length === 0 ? t("badges.empty") : `${props.items.length}`
+      }
       dragHandleProps={dragHandleProps}
       onDragOver={onDragOver}
       onDrop={onDrop}

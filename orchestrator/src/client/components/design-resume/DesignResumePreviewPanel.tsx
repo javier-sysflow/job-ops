@@ -4,11 +4,11 @@ import type {
   TypstTheme,
 } from "@shared/types";
 import {
-  PDF_RENDERER_LABELS,
   PDF_RENDERER_VALUES,
   TYPST_THEME_LABELS,
   TYPST_THEME_VALUES,
 } from "@shared/types";
+import { useTranslation } from "react-i18next";
 import {
   Select,
   SelectContent,
@@ -42,6 +42,7 @@ export function DesignResumePreviewPanel({
   onTypstThemeChange,
   className,
 }: DesignResumePreviewPanelProps) {
+  const { t } = useTranslation("resumeStudio");
   return (
     <section
       className={cn("flex min-h-0 min-w-0 flex-col overflow-hidden", className)}
@@ -53,12 +54,12 @@ export function DesignResumePreviewPanel({
           disabled={isUpdatingRenderer}
         >
           <SelectTrigger id="design-resume-template" className="w-full sm:w-72">
-            <SelectValue placeholder="Choose a template" />
+            <SelectValue placeholder={t("preview.chooseTemplate")} />
           </SelectTrigger>
           <SelectContent>
             {PDF_RENDERER_VALUES.map((value) => (
               <SelectItem key={value} value={value}>
-                {PDF_RENDERER_LABELS[value]}
+                {t(`preview.renderers.${value}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -73,7 +74,7 @@ export function DesignResumePreviewPanel({
               id="design-resume-typst-theme"
               className="w-full sm:w-52"
             >
-              <SelectValue placeholder="Choose a Typst theme" />
+              <SelectValue placeholder={t("preview.chooseTypstTheme")} />
             </SelectTrigger>
             <SelectContent>
               {TYPST_THEME_VALUES.map((value) => (

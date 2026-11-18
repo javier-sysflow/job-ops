@@ -1,8 +1,10 @@
+import i18n from "@client/i18n";
 import { createId } from "@paralleldrive/cuid2";
 import type { ItemFieldConfig } from "./ItemDialog";
 
 export type ItemDefinition = {
   key: string;
+  /** English title; also sent to the AI assistant as the section name. */
   title: string;
   singularTitle: string;
   description: string;
@@ -11,6 +13,48 @@ export type ItemDefinition = {
   fields: ItemFieldConfig[];
   createItem: () => Record<string, unknown>;
 };
+
+type ItemSectionKey =
+  | "profiles"
+  | "experience"
+  | "education"
+  | "projects"
+  | "skills"
+  | "languages"
+  | "interests"
+  | "awards"
+  | "certifications"
+  | "publications"
+  | "volunteer"
+  | "references";
+
+/** Section title in the UI language (falls back to the English title). */
+export function getItemDefinitionTitle(definition: ItemDefinition): string {
+  return i18n.t(
+    `resumeStudio:sections.${definition.key as ItemSectionKey}.title`,
+    { defaultValue: definition.title },
+  );
+}
+
+/** Singular section title in the UI language (e.g. "Experience entry"). */
+export function getItemDefinitionSingularTitle(
+  definition: ItemDefinition,
+): string {
+  return i18n.t(
+    `resumeStudio:sections.${definition.key as ItemSectionKey}.singular`,
+    { defaultValue: definition.singularTitle },
+  );
+}
+
+/** Section description in the UI language. */
+export function getItemDefinitionDescription(
+  definition: ItemDefinition,
+): string {
+  return i18n.t(
+    `resumeStudio:sections.${definition.key as ItemSectionKey}.description`,
+    { defaultValue: definition.description },
+  );
+}
 
 export const ITEM_DEFINITIONS: ItemDefinition[] = [
   {
@@ -24,20 +68,34 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
       {
         key: "icon",
         label: "Icon",
+        labelKey: "resumeStudio:fields.icon",
         type: "text",
         placeholder: "e.g. tabler:brand-linkedin (Iconify icon name)",
+        placeholderKey: "resumeStudio:placeholders.profileIcon",
       },
-      { key: "network", label: "Network", type: "text" },
-      { key: "username", label: "Username", type: "text" },
+      {
+        key: "network",
+        label: "Network",
+        labelKey: "resumeStudio:fields.network",
+        type: "text",
+      },
+      {
+        key: "username",
+        label: "Username",
+        labelKey: "resumeStudio:fields.username",
+        type: "text",
+      },
       {
         key: "website.url",
         label: "Website",
+        labelKey: "resumeStudio:fields.website",
         type: "text",
         placeholder: "https://...",
       },
       {
         key: "website.inlineLink",
         label: "Show link in title",
+        labelKey: "resumeStudio:fields.showLinkInTitle",
         type: "toggle",
       },
     ],
@@ -58,24 +116,48 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
     primaryField: "company",
     secondaryField: "position",
     fields: [
-      { key: "company", label: "Company", type: "text" },
-      { key: "location", label: "Location", type: "text" },
-      { key: "position", label: "Position", type: "text", aiAssist: true },
-      { key: "period", label: "Period", type: "text" },
+      {
+        key: "company",
+        label: "Company",
+        labelKey: "resumeStudio:fields.company",
+        type: "text",
+      },
+      {
+        key: "location",
+        label: "Location",
+        labelKey: "resumeStudio:fields.workLocation",
+        type: "text",
+      },
+      {
+        key: "position",
+        label: "Position",
+        labelKey: "resumeStudio:fields.position",
+        type: "text",
+        aiAssist: true,
+      },
+      {
+        key: "period",
+        label: "Period",
+        labelKey: "resumeStudio:fields.period",
+        type: "text",
+      },
       {
         key: "website.url",
         label: "Website",
+        labelKey: "resumeStudio:fields.website",
         type: "text",
         placeholder: "https://...",
       },
       {
         key: "website.inlineLink",
         label: "Show link in title",
+        labelKey: "resumeStudio:fields.showLinkInTitle",
         type: "toggle",
       },
       {
         key: "description",
         label: "Description",
+        labelKey: "resumeStudio:fields.experienceDescription",
         type: "richtext",
         aiAssist: true,
       },
@@ -100,21 +182,58 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
     primaryField: "school",
     secondaryField: "degree",
     fields: [
-      { key: "school", label: "School", type: "text" },
-      { key: "area", label: "Area", type: "text" },
-      { key: "degree", label: "Degree", type: "text" },
-      { key: "grade", label: "Grade", type: "text" },
-      { key: "location", label: "Location", type: "text" },
-      { key: "period", label: "Period", type: "text" },
-      { key: "website.url", label: "Website", type: "text" },
+      {
+        key: "school",
+        label: "School",
+        labelKey: "resumeStudio:fields.school",
+        type: "text",
+      },
+      {
+        key: "area",
+        label: "Area",
+        labelKey: "resumeStudio:fields.area",
+        type: "text",
+      },
+      {
+        key: "degree",
+        label: "Degree",
+        labelKey: "resumeStudio:fields.degree",
+        type: "text",
+      },
+      {
+        key: "grade",
+        label: "Grade",
+        labelKey: "resumeStudio:fields.grade",
+        type: "text",
+      },
+      {
+        key: "location",
+        label: "Location",
+        labelKey: "resumeStudio:fields.location",
+        type: "text",
+      },
+      {
+        key: "period",
+        label: "Period",
+        labelKey: "resumeStudio:fields.period",
+        type: "text",
+      },
+      {
+        key: "website.url",
+        label: "Website",
+        labelKey: "resumeStudio:fields.website",
+        type: "text",
+      },
       {
         key: "website.inlineLink",
         label: "Show link in title",
+        labelKey: "resumeStudio:fields.showLinkInTitle",
         type: "toggle",
       },
       {
         key: "description",
         label: "Description",
+        labelKey: "resumeStudio:fields.description",
         type: "richtext",
         aiAssist: true,
       },
@@ -141,17 +260,35 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
     primaryField: "name",
     secondaryField: "period",
     fields: [
-      { key: "name", label: "Name", type: "text", aiAssist: true },
-      { key: "period", label: "Period", type: "text" },
-      { key: "website.url", label: "Website", type: "text" },
+      {
+        key: "name",
+        label: "Name",
+        labelKey: "resumeStudio:fields.projectName",
+        type: "text",
+        aiAssist: true,
+      },
+      {
+        key: "period",
+        label: "Period",
+        labelKey: "resumeStudio:fields.period",
+        type: "text",
+      },
+      {
+        key: "website.url",
+        label: "Website",
+        labelKey: "resumeStudio:fields.website",
+        type: "text",
+      },
       {
         key: "website.inlineLink",
         label: "Show link in title",
+        labelKey: "resumeStudio:fields.showLinkInTitle",
         type: "toggle",
       },
       {
         key: "description",
         label: "Description",
+        labelKey: "resumeStudio:fields.description",
         type: "richtext",
         aiAssist: true,
       },
@@ -176,20 +313,41 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
       {
         key: "icon",
         label: "Icon",
+        labelKey: "resumeStudio:fields.icon",
         type: "icon",
         groupWithNext: true,
       },
       {
         key: "name",
         label: "Name",
+        labelKey: "resumeStudio:fields.skillName",
         type: "text",
         required: true,
         placeholder: "e.g. Python, or Programming Languages",
+        placeholderKey: "resumeStudio:placeholders.skillName",
         aiAssist: true,
       },
-      { key: "proficiency", label: "Proficiency", type: "text" },
-      { key: "level", label: "Level", type: "number", min: 0, step: 1 },
-      { key: "keywords", label: "Keywords", type: "tags", aiAssist: true },
+      {
+        key: "proficiency",
+        label: "Proficiency",
+        labelKey: "resumeStudio:fields.proficiency",
+        type: "text",
+      },
+      {
+        key: "level",
+        label: "Level",
+        labelKey: "resumeStudio:fields.level",
+        type: "number",
+        min: 0,
+        step: 1,
+      },
+      {
+        key: "keywords",
+        label: "Keywords",
+        labelKey: "resumeStudio:fields.keywords",
+        type: "tags",
+        aiAssist: true,
+      },
     ],
     createItem: () => ({
       id: createId(),
@@ -209,9 +367,26 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
     primaryField: "language",
     secondaryField: "fluency",
     fields: [
-      { key: "language", label: "Language", type: "text" },
-      { key: "fluency", label: "Fluency", type: "text" },
-      { key: "level", label: "Level", type: "number", min: 0, step: 1 },
+      {
+        key: "language",
+        label: "Language",
+        labelKey: "resumeStudio:fields.language",
+        type: "text",
+      },
+      {
+        key: "fluency",
+        label: "Fluency",
+        labelKey: "resumeStudio:fields.fluency",
+        type: "text",
+      },
+      {
+        key: "level",
+        label: "Level",
+        labelKey: "resumeStudio:fields.level",
+        type: "number",
+        min: 0,
+        step: 1,
+      },
     ],
     createItem: () => ({
       id: createId(),
@@ -232,11 +407,25 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
       {
         key: "icon",
         label: "Icon",
+        labelKey: "resumeStudio:fields.icon",
         type: "text",
         placeholder: "e.g. tabler:brand-python (Iconify icon name)",
+        placeholderKey: "resumeStudio:placeholders.interestIcon",
       },
-      { key: "name", label: "Name", type: "text", aiAssist: true },
-      { key: "keywords", label: "Keywords", type: "tags", aiAssist: true },
+      {
+        key: "name",
+        label: "Name",
+        labelKey: "resumeStudio:fields.interestName",
+        type: "text",
+        aiAssist: true,
+      },
+      {
+        key: "keywords",
+        label: "Keywords",
+        labelKey: "resumeStudio:fields.keywords",
+        type: "tags",
+        aiAssist: true,
+      },
     ],
     createItem: () => ({
       id: createId(),
@@ -254,18 +443,41 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
     primaryField: "title",
     secondaryField: "awarder",
     fields: [
-      { key: "title", label: "Title", type: "text", aiAssist: true },
-      { key: "awarder", label: "Awarder", type: "text" },
-      { key: "date", label: "Date", type: "text" },
-      { key: "website.url", label: "Website", type: "text" },
+      {
+        key: "title",
+        label: "Title",
+        labelKey: "resumeStudio:fields.awardTitle",
+        type: "text",
+        aiAssist: true,
+      },
+      {
+        key: "awarder",
+        label: "Awarder",
+        labelKey: "resumeStudio:fields.awarder",
+        type: "text",
+      },
+      {
+        key: "date",
+        label: "Date",
+        labelKey: "resumeStudio:fields.date",
+        type: "text",
+      },
+      {
+        key: "website.url",
+        label: "Website",
+        labelKey: "resumeStudio:fields.website",
+        type: "text",
+      },
       {
         key: "website.inlineLink",
         label: "Show link in title",
+        labelKey: "resumeStudio:fields.showLinkInTitle",
         type: "toggle",
       },
       {
         key: "description",
         label: "Description",
+        labelKey: "resumeStudio:fields.description",
         type: "richtext",
         aiAssist: true,
       },
@@ -288,18 +500,41 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
     primaryField: "title",
     secondaryField: "issuer",
     fields: [
-      { key: "title", label: "Title", type: "text", aiAssist: true },
-      { key: "issuer", label: "Issuer", type: "text" },
-      { key: "date", label: "Date", type: "text" },
-      { key: "website.url", label: "Website", type: "text" },
+      {
+        key: "title",
+        label: "Title",
+        labelKey: "resumeStudio:fields.certificationTitle",
+        type: "text",
+        aiAssist: true,
+      },
+      {
+        key: "issuer",
+        label: "Issuer",
+        labelKey: "resumeStudio:fields.issuer",
+        type: "text",
+      },
+      {
+        key: "date",
+        label: "Date",
+        labelKey: "resumeStudio:fields.date",
+        type: "text",
+      },
+      {
+        key: "website.url",
+        label: "Website",
+        labelKey: "resumeStudio:fields.website",
+        type: "text",
+      },
       {
         key: "website.inlineLink",
         label: "Show link in title",
+        labelKey: "resumeStudio:fields.showLinkInTitle",
         type: "toggle",
       },
       {
         key: "description",
         label: "Description",
+        labelKey: "resumeStudio:fields.description",
         type: "richtext",
         aiAssist: true,
       },
@@ -322,18 +557,41 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
     primaryField: "title",
     secondaryField: "publisher",
     fields: [
-      { key: "title", label: "Title", type: "text", aiAssist: true },
-      { key: "publisher", label: "Publisher", type: "text" },
-      { key: "date", label: "Date", type: "text" },
-      { key: "website.url", label: "Website", type: "text" },
+      {
+        key: "title",
+        label: "Title",
+        labelKey: "resumeStudio:fields.title",
+        type: "text",
+        aiAssist: true,
+      },
+      {
+        key: "publisher",
+        label: "Publisher",
+        labelKey: "resumeStudio:fields.publisher",
+        type: "text",
+      },
+      {
+        key: "date",
+        label: "Date",
+        labelKey: "resumeStudio:fields.date",
+        type: "text",
+      },
+      {
+        key: "website.url",
+        label: "Website",
+        labelKey: "resumeStudio:fields.website",
+        type: "text",
+      },
       {
         key: "website.inlineLink",
         label: "Show link in title",
+        labelKey: "resumeStudio:fields.showLinkInTitle",
         type: "toggle",
       },
       {
         key: "description",
         label: "Description",
+        labelKey: "resumeStudio:fields.description",
         type: "richtext",
         aiAssist: true,
       },
@@ -359,20 +617,38 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
       {
         key: "organization",
         label: "Organization",
+        labelKey: "resumeStudio:fields.organization",
         type: "text",
         aiAssist: true,
       },
-      { key: "location", label: "Location", type: "text" },
-      { key: "period", label: "Period", type: "text" },
-      { key: "website.url", label: "Website", type: "text" },
+      {
+        key: "location",
+        label: "Location",
+        labelKey: "resumeStudio:fields.location",
+        type: "text",
+      },
+      {
+        key: "period",
+        label: "Period",
+        labelKey: "resumeStudio:fields.period",
+        type: "text",
+      },
+      {
+        key: "website.url",
+        label: "Website",
+        labelKey: "resumeStudio:fields.website",
+        type: "text",
+      },
       {
         key: "website.inlineLink",
         label: "Show link in title",
+        labelKey: "resumeStudio:fields.showLinkInTitle",
         type: "toggle",
       },
       {
         key: "description",
         label: "Description",
+        labelKey: "resumeStudio:fields.description",
         type: "richtext",
         aiAssist: true,
       },
@@ -395,18 +671,42 @@ export const ITEM_DEFINITIONS: ItemDefinition[] = [
     primaryField: "name",
     secondaryField: "position",
     fields: [
-      { key: "name", label: "Name", type: "text", aiAssist: true },
-      { key: "position", label: "Position", type: "text", aiAssist: true },
-      { key: "phone", label: "Phone", type: "text" },
-      { key: "website.url", label: "Website", type: "text" },
+      {
+        key: "name",
+        label: "Name",
+        labelKey: "resumeStudio:fields.referenceName",
+        type: "text",
+        aiAssist: true,
+      },
+      {
+        key: "position",
+        label: "Position",
+        labelKey: "resumeStudio:fields.position",
+        type: "text",
+        aiAssist: true,
+      },
+      {
+        key: "phone",
+        label: "Phone",
+        labelKey: "resumeStudio:fields.phone",
+        type: "text",
+      },
+      {
+        key: "website.url",
+        label: "Website",
+        labelKey: "resumeStudio:fields.website",
+        type: "text",
+      },
       {
         key: "website.inlineLink",
         label: "Show link in title",
+        labelKey: "resumeStudio:fields.showLinkInTitle",
         type: "toggle",
       },
       {
         key: "description",
         label: "Description",
+        labelKey: "resumeStudio:fields.description",
         type: "richtext",
         aiAssist: true,
       },
