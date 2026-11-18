@@ -1,3 +1,4 @@
+import { typstThemeLabel } from "@client/i18n/labels";
 import { BaseResumeSelection } from "@client/pages/settings/components/BaseResumeSelection";
 import { SettingsInput } from "@client/pages/settings/components/SettingsInput";
 import {
@@ -11,7 +12,6 @@ import {
   type PdfPaperSize,
   type PdfRenderer,
   type ResumeProjectCatalogItem,
-  TYPST_THEME_LABELS,
   TYPST_THEME_VALUES,
   type TypstTheme,
 } from "@shared/types.js";
@@ -152,10 +152,6 @@ export const ReactiveResumeConfigPanel: React.FC<
   projectSelection,
 }) => {
   const { t } = useTranslation("settings");
-  const typstThemeLabel = (value: TypstTheme) =>
-    t(`rxresume.typstThemes.${value}`, {
-      defaultValue: TYPST_THEME_LABELS[value],
-    });
   const hasProjectCatalog = Boolean(projectSelection?.projects.length);
   const canShowProjectSelection = Boolean(
     projectSelection && (hasRxResumeAccess || hasProjectCatalog),

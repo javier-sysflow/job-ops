@@ -14,6 +14,8 @@ import type {
   InterviewType,
   JobOutcome,
   JobStatus,
+  PdfRenderer,
+  TypstTheme,
 } from "@shared/types";
 import i18n from "./index";
 import { getUiLocale } from "./language";
@@ -39,6 +41,12 @@ export const interviewOutcomeLabel = (outcome: InterviewOutcome): string =>
 export const workplaceTypeLabel = (
   type: "remote" | "hybrid" | "onsite",
 ): string => i18n.t(`enums:workplaceType.${type}`);
+
+export const typstThemeLabel = (theme: TypstTheme): string =>
+  i18n.t(`enums:typstTheme.${theme}`);
+
+export const pdfRendererLabel = (renderer: PdfRenderer): string =>
+  i18n.t(`resumeStudio:preview.renderers.${renderer}`);
 
 /**
  * Country name in the UI language (日本 / Japan) via Intl.DisplayNames,

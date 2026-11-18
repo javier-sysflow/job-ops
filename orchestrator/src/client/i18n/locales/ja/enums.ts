@@ -56,6 +56,12 @@ const enums: typeof en = {
     hybrid: "ハイブリッド",
     onsite: "出社",
   },
+  typstTheme: {
+    classic: "クラシック",
+    "clean-print-cv": "Clean Print CV",
+    compact: "コンパクト",
+    "shokumu-keirekisho": "職務経歴書（日本式）",
+  },
 };
 
 export default enums;

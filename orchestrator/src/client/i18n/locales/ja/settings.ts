@@ -461,11 +461,6 @@ const settings: typeof en = {
       latex: "LaTeXテンプレートの「レンダラーの既定」はUSレターです。",
       typst: "Typstテーマの「レンダラーの既定」はA4です。",
     },
-    typstThemes: {
-      classic: "クラシック",
-      "clean-print-cv": "Clean Print CV",
-      compact: "コンパクト",
-    },
     pdfRenderer: "PDFレンダラー",
     pdfRendererPlaceholder: "PDFレンダラーを選択",
     typstTheme: "Typstテーマ",
