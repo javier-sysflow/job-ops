@@ -25,6 +25,7 @@ const shell: typeof en = {
     tracerLinks: "トレーサーリンク",
     visaSponsors: "ビザスポンサー",
     watchlist: "ウォッチリスト",
+    guide: "使い方ガイド",
     settings: "設定",
   },
   scoreMeter: {

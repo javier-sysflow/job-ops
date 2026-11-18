@@ -95,7 +95,8 @@ const PRIMARY_NAV_PATHS = new Set([
   "/applications/in-progress",
   "/design-resume",
 ]);
-const SETTINGS_PATH = "/settings";
+/** Shown in the sidebar footer instead of the main list. */
+const FOOTER_NAV_PATHS = ["/guide", "/settings"];
 
 const useNavLinks = (): NavLink[] => {
   const { appMode } = React.useContext(AppModeContext);
@@ -168,7 +169,9 @@ interface NavListProps {
 
 const NavList: React.FC<NavListProps> = ({ collapsed, onNavigate }) => {
   const location = useLocation();
-  const links = useNavLinks().filter(({ to }) => to !== SETTINGS_PATH);
+  const links = useNavLinks().filter(
+    ({ to }) => !FOOTER_NAV_PATHS.includes(to),
+  );
   const primary = links.filter(({ to }) => PRIMARY_NAV_PATHS.has(to));
   const tools = links.filter(({ to }) => !PRIMARY_NAV_PATHS.has(to));
 
@@ -197,17 +200,23 @@ const NavList: React.FC<NavListProps> = ({ collapsed, onNavigate }) => {
   );
 };
 
-const SettingsNavItem: React.FC<NavListProps> = ({ collapsed, onNavigate }) => {
+const FooterNavItems: React.FC<NavListProps> = ({ collapsed, onNavigate }) => {
   const location = useLocation();
-  const link = NAV_LINKS.find(({ to }) => to === SETTINGS_PATH);
-  if (!link) return null;
+  const links = FOOTER_NAV_PATHS.flatMap(
+    (path) => NAV_LINKS.find(({ to }) => to === path) ?? [],
+  );
   return (
-    <NavItem
-      link={link}
-      collapsed={collapsed}
-      onNavigate={onNavigate}
-      active={isNavActive(location.pathname, link.to, link.activePaths)}
-    />
+    <>
+      {links.map((link) => (
+        <NavItem
+          key={link.to}
+          link={link}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+          active={isNavActive(location.pathname, link.to, link.activePaths)}
+        />
+      ))}
+    </>
   );
 };
 
@@ -482,7 +491,7 @@ export const AppShell: React.FC<AppShellProps> = ({ enabled, children }) => {
             <NavList collapsed={collapsed} />
           </nav>
           <div className="flex shrink-0 flex-col gap-0.5 border-t border-sidebar-border px-3 py-3">
-            <SettingsNavItem collapsed={collapsed} />
+            <FooterNavItems collapsed={collapsed} />
             <AccountMenu collapsed={collapsed} />
             <SidebarFooterRow
               collapsed={collapsed}
@@ -599,7 +608,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 <NavList onNavigate={closeNav} />
               </nav>
               <div className="flex shrink-0 flex-col gap-0.5 border-t border-sidebar-border px-3 py-3">
-                <SettingsNavItem onNavigate={closeNav} />
+                <FooterNavItems onNavigate={closeNav} />
                 <AccountMenu onBeforeAction={closeNav} />
                 {showVersionFooter && (
                   <SidebarFooterRow onBeforeAction={closeNav} />

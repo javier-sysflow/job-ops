@@ -39,6 +39,7 @@ export { default as BookmarkPlus } from "@mingcute/react/core-regular/bookmark-a
 export { default as Briefcase } from "@mingcute/react/core-regular/briefcase";
 export { default as BriefcaseBusiness } from "@mingcute/react/core-regular/briefcase-2";
 export { default as Building2 } from "@mingcute/react/core-regular/building-2";
+export { default as Lightbulb } from "@mingcute/react/core-regular/bulb";
 export { default as Calendar } from "@mingcute/react/core-regular/calendar";
 export { default as CalendarDays } from "@mingcute/react/core-regular/calendar-month";
 export {
@@ -62,6 +63,7 @@ export {
   default as XCircle,
 } from "@mingcute/react/core-regular/close-circle";
 export { default as Columns3 } from "@mingcute/react/core-regular/columns-3";
+export { default as Compass } from "@mingcute/react/core-regular/compass";
 export { default as Copy } from "@mingcute/react/core-regular/copy";
 export { default as Trash2 } from "@mingcute/react/core-regular/delete-2";
 export { default as FileText } from "@mingcute/react/core-regular/document";
@@ -108,6 +110,7 @@ export { default as Inbox } from "@mingcute/react/core-regular/inbox";
 export { default as Info } from "@mingcute/react/core-regular/information";
 export { default as Italic } from "@mingcute/react/core-regular/italic";
 export { default as KeyRound } from "@mingcute/react/core-regular/key-2";
+export { default as Keyboard } from "@mingcute/react/core-regular/keyboard";
 export { default as LayoutDashboard } from "@mingcute/react/core-regular/layout-grid";
 export { default as PanelLeftClose } from "@mingcute/react/core-regular/layout-leftbar-close";
 export { default as PanelLeftOpen } from "@mingcute/react/core-regular/layout-leftbar-open";
@@ -152,6 +155,7 @@ export {
 } from "@mingcute/react/core-regular/refresh-anticlockwise-1";
 export { default as ChevronRight } from "@mingcute/react/core-regular/right";
 export { default as Bot } from "@mingcute/react/core-regular/robot";
+export { default as Rocket } from "@mingcute/react/core-regular/rocket";
 export { default as Circle } from "@mingcute/react/core-regular/round";
 export { default as ShieldAlert } from "@mingcute/react/core-regular/safe-alert";
 export { default as Save } from "@mingcute/react/core-regular/save";

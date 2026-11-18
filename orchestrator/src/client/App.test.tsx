@@ -27,8 +27,16 @@ vi.mock("./components/TimeZoneSync", () => ({
   TimeZoneSync: () => null,
 }));
 
+vi.mock("./components/WelcomeGuideDialog", () => ({
+  WelcomeGuideDialog: () => null,
+}));
+
 vi.mock("./pages/GmailOauthCallbackPage", () => ({
   GmailOauthCallbackPage: () => null,
+}));
+
+vi.mock("./pages/GuidePage", () => ({
+  GuidePage: () => <div>guide</div>,
 }));
 
 vi.mock("./pages/HomePage", () => ({

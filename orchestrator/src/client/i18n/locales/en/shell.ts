@@ -22,6 +22,7 @@ const shell = {
     tracerLinks: "Tracer Links",
     visaSponsors: "Visa Sponsors",
     watchlist: "Watchlist",
+    guide: "Guide",
     settings: "Settings",
   },
   scoreMeter: {

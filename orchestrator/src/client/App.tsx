@@ -19,11 +19,13 @@ import { Toaster } from "@/components/ui/sonner";
 import { AppModeContext, AppShell } from "./components/layout";
 import { OnboardingGate } from "./components/OnboardingGate";
 import { TimeZoneSync } from "./components/TimeZoneSync";
+import { WelcomeGuideDialog } from "./components/WelcomeGuideDialog";
 import { useAnalyticsIdentity } from "./hooks/useAnalyticsIdentity";
 import { useDemoInfo } from "./hooks/useDemoInfo";
 import { setAuthNavigator } from "./lib/auth-navigation";
 import { DesignResumePage } from "./pages/DesignResumePage";
 import { GmailOauthCallbackPage } from "./pages/GmailOauthCallbackPage";
+import { GuidePage } from "./pages/GuidePage";
 import { HomePage } from "./pages/HomePage";
 import { InProgressBoardPage } from "./pages/InProgressBoardPage";
 import { JobPage } from "./pages/JobPage";
@@ -117,6 +119,7 @@ export const App: React.FC = () => {
     <>
       <OnboardingGate />
       <TimeZoneSync />
+      <WelcomeGuideDialog enabled={!isStandaloneRoute} />
       {showDemoBanners && (
         <div className="sticky top-0 z-50 w-full border-b border-amber-400/50 bg-amber-500/20 px-4 py-2 text-xs text-amber-100 shadow-sm backdrop-blur">
           <div className="mx-auto flex items-center justify-center gap-3">
@@ -208,6 +211,7 @@ export const App: React.FC = () => {
                   path="/sso/callback/:provider"
                   element={<SsoCallbackPage />}
                 />
+                <Route path="/guide" element={<GuidePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/tracer-links" element={<TracerLinksPage />} />
                 <Route path="/visa-sponsors" element={<VisaSponsorsPage />} />

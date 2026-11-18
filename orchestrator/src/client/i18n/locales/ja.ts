@@ -2,6 +2,7 @@ import type { en } from "./en";
 import common from "./ja/common";
 import enums from "./ja/enums";
 import errors from "./ja/errors";
+import guide from "./ja/guide";
 import inProgress from "./ja/inProgress";
 import jobDetail from "./ja/jobDetail";
 import jobs from "./ja/jobs";
@@ -37,4 +38,5 @@ export const ja: typeof en = {
   visa,
   watchlist,
   welcome,
+  guide,
 };

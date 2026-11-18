@@ -1,6 +1,7 @@
 import common from "./en/common";
 import enums from "./en/enums";
 import errors from "./en/errors";
+import guide from "./en/guide";
 import inProgress from "./en/inProgress";
 import jobDetail from "./en/jobDetail";
 import jobs from "./en/jobs";
@@ -36,4 +37,5 @@ export const en = {
   visa,
   watchlist,
   welcome,
+  guide,
 };

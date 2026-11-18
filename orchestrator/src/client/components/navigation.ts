@@ -1,5 +1,6 @@
 import {
   Columns3,
+  Compass,
   Eye,
   FilePenLine,
   Home,
@@ -55,6 +56,7 @@ export const NAV_LINKS: NavLink[] = [
   },
   { to: "/visa-sponsors", labelKey: "visaSponsors", icon: Shield },
   { to: "/watchlist", labelKey: "watchlist", icon: Eye },
+  { to: "/guide", labelKey: "guide", icon: Compass },
   { to: "/settings", labelKey: "settings", icon: Settings },
 ];
 
