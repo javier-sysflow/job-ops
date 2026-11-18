@@ -6,9 +6,7 @@ import {
 } from "@client/pages/settings/resume-projects-state";
 import type { ResumeProjectsSettingsInput } from "@shared/settings-schema.js";
 import {
-  PDF_PAPER_SIZE_LABELS,
   PDF_PAPER_SIZE_VALUES,
-  PDF_RENDERER_LABELS,
   PDF_RENDERER_VALUES,
   type PdfPaperSize,
   type PdfRenderer,
@@ -17,8 +15,10 @@ import {
   TYPST_THEME_VALUES,
   type TypstTheme,
 } from "@shared/types.js";
+import type { TFunction } from "i18next";
 import { AlertCircle, AlertTriangle } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -96,12 +96,16 @@ type ReactiveResumeConfigPanelProps = {
   projectSelection?: ProjectSelectionConfig;
 };
 
-function renderStatusPill(label: string, state: VersionValidationState) {
+function renderStatusPill(
+  label: string,
+  state: VersionValidationState,
+  t: TFunction<"settings">,
+) {
   const statusLabel = state.checked
     ? state.valid
-      ? "Connected"
-      : "Failed"
-    : "Not tested";
+      ? t("rxresume.statusConnected")
+      : t("rxresume.statusFailed")
+    : t("rxresume.statusNotTested");
   const dotColor = state.checked
     ? state.valid
       ? "bg-emerald-500"
@@ -110,7 +114,7 @@ function renderStatusPill(label: string, state: VersionValidationState) {
 
   return (
     <StatusIndicator
-      label={`${label}: ${statusLabel}`}
+      label={t("rxresume.statusPill", { label, status: statusLabel })}
       dotColor={dotColor}
       tooltip={
         state.checked && !state.valid && state.message
@@ -147,6 +151,11 @@ export const ReactiveResumeConfigPanel: React.FC<
   v5,
   projectSelection,
 }) => {
+  const { t } = useTranslation("settings");
+  const typstThemeLabel = (value: TypstTheme) =>
+    t(`rxresume.typstThemes.${value}`, {
+      defaultValue: TYPST_THEME_LABELS[value],
+    });
   const hasProjectCatalog = Boolean(projectSelection?.projects.length);
   const canShowProjectSelection = Boolean(
     projectSelection && (hasRxResumeAccess || hasProjectCatalog),
@@ -161,21 +170,6 @@ export const ReactiveResumeConfigPanel: React.FC<
     showInlineValidationAlert &&
     isAvailabilityWarning(selectedValidationStatus);
 
-  const rendererHelperText: Record<PdfRenderer, string> = {
-    rxresume:
-      "RxResume export uses the upstream print/export endpoint for the final PDF.",
-    latex:
-      "LaTeX renders PDFs locally with Jake's template and requires tectonic on the JobOps host.",
-    typst: "Typst renders PDFs locally and supports selectable resume themes.",
-  };
-
-  const rendererDefaultPaperSizeText: Record<PdfRenderer, string> = {
-    rxresume:
-      "Renderer default keeps the page format saved on the resume itself. Free-form resumes always stay continuous.",
-    latex: "Renderer default is US Letter for the LaTeX template.",
-    typst: "Renderer default is A4 for Typst themes.",
-  };
-
   return (
     <div className="space-y-4">
       {intro ? (
@@ -189,7 +183,7 @@ export const ReactiveResumeConfigPanel: React.FC<
 
       <div className="space-y-2">
         <label htmlFor="pdfRenderer" className="text-sm font-medium">
-          PDF renderer
+          {t("rxresume.pdfRenderer")}
         </label>
         <Select
           value={pdfRenderer}
@@ -197,12 +191,12 @@ export const ReactiveResumeConfigPanel: React.FC<
           disabled={disabled}
         >
           <SelectTrigger id="pdfRenderer">
-            <SelectValue placeholder="Choose PDF renderer" />
+            <SelectValue placeholder={t("rxresume.pdfRendererPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             {PDF_RENDERER_VALUES.map((value) => (
               <SelectItem key={value} value={value}>
-                {PDF_RENDERER_LABELS[value]}
+                {t(`rxresume.renderers.${value}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -211,14 +205,14 @@ export const ReactiveResumeConfigPanel: React.FC<
           <p className="text-xs text-destructive">{pdfRendererError}</p>
         ) : null}
         <p className="text-xs text-muted-foreground">
-          {rendererHelperText[pdfRenderer]}
+          {t(`rxresume.rendererHelp.${pdfRenderer}`)}
         </p>
       </div>
 
       {pdfRenderer === "typst" ? (
         <div className="space-y-2">
           <label htmlFor="typstTheme" className="text-sm font-medium">
-            Typst theme
+            {t("rxresume.typstTheme")}
           </label>
           <Select
             value={typstTheme}
@@ -226,12 +220,12 @@ export const ReactiveResumeConfigPanel: React.FC<
             disabled={disabled}
           >
             <SelectTrigger id="typstTheme">
-              <SelectValue placeholder="Choose Typst theme" />
+              <SelectValue placeholder={t("rxresume.typstThemePlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {TYPST_THEME_VALUES.map((value) => (
                 <SelectItem key={value} value={value}>
-                  {TYPST_THEME_LABELS[value]}
+                  {typstThemeLabel(value)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -240,15 +234,14 @@ export const ReactiveResumeConfigPanel: React.FC<
             <p className="text-xs text-destructive">{typstThemeError}</p>
           ) : null}
           <p className="text-xs text-muted-foreground">
-            Classic mirrors the current resume density; Compact fits more
-            content on the page.
+            {t("rxresume.typstThemeHelp")}
           </p>
         </div>
       ) : null}
 
       <div className="space-y-2">
         <label htmlFor="pdfPaperSize" className="text-sm font-medium">
-          Paper size
+          {t("rxresume.paperSize")}
         </label>
         <Select
           value={pdfPaperSize}
@@ -256,12 +249,12 @@ export const ReactiveResumeConfigPanel: React.FC<
           disabled={disabled}
         >
           <SelectTrigger id="pdfPaperSize">
-            <SelectValue placeholder="Choose paper size" />
+            <SelectValue placeholder={t("rxresume.paperSizePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             {PDF_PAPER_SIZE_VALUES.map((value) => (
               <SelectItem key={value} value={value}>
-                {PDF_PAPER_SIZE_LABELS[value]}
+                {t(`rxresume.paperSizes.${value}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -270,13 +263,17 @@ export const ReactiveResumeConfigPanel: React.FC<
           <p className="text-xs text-destructive">{pdfPaperSizeError}</p>
         ) : null}
         <p className="text-xs text-muted-foreground">
-          {rendererDefaultPaperSizeText[pdfRenderer]}
+          {t(`rxresume.paperDefaultHelp.${pdfRenderer}`)}
         </p>
       </div>
 
       {showValidationStatus && selectedValidationStatus ? (
         <div className="flex flex-wrap items-center gap-2 text-xs w-full justify-between">
-          {renderStatusPill("v5 status", selectedValidationStatus)}
+          {renderStatusPill(
+            t("rxresume.v5Status"),
+            selectedValidationStatus,
+            t,
+          )}
         </div>
       ) : null}
 
@@ -290,8 +287,9 @@ export const ReactiveResumeConfigPanel: React.FC<
             <AlertCircle className="h-4 w-4" />
           )}
           <AlertTitle>
-            Reactive Resume API{" "}
-            {selectedValidationIsWarning ? "warning" : "error"}
+            {selectedValidationIsWarning
+              ? t("rxresume.apiWarning")
+              : t("rxresume.apiError")}
           </AlertTitle>
           <AlertDescription>
             {selectedValidationStatus.message}
@@ -302,7 +300,7 @@ export const ReactiveResumeConfigPanel: React.FC<
       {
         <div className="grid gap-4">
           <SettingsInput
-            label="RxResume URL"
+            label={t("rxresume.urlLabel")}
             inputProps={{
               name: "rxresumeUrl",
               value: shared.baseUrl,
@@ -313,22 +311,19 @@ export const ReactiveResumeConfigPanel: React.FC<
             placeholder={
               shared.baseUrlPlaceholder ?? "https://resume.example.com"
             }
-            helper={
-              shared.baseUrlHelper ??
-              "Leave blank to use the default for the selected mode (or the RXRESUME_URL environment override, if set)."
-            }
+            helper={shared.baseUrlHelper ?? t("rxresume.urlHelper")}
             disabled={disabled}
             error={shared.baseUrlError}
           />
           <SettingsInput
-            label="v5 API key"
+            label={t("rxresume.apiKeyLabel")}
             inputProps={{
               name: "rxresumeApiKey",
               value: v5.apiKey,
               onChange: (event) => v5.onApiKeyChange(event.currentTarget.value),
             }}
             type="password"
-            placeholder={v5.placeholder ?? "Enter v5 API key"}
+            placeholder={v5.placeholder ?? t("rxresume.apiKeyPlaceholder")}
             helper={v5.helper}
             disabled={disabled}
             error={v5.error}
@@ -342,8 +337,7 @@ export const ReactiveResumeConfigPanel: React.FC<
 
           {!canShowProjectSelection ? (
             <div className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-              No resume projects were found. Add projects to your active resume
-              to configure automatic project selection.
+              {t("rxresume.noProjects")}
             </div>
           ) : (
             <div className="space-y-4">
@@ -358,24 +352,23 @@ export const ReactiveResumeConfigPanel: React.FC<
 
               {projectSelection.isProjectsLoading ? (
                 <div className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                  Loading resume projects...
+                  {t("rxresume.loadingProjects")}
                 </div>
               ) : hasRxResumeAccess &&
                 !projectSelection.baseResumeId &&
                 !hasProjectCatalog ? (
                 <div className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                  Choose a PDF to configure resume projects.
+                  {t("rxresume.choosePdf")}
                 </div>
               ) : !hasProjectCatalog ? (
                 <div className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                  No resume projects were found. Add projects to your active
-                  resume to configure automatic project selection.
+                  {t("rxresume.noProjects")}
                 </div>
               ) : (
                 <>
                   <div className="space-y-2">
                     <div className="text-sm font-medium">
-                      Max projects to choose
+                      {t("rxresume.maxProjects")}
                     </div>
                     <Input
                       type="number"
@@ -413,16 +406,16 @@ export const ReactiveResumeConfigPanel: React.FC<
                     <TableHeader>
                       <TableRow>
                         <TableHead className="text-xs whitespace-wrap sm:whitespace-nowrap">
-                          Project
+                          {t("rxresume.project")}
                         </TableHead>
                         <TableHead className="text-xs whitespace-wrap sm:whitespace-nowrap">
-                          Visible in template
+                          {t("rxresume.visibleInTemplate")}
                         </TableHead>
                         <TableHead className="text-xs whitespace-wrap sm:whitespace-nowrap">
-                          Must include
+                          {t("rxresume.mustInclude")}
                         </TableHead>
                         <TableHead className="text-xs whitespace-wrap sm:whitespace-nowrap">
-                          AI can select
+                          {t("rxresume.aiCanSelect")}
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -453,7 +446,9 @@ export const ReactiveResumeConfigPanel: React.FC<
                               </div>
                             </TableCell>
                             <TableCell>
-                              {project.isVisibleInBase ? "Yes" : "No"}
+                              {project.isVisibleInBase
+                                ? t("shared.yes")
+                                : t("shared.no")}
                             </TableCell>
                             <TableCell>
                               <Checkbox

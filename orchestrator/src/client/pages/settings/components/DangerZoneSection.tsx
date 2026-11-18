@@ -1,13 +1,11 @@
 import { SettingsSectionFrame } from "@client/pages/settings/components/SettingsSectionFrame";
-import {
-  ALL_JOB_STATUSES,
-  STATUS_DESCRIPTIONS,
-} from "@client/pages/settings/constants";
+import { ALL_JOB_STATUSES } from "@client/pages/settings/constants";
 import type { JobStatus } from "@shared/types";
 import { AlertTriangle, Trash2 } from "lucide-react";
 
 import type React from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   AlertDialog,
@@ -45,6 +43,8 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
   isSaving,
   layoutMode,
 }) => {
+  const { t } = useTranslation(["settings", "common"]);
+  const statusName = (status: JobStatus) => t(`danger.statusNames.${status}`);
   const [scoreThreshold, setScoreThreshold] = useState<string>("");
   const parsedThreshold = parseInt(scoreThreshold, 10);
   const isValidThreshold =
@@ -59,7 +59,7 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
         <div className="flex items-center gap-2 text-destructive">
           <AlertTriangle className="h-4 w-4" />
           <span className="text-base font-semibold tracking-wider">
-            Danger Zone
+            {t("danger.title")}
           </span>
         </div>
       }
@@ -69,10 +69,10 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
         <div className="p-3 rounded-md space-y-4">
           <div className="space-y-0.5">
             <div className="text-sm font-semibold text-destructive">
-              Clear Jobs by Status
+              {t("danger.byStatusTitle")}
             </div>
             <div className="text-xs text-muted-foreground">
-              Select which job statuses you want to clear.
+              {t("danger.byStatusHelp")}
             </div>
           </div>
 
@@ -104,10 +104,10 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
                   </div>
                   <div className="grid gap-0.5">
                     <span className="text-sm font-medium capitalize">
-                      {status}
+                      {statusName(status)}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {STATUS_DESCRIPTIONS[status]}
+                      {t(`danger.statusDescriptions.${status}`)}
                     </span>
                   </div>
                 </button>
@@ -123,25 +123,35 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
                 disabled={isLoading || isSaving || statusesToClear.length === 0}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Clear Selected ({statusesToClear.length})
+                {t("danger.clearSelected", {
+                  number: statusesToClear.length,
+                })}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Clear jobs by status?</AlertDialogTitle>
+                <AlertDialogTitle>
+                  {t("danger.byStatusConfirmTitle")}
+                </AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will delete all jobs with the following statuses:{" "}
-                  {statusesToClear.join(", ")}. This action cannot be undone.
+                  {t("danger.byStatusConfirmDescription", {
+                    statuses: statusesToClear
+                      .map(statusName)
+                      .join(t("shared.listSeparator")),
+                  })}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>
+                  {t("common:actions.cancel")}
+                </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleClearByStatuses}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  Clear {statusesToClear.length} status
-                  {statusesToClear.length !== 1 ? "es" : ""}
+                  {t("danger.clearStatuses", {
+                    count: statusesToClear.length,
+                  })}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -155,11 +165,10 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
           <div className="p-3 rounded-md space-y-4">
             <div className="space-y-0.5">
               <div className="text-sm font-semibold text-destructive">
-                Clear Jobs Below Score
+                {t("danger.byScoreTitle")}
               </div>
               <div className="text-xs text-muted-foreground">
-                Remove all jobs with a suitability score below the specified
-                threshold. Applied jobs will not be deleted.
+                {t("danger.byScoreHelp")}
               </div>
             </div>
 
@@ -169,7 +178,7 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
                   htmlFor="score-threshold"
                   className="text-sm font-medium mb-1.5 block"
                 >
-                  Score Threshold (0-100)
+                  {t("danger.thresholdLabel")}
                 </label>
                 <Input
                   id="score-threshold"
@@ -178,7 +187,7 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
                   min={0}
                   max={100}
                   step={1}
-                  placeholder="Enter score threshold"
+                  placeholder={t("danger.thresholdPlaceholder")}
                   value={scoreThreshold}
                   onChange={(e) => setScoreThreshold(e.target.value)}
                   disabled={isLoading || isSaving}
@@ -193,22 +202,28 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
                     disabled={isLoading || isSaving || !isValidThreshold}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Clear Below {isValidThreshold ? parsedThreshold : "..."}
+                    {t("danger.clearBelow", {
+                      threshold: isValidThreshold ? parsedThreshold : "...",
+                    })}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Clear jobs below score {parsedThreshold}?
+                      {t("danger.byScoreConfirmTitle", {
+                        threshold: parsedThreshold,
+                      })}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete all jobs with a suitability
-                      score below {parsedThreshold}. Applied jobs will be
-                      preserved. This action cannot be undone.
+                      {t("danger.byScoreConfirmDescription", {
+                        threshold: parsedThreshold,
+                      })}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>
+                      {t("common:actions.cancel")}
+                    </AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
                         if (isValidThreshold) {
@@ -218,7 +233,7 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
                       }}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      Clear jobs
+                      {t("danger.clearJobs")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -234,10 +249,10 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-3 rounded-md">
               <div className="space-y-0.5">
                 <div className="text-sm font-semibold text-destructive">
-                  Clear Entire Database
+                  {t("danger.databaseTitle")}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Delete all jobs and pipeline runs from the database.
+                  {t("danger.databaseHelp")}
                 </div>
               </div>
               <AlertDialog>
@@ -248,24 +263,27 @@ export const DangerZoneSection: React.FC<DangerZoneSectionProps> = ({
                     disabled={isLoading || isSaving}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Clear Database
+                    {t("danger.clearDatabaseButton")}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Clear all jobs?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      {t("danger.databaseConfirmTitle")}
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This deletes all jobs and pipeline runs from the database.
-                      This action cannot be undone.
+                      {t("danger.databaseConfirmDescription")}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>
+                      {t("common:actions.cancel")}
+                    </AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleClearDatabase}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      Clear database
+                      {t("danger.clearDatabaseConfirm")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

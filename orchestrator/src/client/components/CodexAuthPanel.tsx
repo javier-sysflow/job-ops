@@ -2,6 +2,7 @@ import * as api from "@client/api";
 import { CheckCircle2, Copy, ExternalLink, Loader2 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -118,6 +119,7 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
   isBusy,
   onStatusChange,
 }) => {
+  const { t } = useTranslation(["settings", "common"]);
   const [codexAuthStatus, setCodexAuthStatus] =
     useState<CodexAuthStatus | null>(null);
   const [isLoadingCodexAuthStatus, setIsLoadingCodexAuthStatus] =
@@ -171,7 +173,7 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
           publishCodexAuthStatus(status);
         } catch (error) {
           setCodexAuthError(
-            getErrorMessage(error, "Failed to load Codex sign-in status."),
+            getErrorMessage(error, t("codex.loadStatusFailed")),
           );
         }
         return;
@@ -179,11 +181,11 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
 
       await runCodexAuthAction(
         authApi.getStatus,
-        "Failed to load Codex sign-in status.",
+        t("codex.loadStatusFailed"),
         setIsLoadingCodexAuthStatus,
       );
     },
-    [authApi, publishCodexAuthStatus, runCodexAuthAction],
+    [authApi, publishCodexAuthStatus, runCodexAuthAction, t],
   );
 
   const startCodexAuth = useCallback(
@@ -191,18 +193,18 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
       setHasCopiedCode(false);
       await runCodexAuthAction(
         () => authApi.start({ forceRestart }),
-        "Failed to start Codex sign-in.",
+        t("codex.startFailed"),
         setIsStartingCodexAuth,
       );
     },
-    [authApi, runCodexAuthAction],
+    [authApi, runCodexAuthAction, t],
   );
 
   const copyCode = useCallback(async () => {
     const code = codexAuthStatus?.userCode;
     if (!code) return;
     if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
-      setCodexAuthError("Copy is not available in this browser.");
+      setCodexAuthError(t("codex.copyUnavailable"));
       return;
     }
 
@@ -212,18 +214,18 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
       setHasCopiedCode(true);
       window.setTimeout(() => setHasCopiedCode(false), COPY_FEEDBACK_MS);
     } catch (error) {
-      setCodexAuthError(getErrorMessage(error, "Failed to copy code."));
+      setCodexAuthError(getErrorMessage(error, t("codex.copyFailed")));
     }
-  }, [codexAuthStatus?.userCode]);
+  }, [codexAuthStatus?.userCode, t]);
 
   const disconnectCodex = useCallback(async () => {
     setHasCopiedCode(false);
     await runCodexAuthAction(
       authApi.disconnect,
-      "Failed to disconnect Codex.",
+      t("codex.disconnectFailed"),
       setIsDisconnectingCodexAuth,
     );
-  }, [authApi, runCodexAuthAction]);
+  }, [authApi, runCodexAuthAction, t]);
 
   useEffect(() => {
     void refreshCodexAuthStatus();
@@ -282,21 +284,32 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
     return (
       <CodexAuthPanelShell>
         <div className="flex items-center justify-between gap-2">
-          <div className="text-xs font-medium">Codex Sign-In</div>
+          <div className="text-xs font-medium">{t("codex.title")}</div>
           <Badge
             className="gap-1 border-emerald-700 bg-emerald-700 text-white dark:border-emerald-300 dark:bg-emerald-300 dark:text-emerald-950"
             variant="outline"
           >
             <CheckCircle2 className="h-3.5 w-3.5" />
-            Authenticated
+            {t("codex.authenticated")}
           </Badge>
         </div>
 
         <div className="flex items-center justify-between gap-3 rounded-md border border-emerald-300/60 bg-emerald-500/10 px-3 py-2">
           <p className="text-sm text-foreground">
-            <span className="font-medium">Connected</span>
-            {displayUsername ? ` as ${displayUsername}` : ""}. Existing Codex
-            credentials were found in this runtime.
+            {displayUsername ? (
+              <Trans
+                t={t}
+                i18nKey="codex.connectedAs"
+                values={{ username: displayUsername }}
+                components={{ strong: <span className="font-medium" /> }}
+              />
+            ) : (
+              <Trans
+                t={t}
+                i18nKey="codex.connected"
+                components={{ strong: <span className="font-medium" /> }}
+              />
+            )}
           </p>
           <button
             type="button"
@@ -304,7 +317,9 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
             onClick={() => void disconnectCodex()}
             disabled={isBusy || isDisconnectingCodexAuth}
           >
-            {isDisconnectingCodexAuth ? "Disconnecting..." : "Disconnect"}
+            {isDisconnectingCodexAuth
+              ? t("codex.disconnecting")
+              : t("codex.disconnect")}
           </button>
         </div>
 
@@ -316,43 +331,48 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
   return (
     <CodexAuthPanelShell>
       <div className="flex items-center justify-between gap-2">
-        <div className="text-xs font-medium">Codex Sign-In</div>
+        <div className="text-xs font-medium">{t("codex.title")}</div>
         {isWaitingForApproval ? (
           <div className="inline-flex items-center gap-1 text-xs text-amber-700">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Waiting for approval
+            {t("codex.waiting")}
           </div>
         ) : null}
       </div>
 
       <div className="rounded-md border border-border bg-card px-3 py-2 font-bold text-muted-foreground">
-        Start sign-in to generate a one-time code. After approval in your
-        browser, click{" "}
-        <span className="font-medium text-foreground">Check Status</span>.{" "}
-        <a
-          href="https://developers.openai.com/codex/auth#preferred-device-code-authentication-beta"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn more
-        </a>
+        <Trans
+          t={t}
+          i18nKey="codex.intro"
+          components={{
+            strong: <span className="font-medium text-foreground" />,
+            anchor: (
+              // biome-ignore lint/a11y/useAnchorContent: Trans injects the link text.
+              <a
+                href="https://developers.openai.com/codex/auth#preferred-device-code-authentication-beta"
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            ),
+          }}
+        />
       </div>
 
       <div className="space-y-1 text-xs text-muted-foreground">
         <StepRow
           isComplete={hasActiveDevicePayload}
-          label="Start sign-in"
+          label={t("codex.stepStart")}
           step={1}
         />
         <StepRow
           isComplete={hasCopiedCode}
-          label="Copy code and open verification page"
+          label={t("codex.stepCopy")}
           step={2}
         />
         <StepRow
           isComplete={false}
           isLoading={isWaitingForApproval}
-          label="Approve and return to JobOps"
+          label={t("codex.stepApprove")}
           step={3}
         />
       </div>
@@ -360,7 +380,7 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
       {hasActiveDevicePayload ? (
         <div className="space-y-2 rounded-lg border border-border bg-card p-3">
           <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">
-            One-time code
+            {t("codex.oneTimeCode")}
           </div>
           <div className="text-center font-mono text-2xl font-semibold tracking-widest text-foreground">
             {codexAuthStatus?.userCode}
@@ -374,7 +394,7 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
               disabled={isBusy}
             >
               <Copy className="h-3.5 w-3.5" />
-              {hasCopiedCode ? "Copied" : "Copy code"}
+              {hasCopiedCode ? t("common:actions.copied") : t("codex.copyCode")}
             </Button>
             <Button type="button" size="sm" variant="outline" asChild>
               <a
@@ -383,13 +403,13 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
                 rel="noopener noreferrer"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                Open verification page
+                {t("codex.openVerification")}
               </a>
             </Button>
           </div>
           {showExpiryCountdown ? (
             <div className="text-center text-[11px] text-amber-700">
-              Code expires in {formatRemaining(remainingMs)}
+              {t("codex.expiresIn", { time: formatRemaining(remainingMs) })}
             </div>
           ) : null}
         </div>
@@ -404,7 +424,9 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
               onClick={() => void refreshCodexAuthStatus()}
               disabled={isBusy || isLoadingCodexAuthStatus}
             >
-              {isLoadingCodexAuthStatus ? "Checking..." : "Check Status"}
+              {isLoadingCodexAuthStatus
+                ? t("codex.checking")
+                : t("codex.checkStatus")}
             </Button>
             <Button
               type="button"
@@ -413,7 +435,7 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
               onClick={() => void startCodexAuth(true)}
               disabled={isBusy || isStartingCodexAuth}
             >
-              {isStartingCodexAuth ? "Starting..." : "Start New Sign-In"}
+              {isStartingCodexAuth ? t("codex.starting") : t("codex.startNew")}
             </Button>
           </>
         ) : (
@@ -423,7 +445,7 @@ export const CodexAuthPanel: React.FC<CodexAuthPanelProps> = ({
             onClick={() => void startCodexAuth()}
             disabled={isBusy || isStartingCodexAuth}
           >
-            {isStartingCodexAuth ? "Starting..." : "Start Sign-In"}
+            {isStartingCodexAuth ? t("codex.starting") : t("codex.start")}
           </Button>
         )}
       </div>

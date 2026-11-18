@@ -1,5 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import type React from "react";
+import { Trans, useTranslation } from "react-i18next";
 
 const AUTH_DOC = "https://code.claude.com/docs/en/authentication";
 
@@ -8,30 +9,30 @@ const AUTH_DOC = "https://code.claude.com/docs/en/authentication";
  * key), which JobOps uses when LLM_PROVIDER is `claude_cli`.
  */
 export const ClaudeCliSetupHint: React.FC = () => {
+  const { t } = useTranslation("settings");
+  const code = <code className="rounded bg-muted px-1 py-0.5" />;
   return (
     <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-      <p className="font-medium text-foreground">Claude CLI on this machine</p>
+      <p className="font-medium text-foreground">
+        {t("cliHints.claude.title")}
+      </p>
       <p className="mt-2">
-        Install{" "}
-        <a
-          className="text-foreground underline decoration-border underline-offset-4"
-          href="https://www.npmjs.com/package/@anthropic-ai/claude-code"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          @anthropic-ai/claude-code
-        </a>
-        , then run{" "}
-        <code className="rounded bg-muted px-1 py-0.5">claude setup-token</code>{" "}
-        in a terminal (requires a Claude Pro, Max, Team, or Enterprise
-        subscription) and set the printed value as{" "}
-        <code className="rounded bg-muted px-1 py-0.5">
-          CLAUDE_CODE_OAUTH_TOKEN
-        </code>
-        , or set{" "}
-        <code className="rounded bg-muted px-1 py-0.5">ANTHROPIC_API_KEY</code>{" "}
-        instead. JobOps spawns the CLI in headless mode and reuses that
-        authentication — no JobOps API key field.
+        <Trans
+          t={t}
+          i18nKey="cliHints.claude.setup"
+          components={{
+            npm: (
+              // biome-ignore lint/a11y/useAnchorContent: Trans injects the link text.
+              <a
+                className="text-foreground underline decoration-border underline-offset-4"
+                href="https://www.npmjs.com/package/@anthropic-ai/claude-code"
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            ),
+            code,
+          }}
+        />
       </p>
       <p className="mt-2">
         <a
@@ -40,19 +41,10 @@ export const ClaudeCliSetupHint: React.FC = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Authentication guide
+          {t("cliHints.authGuide")}
           <ExternalLink className="size-3.5 shrink-0 opacity-70" aria-hidden />
         </a>
-        . In Docker, set{" "}
-        <code className="rounded bg-muted px-1 py-0.5">
-          CLAUDE_CODE_OAUTH_TOKEN
-        </code>{" "}
-        (or{" "}
-        <code className="rounded bg-muted px-1 py-0.5">ANTHROPIC_API_KEY</code>)
-        in your <code className="rounded bg-muted px-1 py-0.5">.env</code> file
-        — no credential file mount is needed. Optional:{" "}
-        <code className="rounded bg-muted px-1 py-0.5">CLAUDE_CLI_BIN</code> to
-        override the binary path.
+        <Trans t={t} i18nKey="cliHints.claude.docker" components={{ code }} />
       </p>
     </div>
   );

@@ -9,11 +9,12 @@ import type {
   LlmPurposeOverrides,
 } from "@shared/types";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SettingsInput } from "@/client/pages/settings/components/SettingsInput";
 import {
   formatSecretHint,
   getLlmProviderConfig,
-  LLM_PROVIDER_LABELS,
+  getLlmProviderLabel,
   LLM_PROVIDERS,
   normalizeLlmProvider,
   supportsLlmModelSuggestions,
@@ -62,6 +63,7 @@ export default function PurposeOverrideCard({
   ) => void;
   onApiKeyChange: (purpose: LlmPurpose, value: string) => void;
 }) {
+  const { t } = useTranslation("settings");
   const selectedProvider = value?.provider
     ? normalizeLlmProvider(value.provider)
     : defaultProvider;
@@ -92,11 +94,11 @@ export default function PurposeOverrideCard({
   const keyHint = apiKeyHint
     ? formatSecretHint(apiKeyHint)
     : defaultApiKeyHint
-      ? `inherits ${formatSecretHint(defaultApiKeyHint)}`
-      : "Not set";
+      ? t("llm.inheritsValue", { value: formatSecretHint(defaultApiKeyHint) })
+      : t("shared.notSet");
   const modelOptions = buildModelOptions({
     models: availableModels,
-    emptyLabel: "Inherit purpose default",
+    emptyLabel: t("llm.inheritPurposeDefault"),
     emptyValue: "",
     fallbackValue: modelValue,
   });
@@ -139,7 +141,7 @@ export default function PurposeOverrideCard({
         if (cancelled) return;
         setAvailableModels([]);
         setModelsError(
-          error instanceof Error ? error.message : "Failed to load models.",
+          error instanceof Error ? error.message : t("llm.loadModelsFailed"),
         );
       })
       .finally(() => {
@@ -160,20 +162,21 @@ export default function PurposeOverrideCard({
     purpose,
     selectedProvider,
     supportsModelSuggestions,
+    t,
   ]);
 
   const modelHelper = supportsModelSuggestions
     ? isLoadingModels
-      ? "Loading available models..."
+      ? t("llm.modelHelper.loading")
       : modelsError
         ? modelsError
-        : "Leave blank to inherit the purpose default."
-    : `Type the exact model name, or leave blank to use the default from ${providerConfig.label}.`;
+        : t("llm.purposeModelHelperDefault")
+    : t("llm.purposeModelHelperManual", { provider: providerConfig.label });
 
   return (
     <div className="space-y-2">
       <label htmlFor={`${purpose}-provider`} className="text-sm font-medium">
-        Provider
+        {t("llm.provider")}
       </label>
       <Select
         value={value?.provider ?? "__inherit__"}
@@ -189,23 +192,23 @@ export default function PurposeOverrideCard({
         disabled={disabled}
       >
         <SelectTrigger id={`${purpose}-provider`} className="h-9">
-          <SelectValue placeholder="Inherit default" />
+          <SelectValue placeholder={t("llm.inheritDefault")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__inherit__">Inherit default</SelectItem>
+          <SelectItem value="__inherit__">{t("llm.inheritDefault")}</SelectItem>
           {LLM_PROVIDERS.map((provider) => (
             <SelectItem key={provider} value={provider}>
-              {LLM_PROVIDER_LABELS[provider]}
+              {getLlmProviderLabel(provider)}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
       <div className="text-xs text-muted-foreground">
-        Current:{" "}
+        {t("shared.current")}{" "}
         <span className="font-mono">
           {hasProviderOverride
             ? selectedProvider
-            : `inherits ${defaultProvider}`}
+            : t("llm.inheritsValue", { value: defaultProvider })}
         </span>
       </div>
 
@@ -221,7 +224,7 @@ export default function PurposeOverrideCard({
 
       {hasProviderOverride && providerConfig.showBaseUrl ? (
         <SettingsInput
-          label="Base URL"
+          label={t("llm.baseUrl")}
           inputProps={{
             name: `${purpose}.baseUrl`,
             value: baseUrlValue,
@@ -238,7 +241,9 @@ export default function PurposeOverrideCard({
       {hasProviderOverride && providerConfig.showApiKey ? (
         <SettingsInput
           label={
-            providerConfig.requiresApiKey ? "API key" : "API key (optional)"
+            providerConfig.requiresApiKey
+              ? t("llm.apiKey")
+              : t("llm.apiKeyOptional")
           }
           inputProps={{
             name: `${purpose}.apiKey`,
@@ -248,8 +253,8 @@ export default function PurposeOverrideCard({
           type="password"
           placeholder={
             providerConfig.requiresApiKey
-              ? "Paste a purpose key"
-              : "Optional bearer token"
+              ? t("llm.pastePurposeKey")
+              : t("llm.optionalBearer")
           }
           disabled={disabled}
           helper={renderKeyHelper(
@@ -263,12 +268,12 @@ export default function PurposeOverrideCard({
 
       <ModelField
         id={`${purpose}-model`}
-        label="Model"
+        label={t("llm.model")}
         value={modelValue}
         onChange={(nextValue) => onChange(purpose, "model", nextValue)}
         supportsModelSuggestions={supportsModelSuggestions}
         options={modelOptions}
-        placeholder={purposeProviderDefaultModel || "Inherit model"}
+        placeholder={purposeProviderDefaultModel || t("llm.inheritModel")}
         helper={modelHelper}
         current={currentModel}
         disabled={disabled || isLoadingModels}

@@ -2,6 +2,7 @@
  * Settings page helpers.
  */
 
+import i18n from "@client/i18n";
 import { mapGlmProviderAlias } from "@shared/settings-registry";
 import type { ResumeProjectsSettings } from "@shared/types";
 import { arraysEqual } from "@/lib/utils";
@@ -18,7 +19,7 @@ export function resumeProjectsEqual(
 }
 
 export const formatSecretHint = (hint: string | null) =>
-  hint ? `${hint}********` : "Not set";
+  hint ? `${hint}********` : i18n.t("settings:shared.notSet");
 
 export const LLM_PROVIDERS = [
   "atlascloud",
@@ -74,6 +75,13 @@ export const LLM_PROVIDER_LABELS: Record<LlmProviderId, string> = {
   codex: "Codex",
 };
 
+/** Provider name for the UI; only the generic "OpenAI-compatible" is translated. */
+export function getLlmProviderLabel(provider: LlmProviderId): string {
+  return provider === "openai_compatible"
+    ? i18n.t("settings:llm.providers.openaiCompatible")
+    : LLM_PROVIDER_LABELS[provider];
+}
+
 const PROVIDERS_WITH_API_KEY = new Set<LlmProviderId>([
   "atlascloud",
   "openrouter",
@@ -100,95 +108,19 @@ const PROVIDERS_WITH_BASE_URL = new Set<LlmProviderId>([
   "glm",
 ]);
 
-const PROVIDER_HINTS: Record<LlmProviderId, string> = {
-  atlascloud:
-    "Atlas Cloud provides OpenAI-compatible access to hosted text models with one API key.",
-  litellm:
-    "LiteLLM is a self-hosted AI gateway: one endpoint for 100+ providers (OpenAI, Anthropic, Gemini, Bedrock, Azure, Vertex AI, Ollama) with virtual keys, budgets and fallbacks.",
-  openrouter:
-    "OpenRouter uses your API key and supports model routing across providers.",
-  orcarouter:
-    "OrcaRouter uses your API key and routes requests across providers through an OpenAI-compatible endpoint with adaptive routing and guardrails.",
-  requesty:
-    "Requesty uses your API key and routes requests across providers through an OpenAI-compatible endpoint.",
-  api_route:
-    "API Route uses your API key with an OpenAI-compatible endpoint. Select an exact model ID available to your key.",
-  lmstudio: "LM Studio runs locally via its OpenAI-compatible server.",
-  ollama:
-    "Ollama typically runs locally. Add an API key only for Ollama-compatible endpoints protected by bearer auth.",
-  openai: "OpenAI uses the Responses API with structured outputs.",
-  anthropic:
-    "Claude uses Anthropic's native Messages API with your Anthropic API key.",
-  openai_compatible:
-    "Use a bearer token with any chat-completions-compatible endpoint.",
-  glm: "GLM uses the Z.AI chat completions API (OpenAI-compatible) with your API key.",
-  gemini: "Gemini uses the native AI Studio API and requires a key.",
-  gemini_cli:
-    "Gemini (CLI) runs the official Google Gemini CLI on this host using your OAuth session or CLI API key — no JobOps LLM key.",
-  claude_cli:
-    "Claude (CLI) runs the official Claude Code CLI on this host using your subscription token or API key — no JobOps LLM key.",
-  codex:
-    "Codex runs through a local app-server process and uses your Codex login session.",
-};
-
-const PROVIDER_KEY_HELPERS: Record<
-  LlmProviderId,
-  { text: string; href?: string }
-> = {
-  atlascloud: {
-    text: "Create a key at atlascloud.ai",
-    href: "https://www.atlascloud.ai/console/api-keys",
-  },
-  litellm: {
-    text: "Optional virtual key issued by your LiteLLM proxy",
-    href: "https://docs.litellm.ai/docs/proxy/virtual_keys",
-  },
-  openrouter: {
-    text: "Create a key at openrouter.ai",
-    href: "https://openrouter.ai/keys",
-  },
-  orcarouter: {
-    text: "Create a key at orcarouter.ai/console",
-    href: "https://www.orcarouter.ai/console",
-  },
-  requesty: {
-    text: "Create a key at app.requesty.ai/api-keys",
-    href: "https://app.requesty.ai/api-keys",
-  },
-  api_route: {
-    text: "Create a key at api-route.com/api-keys",
-    href: "https://www.api-route.com/api-keys",
-  },
-  lmstudio: { text: "No API key required for LM Studio" },
-  ollama: {
-    text: "Optional bearer token for Ollama-compatible endpoints that require auth",
-  },
-  openai: {
-    text: "Create a key at platform.openai.com",
-    href: "https://platform.openai.com/api-keys",
-  },
-  anthropic: {
-    text: "Create a key at platform.claude.com",
-    href: "https://platform.claude.com/settings/keys",
-  },
-  openai_compatible: {
-    text: "Use the bearer token issued by your compatible provider",
-  },
-  glm: {
-    text: "Create a key at z.ai",
-    href: "https://z.ai/manage-apikey/apikey-list",
-  },
-  gemini: {
-    text: "Create a key at aistudio.google.com/api-keys",
-    href: "https://aistudio.google.com/app/apikey",
-  },
-  gemini_cli: {
-    text: "Authenticate with the Gemini CLI (gemini login / OAuth); see docs link below",
-  },
-  claude_cli: {
-    text: "Authenticate with the Claude CLI (claude setup-token); see docs link below",
-  },
-  codex: { text: "No API key required when Codex is authenticated locally" },
+// Provider hints and API-key helper texts are translated through
+// settings:llm.providerHints.<provider> and settings:llm.keyHelpers.<provider>.
+const PROVIDER_KEY_HELPER_HREFS: Partial<Record<LlmProviderId, string>> = {
+  atlascloud: "https://www.atlascloud.ai/console/api-keys",
+  litellm: "https://docs.litellm.ai/docs/proxy/virtual_keys",
+  openrouter: "https://openrouter.ai/keys",
+  orcarouter: "https://www.orcarouter.ai/console",
+  requesty: "https://app.requesty.ai/api-keys",
+  api_route: "https://www.api-route.com/api-keys",
+  openai: "https://platform.openai.com/api-keys",
+  anthropic: "https://platform.claude.com/settings/keys",
+  glm: "https://z.ai/manage-apikey/apikey-list",
+  gemini: "https://aistudio.google.com/app/apikey",
 };
 
 const BASE_URL_PROVIDERS = [
@@ -242,26 +174,29 @@ export function getLlmProviderConfig(provider: string | null | undefined) {
     : "";
   const baseUrlHelper = showBaseUrl
     ? normalizedProvider === "openai_compatible"
-      ? "Enter a base URL or a full /v1/chat/completions endpoint."
+      ? i18n.t("settings:llm.baseUrlHelpers.openaiCompatible")
       : normalizedProvider === "litellm"
-        ? "Default: http://localhost:4000. From Docker Desktop, use http://host.docker.internal:4000, or the proxy service name when both run in one Compose project."
+        ? i18n.t("settings:llm.baseUrlHelpers.litellm")
         : normalizedProvider === "ollama"
-          ? "Default: http://localhost:11434. From Docker Desktop, use http://host.docker.internal:11434. On Linux Docker, use a container-reachable host gateway such as http://172.17.0.1:11434."
-          : `Default: ${baseUrlPlaceholder}`
+          ? i18n.t("settings:llm.baseUrlHelpers.ollama")
+          : i18n.t("settings:llm.baseUrlHelpers.default", {
+              url: baseUrlPlaceholder,
+            })
     : "";
-  const providerHint = PROVIDER_HINTS[normalizedProvider];
-  const keyHelper = PROVIDER_KEY_HELPERS[normalizedProvider];
+  const providerHint = i18n.t(
+    `settings:llm.providerHints.${normalizedProvider}`,
+  );
 
   return {
     normalizedProvider,
-    label: LLM_PROVIDER_LABELS[normalizedProvider],
+    label: getLlmProviderLabel(normalizedProvider),
     showApiKey,
     showBaseUrl,
     requiresApiKey,
     baseUrlPlaceholder,
     baseUrlHelper,
     providerHint,
-    keyHelperText: keyHelper.text,
-    keyHelperHref: keyHelper.href ?? null,
+    keyHelperText: i18n.t(`settings:llm.keyHelpers.${normalizedProvider}`),
+    keyHelperHref: PROVIDER_KEY_HELPER_HREFS[normalizedProvider] ?? null,
   };
 }

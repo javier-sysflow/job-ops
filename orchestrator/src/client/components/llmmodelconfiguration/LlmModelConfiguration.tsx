@@ -7,7 +7,7 @@ import { SettingsInput } from "@client/pages/settings/components/SettingsInput";
 import {
   formatSecretHint,
   getLlmProviderConfig,
-  LLM_PROVIDER_LABELS,
+  getLlmProviderLabel,
   LLM_PROVIDERS,
   type LlmProviderId,
   supportsLlmModelSuggestions,
@@ -20,6 +20,7 @@ import type {
 } from "@shared/types";
 import type React from "react";
 import { useDeferredValue, useEffect, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import {
   Accordion,
   AccordionContent,
@@ -103,6 +104,7 @@ export function LlmModelConfiguration({
   validationSlot,
   onCodexAuthStatusChange,
 }: LlmModelConfigurationProps) {
+  const { t } = useTranslation("settings");
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
@@ -172,7 +174,7 @@ export function LlmModelConfiguration({
         if (cancelled) return;
         setAvailableModels([]);
         setModelsError(
-          error instanceof Error ? error.message : "Failed to load models.",
+          error instanceof Error ? error.message : t("llm.loadModelsFailed"),
         );
       })
       .finally(() => {
@@ -191,6 +193,7 @@ export function LlmModelConfiguration({
     showApiKey,
     showBaseUrl,
     supportsModelSuggestions,
+    t,
   ]);
 
   const handleProviderChange = (value: string) => {
@@ -205,12 +208,12 @@ export function LlmModelConfiguration({
   const hasSavedKey = Boolean(apiKeyHint);
   const apiKeyLabel = providerConfig.requiresApiKey
     ? mode === "compact"
-      ? "API key"
-      : "LLM API key"
+      ? t("llm.apiKey")
+      : t("llm.llmApiKey")
     : mode === "compact"
-      ? "API key (optional)"
-      : "LLM API key (optional)";
-  const keyText = showApiKey ? formattedKeyHint : "Not required";
+      ? t("llm.apiKeyOptional")
+      : t("llm.llmApiKeyOptional");
+  const keyText = showApiKey ? formattedKeyHint : t("llm.notRequired");
   const resolvedBaseUrl = baseUrl.value.trim() || savedBaseUrl || "-";
   const selectedDefaultModel = model.value.trim();
   const previewDefaultModel =
@@ -225,58 +228,62 @@ export function LlmModelConfiguration({
     selectedProjectSelectionModel || previewDefaultModel;
   const modelHelper: React.ReactNode = supportsModelSuggestions ? (
     !hasAvailableApiKey ? (
-      `Add or save a ${providerConfig.label} API key to load available models.`
+      t("llm.modelHelper.addKey", { provider: providerConfig.label })
     ) : isLoadingModels ? (
-      "Loading available models..."
+      t("llm.modelHelper.loading")
     ) : modelsError ? (
       modelsError
     ) : availableModels.length > 0 ? (
-      "Choose from the available text-generation models."
+      t("llm.modelHelper.choose")
     ) : requiresExplicitDefaultModel ? (
-      "No Ollama models were returned. Pull a model in Ollama, then choose it here before continuing."
+      t("llm.modelHelper.noOllamaModels")
     ) : (
-      "No text-generation models were returned."
+      t("llm.modelHelper.noModels")
     )
   ) : isCodexProvider ? (
-    <>
-      Type the exact model name manually, or leave blank to use the{" "}
-      {providerConfig.label} default model.{" "}
-      <a
-        href="https://developers.openai.com/codex/models"
-        target="_blank"
-        rel="noreferrer"
-        className="text-foreground underline underline-offset-2"
-      >
-        find out what model name to use
-      </a>
-      .
-    </>
+    <Trans
+      t={t}
+      i18nKey="llm.modelHelper.codex"
+      values={{ provider: providerConfig.label }}
+      components={{
+        anchor: (
+          // biome-ignore lint/a11y/useAnchorContent: Trans injects the link text.
+          <a
+            href="https://developers.openai.com/codex/models"
+            target="_blank"
+            rel="noreferrer"
+            className="text-foreground underline underline-offset-2"
+          />
+        ),
+      }}
+    />
   ) : (
-    `Type the exact model name manually, or leave blank to use the ${providerConfig.label} default model.`
+    t("llm.modelHelper.manual", { provider: providerConfig.label })
   );
+  const inheritDefaultModelLabel = t("llm.inheritDefaultModel");
   const defaultModelOptions = buildModelOptions({
     models: availableModels,
     emptyLabel: requiresExplicitDefaultModel
-      ? `Select a ${providerConfig.label} model`
-      : `Use ${providerConfig.label} default`,
+      ? t("llm.selectProviderModel", { provider: providerConfig.label })
+      : t("llm.useProviderDefault", { provider: providerConfig.label }),
     emptyValue: "",
     fallbackValue: model.value.trim(),
   });
   const scoringModelOptions = buildModelOptions({
     models: availableModels,
-    emptyLabel: "Inherit default model",
+    emptyLabel: inheritDefaultModelLabel,
     emptyValue: "",
     fallbackValue: modelScorer?.value.trim(),
   });
   const tailoringModelOptions = buildModelOptions({
     models: availableModels,
-    emptyLabel: "Inherit default model",
+    emptyLabel: inheritDefaultModelLabel,
     emptyValue: "",
     fallbackValue: modelTailoring?.value.trim(),
   });
   const projectSelectionModelOptions = buildModelOptions({
     models: availableModels,
-    emptyLabel: "Inherit default model",
+    emptyLabel: inheritDefaultModelLabel,
     emptyValue: "",
     fallbackValue: modelProjectSelection?.value.trim(),
   });
@@ -294,12 +301,14 @@ export function LlmModelConfiguration({
       <div className={mode === "compact" ? "space-y-6" : "space-y-4"}>
         <div className="space-y-4">
           {mode === "settings" ? (
-            <div className="text-sm font-medium">LLM Provider</div>
+            <div className="text-sm font-medium">
+              {t("llm.llmProviderHeading")}
+            </div>
           ) : null}
           <div className={providerGridClass}>
             <div className="space-y-2">
               <label htmlFor="llmProvider" className="text-sm font-medium">
-                Provider
+                {t("llm.provider")}
               </label>
               <Select
                 value={selectedProvider}
@@ -310,12 +319,12 @@ export function LlmModelConfiguration({
                   id="llmProvider"
                   className={mode === "compact" ? "h-10" : undefined}
                 >
-                  <SelectValue placeholder="Select provider" />
+                  <SelectValue placeholder={t("llm.selectProvider")} />
                 </SelectTrigger>
                 <SelectContent>
                   {LLM_PROVIDERS.map((llmProvider) => (
                     <SelectItem key={llmProvider} value={llmProvider}>
-                      {LLM_PROVIDER_LABELS[llmProvider]}
+                      {getLlmProviderLabel(llmProvider)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -325,8 +334,7 @@ export function LlmModelConfiguration({
               ) : null}
               {mode === "settings" ? (
                 <p className="text-xs text-muted-foreground">
-                  Used for scoring, tailoring, ghostwriting, and email
-                  classification.
+                  {t("llm.providerUsage")}
                 </p>
               ) : null}
               <p className={providerHintClass}>{providerConfig.providerHint}</p>
@@ -341,7 +349,9 @@ export function LlmModelConfiguration({
             {isClaudeCliProvider ? <ClaudeCliSetupHint /> : null}
             {showBaseUrl ? (
               <SettingsInput
-                label={mode === "compact" ? "Base URL" : "LLM base URL"}
+                label={
+                  mode === "compact" ? t("llm.baseUrl") : t("llm.llmBaseUrl")
+                }
                 inputProps={{
                   name: "llmBaseUrl",
                   value: baseUrl.value,
@@ -366,9 +376,9 @@ export function LlmModelConfiguration({
                 placeholder={
                   providerConfig.requiresApiKey
                     ? mode === "compact"
-                      ? "Paste a new key"
-                      : "Enter new key"
-                    : "Optional bearer token"
+                      ? t("llm.pasteNewKey")
+                      : t("llm.enterNewKey")
+                    : t("llm.optionalBearer")
                 }
                 disabled={disabled}
                 error={apiKey.error}
@@ -381,7 +391,7 @@ export function LlmModelConfiguration({
               />
             ) : mode === "compact" && !isCodexProvider ? (
               <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
-                No API key is required for this provider.
+                {t("llm.noKeyRequired")}
               </div>
             ) : null}
           </div>
@@ -394,13 +404,13 @@ export function LlmModelConfiguration({
 
       <ModelField
         id="model"
-        label="Default model"
+        label={t("llm.defaultModel")}
         value={model.value}
         onChange={model.onChange}
         error={model.error}
         supportsModelSuggestions={supportsModelSuggestions}
         options={defaultModelOptions}
-        placeholder={providerDefaultModel || "Select a model"}
+        placeholder={providerDefaultModel || t("llm.selectModel")}
         helper={modelHelper}
         current={previewDefaultModel}
         disabled={disabled || isLoadingModels}
@@ -411,9 +421,7 @@ export function LlmModelConfiguration({
           <Separator />
 
           <div>
-            <div className="font-medium mt-8">
-              Purpose-specific model overrides
-            </div>
+            <div className="font-medium mt-8">{t("llm.purposeOverrides")}</div>
             <div className="space-y-4">
               {purposeOverrides ? (
                 <Accordion type="single" collapsible>
@@ -422,10 +430,10 @@ export function LlmModelConfiguration({
                       <AccordionTrigger>
                         <div className="flex flex-col items-start gap-1">
                           <span className="font-medium text-sm">
-                            {purpose.label}
+                            {t(`llm.purposes.${purpose.id}.label`)}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {purpose.description}
+                            {t(`llm.purposes.${purpose.id}.description`)}
                           </span>
                         </div>
                       </AccordionTrigger>
@@ -457,37 +465,43 @@ export function LlmModelConfiguration({
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   <ModelField
                     id="modelScorer"
-                    label="Scoring Model"
+                    label={t("llm.scoringModelLabel")}
                     value={modelScorer?.value ?? ""}
                     onChange={(value) => modelScorer?.onChange(value)}
                     error={modelScorer?.error}
                     supportsModelSuggestions={supportsModelSuggestions}
                     options={scoringModelOptions}
-                    placeholder={previewDefaultModel || "Inherit default model"}
+                    placeholder={
+                      previewDefaultModel || inheritDefaultModelLabel
+                    }
                     current={scoringModel}
                     disabled={disabled || isLoadingModels}
                   />
                   <ModelField
                     id="modelTailoring"
-                    label="Tailoring Model"
+                    label={t("llm.tailoringModelLabel")}
                     value={modelTailoring?.value ?? ""}
                     onChange={(value) => modelTailoring?.onChange(value)}
                     error={modelTailoring?.error}
                     supportsModelSuggestions={supportsModelSuggestions}
                     options={tailoringModelOptions}
-                    placeholder={previewDefaultModel || "Inherit default model"}
+                    placeholder={
+                      previewDefaultModel || inheritDefaultModelLabel
+                    }
                     current={tailoringModel}
                     disabled={disabled || isLoadingModels}
                   />
                   <ModelField
                     id="modelProjectSelection"
-                    label="Project Selection Model"
+                    label={t("llm.projectSelectionModelLabel")}
                     value={modelProjectSelection?.value ?? ""}
                     onChange={(value) => modelProjectSelection?.onChange(value)}
                     error={modelProjectSelection?.error}
                     supportsModelSuggestions={supportsModelSuggestions}
                     options={projectSelectionModelOptions}
-                    placeholder={previewDefaultModel || "Inherit default model"}
+                    placeholder={
+                      previewDefaultModel || inheritDefaultModelLabel
+                    }
                     current={projectSelectionModel}
                     disabled={disabled || isLoadingModels}
                   />
@@ -497,35 +511,45 @@ export function LlmModelConfiguration({
           </div>
 
           <div className="space-y-3 text-sm">
-            <div className="text-xs text-muted-foreground">Resolved config</div>
+            <div className="text-xs text-muted-foreground">
+              {t("llm.resolvedConfig")}
+            </div>
             <div className="grid gap-x-4 gap-y-2 text-xs sm:grid-cols-[160px_1fr]">
-              <div className="text-muted-foreground">Provider</div>
+              <div className="text-muted-foreground">{t("llm.provider")}</div>
               <div className="font-mono">{selectedProvider || "-"}</div>
 
-              <div className="text-muted-foreground">Base URL</div>
+              <div className="text-muted-foreground">{t("llm.baseUrl")}</div>
               <div className="font-mono">{resolvedBaseUrl}</div>
 
-              <div className="text-muted-foreground">API key</div>
+              <div className="text-muted-foreground">{t("llm.apiKey")}</div>
               <div className="font-mono">{keyText}</div>
 
-              <div className="text-muted-foreground">Default model</div>
+              <div className="text-muted-foreground">
+                {t("llm.defaultModel")}
+              </div>
               <div className="font-mono">{previewDefaultModel}</div>
 
-              <div className="text-muted-foreground">Scoring model</div>
+              <div className="text-muted-foreground">
+                {t("llm.scoringModel")}
+              </div>
               <div className="font-mono">
-                {selectedScoringModel ? scoringModel : "inherits"}
+                {selectedScoringModel ? scoringModel : t("llm.inherits")}
               </div>
 
-              <div className="text-muted-foreground">Tailoring model</div>
+              <div className="text-muted-foreground">
+                {t("llm.tailoringModel")}
+              </div>
               <div className="font-mono">
-                {selectedTailoringModel ? tailoringModel : "inherits"}
+                {selectedTailoringModel ? tailoringModel : t("llm.inherits")}
               </div>
 
-              <div className="text-muted-foreground">Project selection</div>
+              <div className="text-muted-foreground">
+                {t("llm.projectSelection")}
+              </div>
               <div className="font-mono">
                 {selectedProjectSelectionModel
                   ? projectSelectionModel
-                  : "inherits"}
+                  : t("llm.inherits")}
               </div>
             </div>
           </div>
