@@ -107,6 +107,7 @@ export const DesignResumePage: React.FC = () => {
     handleDeletePicture,
     handlePdfRendererChange,
     handleTypstThemeChange,
+    handleResumeLayoutChange,
     handleMobileSectionSelect,
     getDesignResumeSectionBadge,
   } = useDesignResumeStudio();
@@ -479,6 +480,7 @@ export const DesignResumePage: React.FC = () => {
                 saveState={saveState}
                 onPdfRendererChange={handlePdfRendererChange}
                 onTypstThemeChange={handleTypstThemeChange}
+                onResumeLayoutChange={handleResumeLayoutChange}
               />
             </div>
           </>

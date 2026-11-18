@@ -22,6 +22,7 @@ vi.mock("@client/api", () => ({
   uploadDesignResumePictureFile: vi.fn(),
   deleteDesignResumePicture: vi.fn(),
   updateSetting: vi.fn(),
+  updateSettings: vi.fn(),
 }));
 
 vi.mock("@client/hooks/useDesignResume", () => ({
@@ -250,5 +251,58 @@ describe("useDesignResumeStudio autosave conflict handling", () => {
     expect(api.getDesignResume).not.toHaveBeenCalled();
     expect(result.current.saveState).toBe("error");
     expect(showErrorToast).toHaveBeenCalled();
+  });
+});
+
+describe("useDesignResumeStudio resume layout switch", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    designResumeState.document = makeDocument(9);
+  });
+
+  it("switches to the 職務経歴書 layout with one settings update", async () => {
+    vi.mocked(api.updateSettings).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof api.updateSettings>>,
+    );
+    const { result } = renderStudioHook();
+
+    await act(async () => {
+      await result.current.handleResumeLayoutChange("japanese");
+    });
+
+    expect(api.updateSettings).toHaveBeenCalledTimes(1);
+    expect(api.updateSettings).toHaveBeenCalledWith({
+      pdfRenderer: "typst",
+      typstTheme: "shokumu-keirekisho",
+    });
+    expect(toast.success).toHaveBeenCalledWith(
+      "Switched to the 職務経歴書 layout.",
+    );
+  });
+
+  it("does nothing when the chosen layout is already active", async () => {
+    // No settings loaded: the studio falls back to an English layout.
+    const { result } = renderStudioHook();
+
+    await act(async () => {
+      await result.current.handleResumeLayoutChange("english");
+    });
+
+    expect(api.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it("reports a failed switch", async () => {
+    vi.mocked(api.updateSettings).mockRejectedValue(new Error("offline"));
+    const { result } = renderStudioHook();
+
+    await act(async () => {
+      await result.current.handleResumeLayoutChange("japanese");
+    });
+
+    expect(showErrorToast).toHaveBeenCalledWith(
+      expect.any(Error),
+      "Could not change the resume layout.",
+    );
+    expect(result.current.rendererUpdating).toBe(false);
   });
 });

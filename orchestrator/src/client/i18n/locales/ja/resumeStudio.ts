@@ -313,6 +313,14 @@ const resumeStudio: typeof en = {
   preview: {
     chooseTemplate: "テンプレートを選択",
     chooseTypstTheme: "Typstテーマを選択",
+    layout: {
+      label: "レジュメの形式",
+      japanese: "職務経歴書（日本式）",
+      english: "英文レジュメ",
+      japaneseActive: "職務経歴書の形式に切り替えました。",
+      englishActive: "英文レジュメの形式に切り替えました。",
+      failed: "レジュメの形式を変更できませんでした。",
+    },
     renderers: {
       rxresume: "RxResumeでエクスポート",
       latex: "ローカルLaTeX（Jakeテンプレート）",

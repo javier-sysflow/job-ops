@@ -455,11 +455,6 @@ const settings = {
       latex: "Renderer default is US Letter for the LaTeX template.",
       typst: "Renderer default is A4 for Typst themes.",
     },
-    typstThemes: {
-      classic: "Classic",
-      "clean-print-cv": "Clean Print CV",
-      compact: "Compact",
-    },
     pdfRenderer: "PDF renderer",
     pdfRendererPlaceholder: "Choose PDF renderer",
     typstTheme: "Typst theme",

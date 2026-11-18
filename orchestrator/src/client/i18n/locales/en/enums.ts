@@ -55,6 +55,12 @@ const enums = {
     hybrid: "Hybrid",
     onsite: "Onsite",
   },
+  typstTheme: {
+    classic: "Classic",
+    "clean-print-cv": "Clean Print CV",
+    compact: "Compact",
+    "shokumu-keirekisho": "職務経歴書 (Japanese career history)",
+  },
 };
 
 export default enums;

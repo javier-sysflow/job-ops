@@ -307,6 +307,14 @@ const resumeStudio = {
   preview: {
     chooseTemplate: "Choose a template",
     chooseTypstTheme: "Choose a Typst theme",
+    layout: {
+      label: "Resume layout",
+      japanese: "職務経歴書 (Japanese)",
+      english: "English resume",
+      japaneseActive: "Switched to the 職務経歴書 layout.",
+      englishActive: "Switched to the English resume layout.",
+      failed: "Could not change the resume layout.",
+    },
     renderers: {
       rxresume: "RxResume export",
       latex: "Local LaTeX (Jake template)",

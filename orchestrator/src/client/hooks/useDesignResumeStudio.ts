@@ -10,6 +10,11 @@ import {
 } from "@client/components/design-resume/constants";
 import type { ItemDefinition } from "@client/components/design-resume/definitions";
 import {
+  getResumeLayout,
+  type ResumeLayout,
+  resumeLayoutSettings,
+} from "@client/components/design-resume/resumeLayout";
+import {
   asArray,
   asRecord,
   fileToDataUrl,
@@ -21,13 +26,13 @@ import type { SectionWorkspaceBadge } from "@client/components/section-workspace
 import { useDesignResume } from "@client/hooks/useDesignResume";
 import { useSettings } from "@client/hooks/useSettings";
 import { useTracerReadiness } from "@client/hooks/useTracerReadiness";
+import { pdfRendererLabel, typstThemeLabel } from "@client/i18n/labels";
 import type {
   DesignResumeDocument,
   DesignResumeJson,
   PdfRenderer,
   TypstTheme,
 } from "@shared/types";
-import { PDF_RENDERER_LABELS, TYPST_THEME_LABELS } from "@shared/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -562,7 +567,7 @@ export function useDesignResumeStudio() {
       queryClient.setQueryData(queryKeys.settings.current(), updatedSettings);
       toast.success(
         i18n.t("shell:hooks.resumeStudio.rendererActive", {
-          renderer: PDF_RENDERER_LABELS[nextRenderer],
+          renderer: pdfRendererLabel(nextRenderer),
         }),
       );
       notifyReadyPdfRefresh();
@@ -587,7 +592,7 @@ export function useDesignResumeStudio() {
       queryClient.setQueryData(queryKeys.settings.current(), updatedSettings);
       toast.success(
         i18n.t("shell:hooks.resumeStudio.themeActive", {
-          theme: TYPST_THEME_LABELS[nextTheme],
+          theme: typstThemeLabel(nextTheme),
         }),
       );
       notifyReadyPdfRefresh();
@@ -596,6 +601,29 @@ export function useDesignResumeStudio() {
         updateError,
         i18n.t("shell:hooks.resumeStudio.themeFailed"),
       );
+    } finally {
+      setRendererUpdating(false);
+    }
+  };
+
+  const handleResumeLayoutChange = async (nextLayout: ResumeLayout) => {
+    if (
+      settingsLoading ||
+      nextLayout === getResumeLayout(pdfRenderer, typstTheme)
+    ) {
+      return;
+    }
+
+    try {
+      setRendererUpdating(true);
+      const updatedSettings = await api.updateSettings(
+        resumeLayoutSettings(nextLayout),
+      );
+      queryClient.setQueryData(queryKeys.settings.current(), updatedSettings);
+      toast.success(i18n.t(`resumeStudio:preview.layout.${nextLayout}Active`));
+      notifyReadyPdfRefresh();
+    } catch (updateError) {
+      showErrorToast(updateError, i18n.t("resumeStudio:preview.layout.failed"));
     } finally {
       setRendererUpdating(false);
     }
@@ -725,6 +753,7 @@ export function useDesignResumeStudio() {
     handleDeletePicture,
     handlePdfRendererChange,
     handleTypstThemeChange,
+    handleResumeLayoutChange,
     handleMobileSectionSelect,
     getDesignResumeSectionBadge,
   };
