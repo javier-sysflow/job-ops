@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import type React from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -113,6 +119,8 @@ describe("SignInPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    // The quick-glance pop-up opens on a first visit; tests opt in below.
+    localStorage.setItem("jobops.quickGlanceSeen", "1");
     sessionStorage.clear();
     vi.mocked(getAppStatus).mockResolvedValue(localAppStatus);
     vi.mocked(getAuthBootstrapStatus).mockResolvedValue({
@@ -352,6 +360,52 @@ describe("SignInPage", () => {
       });
       expect(screen.getByText("onboarding-page")).toBeInTheDocument();
     });
+  });
+
+  it("opens the quick-glance pop-up once on a first visit", async () => {
+    localStorage.removeItem("jobops.quickGlanceSeen");
+
+    const { unmount } = renderSignInPage(["/sign-in"]);
+
+    expect(
+      await screen.findByRole("dialog", { name: "JobOps at a glance" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("It's free to use.")).toBeInTheDocument();
+    expect(localStorage.getItem("jobops.quickGlanceSeen")).toBe("1");
+    // The footer button; the dialog's corner ✕ is also labelled Close.
+    fireEvent.click(screen.getAllByRole("button", { name: "Close" })[0]);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    unmount();
+    renderSignInPage(["/sign-in"]);
+    expect(
+      await screen.findByRole("button", {
+        name: "New here? See what JobOps does",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("reopens the pop-up from the link and goes to Create account", async () => {
+    vi.mocked(getAppStatus).mockResolvedValueOnce({
+      ...localAppStatus,
+      capabilities: { ...localAppStatus.capabilities, localSignups: true },
+    });
+
+    renderSignInPage(["/sign-in"]);
+    await screen.findByRole("tab", { name: "Create account" });
+    fireEvent.click(
+      screen.getByRole("button", { name: "New here? See what JobOps does" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "JobOps at a glance",
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Create account" }),
+    );
+
+    expect(await screen.findByText(/stay private to you/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
   });
 
   it("hides the single sign-on divider when no provider is configured", async () => {

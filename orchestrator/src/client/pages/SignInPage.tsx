@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LanguageToggle } from "../components/LanguageToggle";
+import { QuickGlance } from "../components/QuickGlance";
 import i18n from "../i18n";
 import { resolveNextPath } from "../lib/auth-navigation";
 import { getErrorMessage } from "../lib/error-format";
@@ -51,6 +52,8 @@ export function SignInPage() {
   const [signupMode, setSignupMode] = useState<"hosted" | "local" | null>(null);
   const [inviteCodeRequired, setInviteCodeRequired] = useState(false);
   const [isBusy, setIsBusy] = useState(true);
+  // True once status has loaded and this page stays (no redirect).
+  const [isPageReady, setIsPageReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [rememberedUsers, setRememberedUsers] = useState(() =>
     loadRememberedAuthUsers(),
@@ -106,6 +109,7 @@ export function SignInPage() {
           navigate(nextPath, { replace: true });
           return;
         }
+        setIsPageReady(true);
       } catch (error) {
         if (!cancelled) {
           setErrorMessage(
@@ -399,6 +403,11 @@ export function SignInPage() {
             ) : null}
           </CardContent>
         </Card>
+        <QuickGlance
+          ready={isPageReady}
+          canSignUp={signupMode !== null}
+          onCreateAccount={() => resetFormFeedback("signup")}
+        />
       </div>
     </main>
   );

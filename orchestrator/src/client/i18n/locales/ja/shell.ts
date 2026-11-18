@@ -64,6 +64,44 @@ const shell: typeof en = {
     signInFailed: "サインインできませんでした",
     ssoFailed: "{{provider}} で続行できませんでした",
   },
+  quickGlance: {
+    trigger: "はじめての方へ：JobOpsでできること",
+    title: "JobOpsでできること",
+    description:
+      "求人探しをAIがお手伝いする無料のツールです。求人を集め、あなたとの相性をチェックし、応募書類まで作成します。流れは4ステップです。",
+    steps: {
+      resume: {
+        title: "レジュメを登録",
+        body: "お手持ちの職務経歴書や履歴書（PDFまたはWord）を読み込むだけで、あなたの経歴が登録されます。",
+      },
+      search: {
+        title: "合う求人を見つける",
+        body: "Indeed、LinkedIn、マイナビ転職などから求人を集め、AIがあなたの経歴との相性を点数で示します。",
+      },
+      documents: {
+        title: "応募書類を作成",
+        body: "応募したい求人ごとに、AIが職務経歴書や英文レジュメを作成。PDFやWordでダウンロードできます。",
+      },
+      track: {
+        title: "選考状況を管理",
+        body: "書類選考から内定まで、応募ごとの進み具合をボードでひと目で確認できます。",
+      },
+    },
+    goodToKnow: {
+      title: "知っておいてほしいこと",
+      free: "無料で使えます。",
+      private:
+        "求人、レジュメ、設定はあなたのアカウントだけに保存され、ほかの人からは見えません。",
+      youApply:
+        "アプリが勝手に応募することはありません。応募はご自身で行います。",
+      review: "AIが作る文章は下書きです。送る前に必ず内容を確認してください。",
+    },
+    privacy: "プライバシーポリシー",
+    terms: "利用規約",
+    close: "閉じる",
+    createAccount: "アカウントを作成",
+    continue: "サインインへ進む",
+  },
   sso: {
     invalidFlow: "このサインインリンクは無効になっています。",
     providerRefused:

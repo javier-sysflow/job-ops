@@ -60,6 +60,45 @@ const shell = {
     signInFailed: "Unable to sign in",
     ssoFailed: "Unable to continue with {{provider}}",
   },
+  // Fork: "JobOps at a glance" pop-up on the sign-in page.
+  quickGlance: {
+    trigger: "New here? See what JobOps does",
+    title: "JobOps at a glance",
+    description:
+      "A free helper for your job search. It collects jobs, checks how well each one fits you, and writes your application documents. It works in four steps.",
+    steps: {
+      resume: {
+        title: "Add your résumé",
+        body: "Upload the résumé or 職務経歴書 you already have (PDF or Word). JobOps reads your experience from it.",
+      },
+      search: {
+        title: "Find jobs that fit",
+        body: "It collects jobs from Indeed, LinkedIn, Mynavi and more, and AI scores how well each one matches your experience.",
+      },
+      documents: {
+        title: "Get tailored documents",
+        body: "For the jobs you like, AI writes a 職務経歴書 or English résumé that you can download as PDF or Word.",
+      },
+      track: {
+        title: "Track your applications",
+        body: "Follow every application from document screening to offer on one board.",
+      },
+    },
+    goodToKnow: {
+      title: "Good to know",
+      free: "It's free to use.",
+      private:
+        "Your jobs, résumé and settings stay in your own account. Other people can't see them.",
+      youApply:
+        "JobOps never applies for you. You send each application yourself.",
+      review: "Anything the AI writes is a draft. Read it before you send it.",
+    },
+    privacy: "Privacy policy",
+    terms: "Terms",
+    close: "Close",
+    createAccount: "Create account",
+    continue: "Continue to sign in",
+  },
   sso: {
     invalidFlow: "This sign-in link is no longer valid.",
     providerRefused:
