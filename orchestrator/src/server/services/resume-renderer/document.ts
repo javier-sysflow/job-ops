@@ -187,20 +187,55 @@ function stripHtml(value: string): string {
     .trim();
 }
 
-function extractBullets(value: unknown): string[] {
-  if (typeof value !== "string" || !value.trim()) return [];
-
-  const listItems = [...value.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
-    .map((match) => stripHtml(match[1] ?? ""))
-    .filter(Boolean);
-  if (listItems.length > 0) return listItems;
-
+function extractTextLines(value: string): string[] {
   const cleaned = stripHtml(value);
   if (!cleaned) return [];
   return cleaned
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean);
+}
+
+function extractBullets(value: unknown): string[] {
+  if (typeof value !== "string" || !value.trim()) return [];
+
+  // Keep text outside lists (e.g. an intro paragraph before a <ul>) in its
+  // original position instead of dropping it whenever a list is present.
+  const segments = value.split(/(<(?:ul|ol)\b[^>]*>[\s\S]*?<\/(?:ul|ol)>)/i);
+  const bullets: string[] = [];
+  for (const segment of segments) {
+    if (/^<(?:ul|ol)\b/i.test(segment)) {
+      bullets.push(
+        ...[...segment.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
+          .map((match) => stripHtml(match[1] ?? ""))
+          .filter(Boolean),
+      );
+    } else {
+      bullets.push(...extractTextLines(segment));
+    }
+  }
+  return bullets;
+}
+
+/**
+ * Reactive Resume v5 experience items can list several roles held at the
+ * same company. Render each as a short "Position (period)" line followed by
+ * that role's own bullets, so promotions are not silently dropped.
+ */
+function extractRoleBullets(item: RecordLike): string[] {
+  const bullets: string[] = [];
+  for (const rawRole of asArray(item.roles)) {
+    const role = (asRecord(rawRole) ?? {}) as RecordLike;
+    if (toBoolean(role.hidden, false)) continue;
+    const position = toText(role.position).trim();
+    const period = toText(role.period).trim();
+    const heading = position
+      ? `<strong>${position}</strong>${period ? ` (${period})` : ""}`
+      : period;
+    if (heading) bullets.push(stripHtml(heading));
+    bullets.push(...extractBullets(role.description));
+  }
+  return bullets;
 }
 
 function getSectionRecord(resumeJson: RecordLike, key: string): RecordLike {
@@ -362,8 +397,13 @@ function buildExperienceEntries(resumeJson: RecordLike): LatexResumeEntry[] {
       subtitle:
         joinNonEmpty([toText(item.position), toText(item.location)], " / ") ||
         null,
+      position: toText(item.position).trim() || null,
+      location: toText(item.location).trim() || null,
       date: toText(item.period) || null,
-      bullets: extractBullets(item.description),
+      bullets: [
+        ...extractBullets(item.description),
+        ...extractRoleBullets(item),
+      ],
       url: toText(getByPath(item, "website.url")) || undefined,
     }),
   );

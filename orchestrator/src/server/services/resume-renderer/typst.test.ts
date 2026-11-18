@@ -4,7 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { TYPST_THEME_VALUES, type TypstTheme } from "@shared/types";
 import { afterEach, describe, expect, it } from "vitest";
-import { readPdfPageSizes } from "./test-utils";
+import { buildResumeRenderDocument } from "./document";
+import shokumuFixture from "./fixtures/shokumu-keirekisho-ja.json";
+import { readPdfPageSizes, readPdfText } from "./test-utils";
 import type { ResumeRenderDocument } from "./types";
 import {
   buildTypstDocument,
@@ -67,6 +69,20 @@ function typstAvailable(): boolean {
   const binary = process.env.TYPST_BIN?.trim() || "typst";
   const result = spawnSync(binary, ["--version"], { stdio: "ignore" });
   return result.status === 0;
+}
+
+/** Text assertions on Japanese output need real CJK glyphs, not tofu. */
+function typstHasJapaneseFonts(): boolean {
+  const binary = process.env.TYPST_BIN?.trim() || "typst";
+  const result = spawnSync(binary, ["fonts"], { encoding: "utf8" });
+  return (
+    result.status === 0 && /Noto (Serif|Sans) CJK JP/.test(result.stdout ?? "")
+  );
+}
+
+/** PDF text with all whitespace removed, so tracking and CJK spacing don't matter. */
+async function readCompactPdfText(pdfPath: string): Promise<string> {
+  return (await readPdfText(pdfPath)).replace(/\s+/g, "");
 }
 
 async function readNativeThemeTokens(
@@ -290,6 +306,17 @@ describe("typst resume renderer", () => {
     expect(template).toContain("#let bullet-trailing(entry)");
     expect(template).toContain('text-of(section-titles.at("awards"');
     expect(template).toContain("trailing: bullet-trailing(entry)");
+  });
+
+  it("keeps the shokumu-keirekisho theme offline and data-driven", async () => {
+    const { manifest, template } = await readTypstTheme("shokumu-keirekisho");
+
+    expect(manifest.kind).toBe("adapted");
+    expect(template).toContain("json(__RESUME_DATA_PATH__)");
+    // Plain Typst only: package imports would need network access at render time.
+    expect(template).not.toMatch(/#import\b/);
+    expect(template).toContain('"Noto Serif CJK JP"');
+    expect(template).toContain('lang: if is-japanese { "ja" }');
   });
 
   it("renders the newly supported native sections and picture block", async () => {
@@ -537,6 +564,105 @@ describe("typst resume renderer", () => {
         stdio: "ignore",
       });
       expect(stats.status).toBe(0);
+    },
+  );
+
+  it.skipIf(!typstAvailable())(
+    "renders the shokumu-keirekisho theme on A4 from a Japanese resume",
+    async () => {
+      const tempDir = await createTempDir();
+      tempDirs.push(tempDir);
+      const outputPath = join(tempDir, "shokumu-keirekisho.pdf");
+
+      await renderTypstPdf({
+        document: buildResumeRenderDocument(shokumuFixture, {
+          language: "japanese",
+        }),
+        outputPath,
+        jobId: "job-render-shokumu-keirekisho",
+        typstTheme: "shokumu-keirekisho",
+      });
+
+      const pageSizes = await readPdfPageSizes(outputPath);
+      expect(pageSizes.length).toBeGreaterThan(0);
+      for (const size of pageSizes) {
+        expect(size).toEqual({ width: 595, height: 842 });
+      }
+    },
+  );
+
+  it.skipIf(!typstAvailable() || !typstHasJapaneseFonts())(
+    "lays out the shokumu-keirekisho sections and omits hidden or empty ones",
+    async () => {
+      const tempDir = await createTempDir();
+      tempDirs.push(tempDir);
+      const fullPath = join(tempDir, "shokumu-full.pdf");
+      const sparsePath = join(tempDir, "shokumu-sparse.pdf");
+      const document = buildResumeRenderDocument(shokumuFixture, {
+        language: "japanese",
+      });
+
+      await renderTypstPdf({
+        document,
+        outputPath: fullPath,
+        jobId: "job-render-shokumu-full",
+        typstTheme: "shokumu-keirekisho",
+      });
+      const full = await readCompactPdfText(fullPath);
+
+      expect(full).toContain("職務経歴書");
+      expect(full).toMatch(/\d{4}年\d{1,2}月\d{1,2}日現在/);
+      expect(full).toContain("氏名ミラー健太");
+      for (const heading of [
+        "■職務要約",
+        "■職務経歴",
+        "■活かせる経験・知識・技術",
+        "■資格",
+        "■語学",
+        "■学歴",
+        "■自己PR",
+      ]) {
+        expect(full).toContain(heading);
+      }
+      expect(full).toContain("株式会社サクラペイメンツ");
+      expect(full).toContain("シニアソフトウェアエンジニア／テックリード");
+      expect(full).toContain("東京都渋谷区");
+      expect(full).toContain("新卒・中途エンジニア4名");
+      expect(full).toContain("日本語能力試験（JLPT）N1合格");
+      expect(full).toContain("日英バイリンガルのエンジニアとして");
+      expect(full).toContain("以上");
+      expect(full).not.toContain("非表示テスト株式会社");
+      expect(full).not.toContain("非表示スキル");
+      expect(full.indexOf("■職務要約")).toBeLessThan(full.indexOf("■職務経歴"));
+      expect(full.indexOf("■職務経歴")).toBeLessThan(full.indexOf("■自己PR"));
+
+      await renderTypstPdf({
+        document: {
+          ...document,
+          summary: null,
+          customFieldItems: [],
+          skillGroups: [],
+          certifications: [],
+          languages: [],
+          education: [],
+        },
+        outputPath: sparsePath,
+        jobId: "job-render-shokumu-sparse",
+        typstTheme: "shokumu-keirekisho",
+      });
+      const sparse = await readCompactPdfText(sparsePath);
+
+      expect(sparse).toContain("■職務経歴");
+      for (const heading of [
+        "■職務要約",
+        "■活かせる経験・知識・技術",
+        "■資格",
+        "■語学",
+        "■学歴",
+        "■自己PR",
+      ]) {
+        expect(sparse).not.toContain(heading);
+      }
     },
   );
 

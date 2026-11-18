@@ -23,6 +23,10 @@ vi.mock("./components/OnboardingGate", () => ({
   OnboardingGate: () => null,
 }));
 
+vi.mock("./components/TimeZoneSync", () => ({
+  TimeZoneSync: () => null,
+}));
+
 vi.mock("./pages/GmailOauthCallbackPage", () => ({
   GmailOauthCallbackPage: () => null,
 }));
