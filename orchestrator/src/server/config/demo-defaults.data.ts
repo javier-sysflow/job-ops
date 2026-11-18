@@ -260,6 +260,7 @@ export const DEMO_SOURCE_BASE_URLS: Record<JobSource, string> = {
   workingnomads: "https://www.workingnomads.com",
   himalayas: "https://himalayas.app",
   japandev: "https://japan-dev.com",
+  mynavi: "https://tenshoku.mynavi.jp",
   golangjobs: "https://www.golangjobs.tech",
   jobindex: "https://www.jobindex.dk",
   seek: "https://www.seek.com.au",

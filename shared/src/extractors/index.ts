@@ -19,6 +19,7 @@ export const EXTRACTOR_SOURCE_IDS = [
   "freehire",
   "himalayas",
   "japandev",
+  "mynavi",
   "manual",
 ] as const;
 
@@ -91,6 +92,13 @@ export const EXTRACTOR_SOURCE_METADATA: Record<
   freehire: { label: "FreeHire", order: 115, category: "pipeline" },
   himalayas: { label: "Himalayas", order: 116, category: "pipeline" },
   japandev: { label: "Japan Dev", order: 117, category: "pipeline" },
+  // Fork: マイナビ転職 through an Apify actor (needs APIFY_TOKEN).
+  mynavi: {
+    label: "Mynavi 転職",
+    order: 118,
+    category: "pipeline",
+    requiresCredentials: true,
+  },
   manual: { label: "Manual", order: 120, category: "manual" },
 };
 

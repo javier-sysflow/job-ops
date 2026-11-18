@@ -311,7 +311,7 @@ export const getEnabledSources = (
       !EXTRACTOR_SOURCE_METADATA[source].requiresCredentials ||
       (source === "ukvisajobs" && hasUkVisaJobsAuth) ||
       (source === "adzuna" && hasAdzunaAuth) ||
-      (source === "seek" && hasApifyToken)
+      ((source === "seek" || source === "mynavi") && hasApifyToken)
     ) {
       enabled.push(source);
     }

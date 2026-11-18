@@ -58,6 +58,7 @@ jobs:
           - workingnomads-extractor
           - himalayas-extractor
           - japandev-extractor
+          - mynavi-extractor
           - ukvisajobs-extractor
     steps:
       - uses: actions/checkout@v4

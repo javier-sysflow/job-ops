@@ -349,6 +349,7 @@ const SOURCE_SUPPORTED_COUNTRY_KEYS: Partial<Record<JobSource, string[]>> = {
   fiveamsat: ["egypt"],
   wazzuf: ["egypt"],
   japandev: ["japan"],
+  mynavi: ["japan"],
 };
 
 const SOURCE_SUPPORTED_COUNTRY_KEYS_NORMALIZED: Partial<

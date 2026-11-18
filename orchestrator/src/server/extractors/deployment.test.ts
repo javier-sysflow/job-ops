@@ -69,6 +69,7 @@ describe("extractor deployment config", () => {
   it.each([
     "himalayas",
     "japandev",
+    "mynavi",
   ])("ships and syncs the %s extractor", async (name) => {
     const dockerfile = await readFile(resolve(process.cwd(), "../Dockerfile"), {
       encoding: "utf8",

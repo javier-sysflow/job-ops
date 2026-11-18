@@ -98,6 +98,9 @@ services:
         - path: ./extractors/japandev/src
           target: /app/extractors/japandev/src
           action: sync+restart
+        - path: ./extractors/mynavi/src
+          target: /app/extractors/mynavi/src
+          action: sync+restart
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
