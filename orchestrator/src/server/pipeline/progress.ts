@@ -24,10 +24,37 @@ export type PipelineProgress = PipelineProgressState;
 type ProgressListener = (progress: PipelineProgress) => void;
 const listenersByTenant = new Map<string, Set<ProgressListener>>();
 
+/** UI translation keys for progress text (client namespace "pipeline"). */
+const MESSAGE_KEY_PREFIX = "pipeline:progress.messages.";
+const DETAIL_KEY_PREFIX = "pipeline:progress.details.";
+
+type ProgressTextParams = Record<string, string | number>;
+
+function messageText(
+  key: string,
+  params?: ProgressTextParams,
+): Pick<PipelineProgress, "messageKey" | "messageParams"> {
+  return {
+    messageKey: `${MESSAGE_KEY_PREFIX}${key}`,
+    ...(params ? { messageParams: params } : {}),
+  };
+}
+
+function detailText(
+  key: string,
+  params?: ProgressTextParams,
+): Pick<PipelineProgress, "detailKey" | "detailParams"> {
+  return {
+    detailKey: `${DETAIL_KEY_PREFIX}${key}`,
+    ...(params ? { detailParams: params } : {}),
+  };
+}
+
 function createIdleProgress(): PipelineProgress {
   return {
     step: "idle",
     message: "Ready",
+    ...messageText("ready"),
     crawlingSource: null,
     crawlingSourcesCompleted: 0,
     crawlingSourcesTotal: 0,
@@ -100,6 +127,7 @@ function getCurrentSourceStatsForTenant(
 let currentProgress: PipelineProgress = {
   step: "idle",
   message: "Ready",
+  ...messageText("ready"),
   crawlingSource: null,
   crawlingSourcesCompleted: 0,
   crawlingSourcesTotal: 0,
@@ -234,7 +262,21 @@ function getFanoutTracker(): FanoutTracker | undefined {
  */
 export function updateProgress(update: Partial<PipelineProgress>): void {
   const tenantId = getProgressScopeKey();
-  currentProgress = { ...getCurrentProgressForTenant(tenantId), ...update };
+  const next: PipelineProgress = {
+    ...getCurrentProgressForTenant(tenantId),
+    ...update,
+  };
+  // New text without a translation key (or a key without params) must not
+  // keep the previous key/params, or the UI would show stale translated text.
+  if ("message" in update && !("messageKey" in update)) delete next.messageKey;
+  if ("message" in update && !("messageParams" in update)) {
+    delete next.messageParams;
+  }
+  if ("detail" in update && !("detailKey" in update)) delete next.detailKey;
+  if ("detail" in update && !("detailParams" in update)) {
+    delete next.detailParams;
+  }
+  currentProgress = next;
   currentProgressByTenant.set(tenantId, currentProgress);
 
   // Notify all listeners
@@ -424,7 +466,9 @@ export const progressHelpers = {
       updateProgress({
         step: "crawling",
         message: "Fetching jobs from sources...",
+        ...messageText("fetchingSources"),
         detail: "Starting crawler",
+        ...detailText("startingCrawler"),
         startedAt: preserveStartedAt
           ? getProgress().startedAt
           : new Date().toISOString(),
@@ -459,6 +503,8 @@ export const progressHelpers = {
     updateProgress({
       step: "crawling",
       message: `Fetching jobs from ${source}...`,
+      ...messageText("fetchingSource", { source }),
+      // Source-specific detail comes from the extractor and stays as sent.
       detail: options?.detail,
       crawlingSource: source,
       crawlingSourcesCompleted: sourcesCompleted,
@@ -570,17 +616,37 @@ export const progressHelpers = {
         : "";
 
     const message = `Crawling jobs (list pages ${sourcesPart}, job pages ${pagesPart}${termsPart}${skippedPart}${cardsPart})...`;
+    // One translation key per combination of the optional parts above.
+    const messageKeySuffix = `${termsPart ? "Terms" : ""}${skippedPart ? "Skipped" : ""}${cardsPart ? "Cards" : ""}`;
+    const messageI18n = messageText(`crawling${messageKeySuffix}`, {
+      listPages: sourcesPart,
+      jobPages: pagesPart,
+      termsProcessed: next.crawlingTermsProcessed,
+      termsTotal: next.crawlingTermsTotal,
+      skipped: next.crawlingJobPagesSkipped,
+      cards: next.crawlingJobCardsFound,
+    });
     const detail =
       next.crawlingCurrentUrl && next.crawlingPhase
         ? `${next.crawlingPhase === "list" ? "List" : "Job"}: ${next.crawlingCurrentUrl}`
         : next.crawlingCurrentUrl
           ? next.crawlingCurrentUrl
           : "Running crawler";
+    const detailI18n =
+      next.crawlingCurrentUrl && next.crawlingPhase
+        ? detailText(next.crawlingPhase === "list" ? "listUrl" : "jobUrl", {
+            url: next.crawlingCurrentUrl,
+          })
+        : next.crawlingCurrentUrl
+          ? {}
+          : detailText("runningCrawler");
 
     updateProgress({
       step: "crawling",
       message,
+      ...messageI18n,
       detail,
+      ...detailI18n,
       crawlingSource: next.crawlingSource,
       crawlingTermsProcessed: next.crawlingTermsProcessed,
       crawlingTermsTotal: next.crawlingTermsTotal,
@@ -599,7 +665,9 @@ export const progressHelpers = {
     updateProgress({
       step: "importing",
       message: `Found ${jobsFound} jobs, importing to database...`,
+      ...messageText("foundJobs", { jobsFound }),
       detail: "Deduplicating and saving",
+      ...detailText("deduplicating"),
       jobsDiscovered: jobsFound,
       crawlingSource: null,
       crawlingCurrentUrl: undefined,
@@ -613,7 +681,9 @@ export const progressHelpers = {
     updateProgress({
       step: "importing",
       message: `Importing jobs (${index}/${total})...`,
+      ...messageText("importingJobs", { index, total }),
       detail: "Checking for duplicates and saving new jobs",
+      ...detailText("checkingDuplicates"),
       currentJob: job,
     }),
 
@@ -621,7 +691,9 @@ export const progressHelpers = {
     updateProgress({
       step: "scoring",
       message: `Imported ${created} new jobs (${skipped} duplicates). Scoring...`,
+      ...messageText("imported", { created, skipped }),
       detail: "Using AI to evaluate job fit",
+      ...detailText("evaluatingFit"),
       currentJob: undefined,
     }),
 
@@ -634,7 +706,9 @@ export const progressHelpers = {
     updateProgress({
       step: "scoring",
       message: `Scoring jobs (${index}/${total})...`,
+      ...messageText("scoringJobs", { index, total }),
       detail: "Using AI to evaluate job fit",
+      ...detailText("evaluatingFit"),
       jobsScored: index,
       jobsExceptional: exceptional,
       currentJob: job,
@@ -644,7 +718,9 @@ export const progressHelpers = {
     updateProgress({
       step: "scoring",
       message: `Scored ${totalScored} jobs.`,
+      ...messageText("scored", { totalScored }),
       detail: "Ready for manual processing",
+      ...detailText("readyForManual"),
       jobsScored: totalScored,
       totalToProcess: 0,
       jobsProcessed: 0,
@@ -659,7 +735,12 @@ export const progressHelpers = {
     updateProgress({
       step: "processing",
       message: `Processing job ${index}/${total}...`,
+      ...messageText("processingJob", { index, total }),
       detail: `${job.title} @ ${job.employer}`,
+      ...detailText("jobAtEmployer", {
+        title: job.title,
+        employer: job.employer,
+      }),
       totalToProcess: total,
       currentJob: job,
     }),
@@ -667,24 +748,29 @@ export const progressHelpers = {
   generatingSummary: (job: { title: string; employer: string }) =>
     updateProgress({
       detail: `Generating summary for ${job.title}...`,
+      ...detailText("generatingSummary", { title: job.title }),
     }),
 
   generatingPdf: (job: { title: string; employer: string }) =>
     updateProgress({
       detail: `Generating PDF for ${job.title}...`,
+      ...detailText("generatingPdf", { title: job.title }),
     }),
 
   jobComplete: (index: number, total: number) =>
     updateProgress({
       jobsProcessed: index,
       detail: `Completed ${index}/${total} jobs`,
+      ...detailText("jobsCompleted", { index, total }),
     }),
 
   complete: (discovered: number, processed: number) =>
     updateProgress({
       step: "completed",
       message: `Search complete! Discovered ${discovered} jobs, processed ${processed}.`,
+      ...messageText("complete", { discovered, processed }),
       detail: "Ready for review",
+      ...detailText("readyForReview"),
       completedAt: new Date().toISOString(),
       currentJob: undefined,
     }),
@@ -693,6 +779,7 @@ export const progressHelpers = {
     updateProgress({
       step: "cancelled",
       message: "Search cancelled",
+      ...messageText("cancelled"),
       detail: reason,
       completedAt: new Date().toISOString(),
       currentJob: undefined,
@@ -702,6 +789,7 @@ export const progressHelpers = {
     updateProgress({
       step: "failed",
       message: "Search failed",
+      ...messageText("failed"),
       detail: error,
       error,
       completedAt: new Date().toISOString(),
@@ -711,6 +799,7 @@ export const progressHelpers = {
     updateProgress({
       step: "configuration_required",
       message: "Configuration required",
+      ...messageText("configurationRequired"),
       detail: error,
       error,
       completedAt: new Date().toISOString(),
@@ -720,6 +809,10 @@ export const progressHelpers = {
     updateProgress({
       step: "challenge_required",
       message: `${challenges.length} extractor${challenges.length > 1 ? "s need" : " needs"} a Cloudflare challenge solved`,
+      ...messageText(
+        challenges.length > 1 ? "challengesNeededMany" : "challengesNeededOne",
+        { extractors: challenges.length },
+      ),
       detail: challenges.map((c) => c.extractorName).join(", "),
       pendingChallenges: challenges,
     }),
@@ -731,10 +824,19 @@ export const progressHelpers = {
         remaining.length > 0
           ? `${remaining.length} challenge${remaining.length > 1 ? "s" : ""} remaining`
           : "All challenges solved, resuming...",
+      ...(remaining.length > 0
+        ? messageText(
+            remaining.length > 1
+              ? "challengesRemainingMany"
+              : "challengesRemainingOne",
+            { remaining: remaining.length },
+          )
+        : messageText("allChallengesSolved")),
       detail:
         remaining.length > 0
           ? remaining.map((c) => c.extractorName).join(", ")
           : "Re-running extractors",
+      ...(remaining.length > 0 ? {} : detailText("rerunningExtractors")),
       pendingChallenges: remaining,
     }),
 };

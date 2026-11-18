@@ -3,9 +3,9 @@ import type {
   LocationMatchStrictness,
   LocationSearchScope,
 } from "@shared/location-preferences.js";
-import { formatCountryLabel } from "@shared/location-support.js";
 import type { LocationProximity } from "@shared/types";
 import { Info } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 import {
   Accordion,
   AccordionContent,
@@ -36,6 +36,7 @@ import {
   WORKPLACE_TYPE_OPTIONS,
   type WorkplaceType,
 } from "./automatic-run";
+import { localizedCountryLabel } from "./automatic-run-i18n";
 import { LocationRadiusPicker } from "./LocationRadiusPicker";
 import { TokenizedInput } from "./TokenizedInput";
 
@@ -75,6 +76,7 @@ export function AutomaticRunSettingsCard({
   onProximityChange,
   onToggleWorkplaceType,
 }: AutomaticRunSettingsCardProps) {
+  const { t } = useTranslation("pipeline");
   return (
     <Card>
       <CardHeader>
@@ -83,10 +85,8 @@ export function AutomaticRunSettingsCard({
             2
           </span>
           <div className="flex min-w-0 flex-col gap-1">
-            <CardTitle>Where can you work?</CardTitle>
-            <CardDescription>
-              Choose a location model and the work arrangements you want.
-            </CardDescription>
+            <CardTitle>{t("location.title")}</CardTitle>
+            <CardDescription>{t("location.description")}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -148,21 +148,24 @@ function LocationPreferences({
   onProximityChange,
   onToggleWorkplaceType,
 }: LocationPreferencesProps) {
+  const { t } = useTranslation("pipeline");
   return (
     <div className="flex flex-col gap-4">
       {values.locationMode === "cities" && countrySuggestion ? (
         <Alert className="border-sky-500/20 bg-sky-500/5">
           <Info />
-          <AlertTitle>Detected from your browser</AlertTitle>
+          <AlertTitle>{t("location.detectedTitle")}</AlertTitle>
           <AlertDescription>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm leading-6 text-muted-foreground">
-                We detected{" "}
-                <span className="font-medium text-foreground">
-                  {formatCountryLabel(countrySuggestion)}
-                </span>{" "}
-                as a helpful starting point. Apply it to unlock country-specific
-                sources, or choose another country.
+                <Trans
+                  t={t}
+                  i18nKey="location.detectedBody"
+                  values={{ country: localizedCountryLabel(countrySuggestion) }}
+                  components={{
+                    country: <span className="font-medium text-foreground" />,
+                  }}
+                />
               </p>
               <Button
                 type="button"
@@ -171,7 +174,7 @@ function LocationPreferences({
                 className="shrink-0"
                 onClick={onUseCountrySuggestion}
               >
-                Use suggestion
+                {t("location.useSuggestion")}
               </Button>
             </div>
           </AlertDescription>
@@ -179,21 +182,23 @@ function LocationPreferences({
       ) : null}
 
       <div className="flex flex-col gap-2">
-        <Label className="text-base font-semibold">Search area</Label>
+        <Label className="text-base font-semibold">
+          {t("location.searchArea")}
+        </Label>
         <AutomaticChoiceCardGroup
-          ariaLabel="Search area"
+          ariaLabel={t("location.searchArea")}
           value={values.locationMode}
           columns={2}
           options={[
             {
               value: "radius",
-              label: "Map radius",
-              description: "Search around a point you choose on the map.",
+              label: t("location.modes.radius.label"),
+              description: t("location.modes.radius.description"),
             },
             {
               value: "cities",
-              label: "Manual cities",
-              description: "Enter the exact cities each source should search.",
+              label: t("location.modes.cities.label"),
+              description: t("location.modes.cities.description"),
             },
           ]}
           onValueChange={onLocationModeChange}
@@ -203,26 +208,28 @@ function LocationPreferences({
       {values.locationMode === "cities" ? (
         <div className="grid gap-4 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
           <div className="flex flex-col gap-2">
-            <Label className="text-base font-semibold">Country</Label>
+            <Label className="text-base font-semibold">
+              {t("location.country")}
+            </Label>
             <SearchableDropdown
               value={values.country}
               options={countryOptions}
               onValueChange={onCountryChange}
-              placeholder="Select country"
-              searchPlaceholder="Search country..."
-              emptyText="No matching countries."
+              placeholder={t("location.selectCountry")}
+              searchPlaceholder={t("location.searchCountry")}
+              emptyText={t("location.noCountries")}
               triggerClassName="h-10 w-full"
               ariaLabel={
                 values.country
-                  ? formatCountryLabel(values.country)
-                  : "Select country"
+                  ? localizedCountryLabel(values.country)
+                  : t("location.selectCountry")
               }
             />
             {countrySelectionInvalid ? (
               <p className="text-xs text-destructive">
                 {countrySuggestion
-                  ? "Select a country or use the browser suggestion."
-                  : "Select a country."}
+                  ? t("location.countryRequiredWithSuggestion")
+                  : t("location.countryRequired")}
               </p>
             ) : null}
           </div>
@@ -232,7 +239,7 @@ function LocationPreferences({
               htmlFor="city-locations-input"
               className="text-base font-semibold"
             >
-              Cities
+              {t("location.cities")}
             </Label>
             <TokenizedInput
               id="city-locations-input"
@@ -241,8 +248,8 @@ function LocationPreferences({
               parseInput={parseCityLocationsInput}
               onDraftChange={onCityLocationDraftChange}
               onValuesChange={onCityLocationsChange}
-              placeholder='e.g. "London"'
-              removeLabelPrefix="Remove city"
+              placeholder={t("location.citiesPlaceholder")}
+              removeLabelPrefix={t("location.removeCity")}
             />
           </div>
         </div>
@@ -259,25 +266,25 @@ function LocationPreferences({
       ) : null}
 
       <div className="flex flex-col gap-3">
-        <p className="text-sm font-medium">Work arrangement</p>
+        <p className="text-sm font-medium">{t("location.workArrangement")}</p>
         <AutomaticMultiChoiceCardGroup
-          ariaLabel="Work arrangement"
+          ariaLabel={t("location.workArrangement")}
           values={workplaceTypes}
           columns={3}
           options={WORKPLACE_TYPE_OPTIONS.map((workplaceType) => ({
             value: workplaceType,
-            label: formatWorkplaceTypeLabel(workplaceType),
-            description: formatWorkplaceTypeDescription(workplaceType),
+            label: t(`workplace.${workplaceType}.label`),
+            description: t(`workplace.${workplaceType}.description`),
             ariaLabel:
               workplaceType === "onsite"
-                ? "Onsite"
-                : formatWorkplaceTypeLabel(workplaceType),
+                ? t("workplace.onsite.ariaLabel")
+                : t(`workplace.${workplaceType}.label`),
           }))}
           onValueChange={onToggleWorkplaceType}
         />
         {workplaceTypeSelectionInvalid ? (
           <p className="text-xs text-destructive">
-            Select at least one workplace type.
+            {t("location.workplaceRequired")}
           </p>
         ) : null}
       </div>
@@ -355,6 +362,7 @@ export function AutomaticRunAdvancedSettings({
   onRunBudgetInputChange,
   onRunBudgetInputBlur,
 }: AutomaticRunAdvancedSettingsProps) {
+  const { t } = useTranslation("pipeline");
   return (
     <Card>
       <Accordion
@@ -365,26 +373,38 @@ export function AutomaticRunAdvancedSettings({
       >
         <AccordionItem value="advanced" className="border-b-0">
           <AccordionTrigger
-            aria-label="Run settings"
+            aria-label={t("advanced.ariaLabel")}
             className="px-6 py-5 text-base font-semibold hover:no-underline"
           >
-            Advanced search settings
+            {t("advanced.title")}
           </AccordionTrigger>
           <AccordionContent className="px-6 pb-6">
             <div className="flex flex-col gap-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <RadioOptionGroup
-                  label="Location scope"
+                  label={t("advanced.locationScope")}
                   value={searchScope}
-                  options={SEARCH_SCOPE_OPTIONS}
+                  options={SEARCH_SCOPE_OPTIONS.map((option) => ({
+                    ...option,
+                    label: t(`advanced.searchScope.${option.value}.label`),
+                    description: t(
+                      `advanced.searchScope.${option.value}.description`,
+                    ),
+                  }))}
                   onChange={(value) =>
                     onSearchScopeChange(value as LocationSearchScope)
                   }
                 />
                 <RadioOptionGroup
-                  label="Match strictness"
+                  label={t("advanced.matchStrictness")}
                   value={matchStrictness}
-                  options={MATCH_STRICTNESS_OPTIONS}
+                  options={MATCH_STRICTNESS_OPTIONS.map((option) => ({
+                    ...option,
+                    label: t(`advanced.strictness.${option.value}.label`),
+                    description: t(
+                      `advanced.strictness.${option.value}.description`,
+                    ),
+                  }))}
                   onChange={(value) =>
                     onMatchStrictnessChange(value as LocationMatchStrictness)
                   }
@@ -393,7 +413,7 @@ export function AutomaticRunAdvancedSettings({
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="top-n">Resumes tailored</Label>
+                  <Label htmlFor="top-n">{t("advanced.topN")}</Label>
                   <Input
                     id="top-n"
                     type="number"
@@ -404,7 +424,7 @@ export function AutomaticRunAdvancedSettings({
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="min-score">Min suitability score</Label>
+                  <Label htmlFor="min-score">{t("advanced.minScore")}</Label>
                   <Input
                     id="min-score"
                     type="number"
@@ -417,7 +437,9 @@ export function AutomaticRunAdvancedSettings({
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="jobs-per-term">Max jobs discovered</Label>
+                  <Label htmlFor="jobs-per-term">
+                    {t("advanced.runBudget")}
+                  </Label>
                   <Input
                     id="jobs-per-term"
                     type="number"
@@ -437,15 +459,4 @@ export function AutomaticRunAdvancedSettings({
       </Accordion>
     </Card>
   );
-}
-
-function formatWorkplaceTypeLabel(workplaceType: WorkplaceType): string {
-  if (workplaceType === "onsite") return "On-site";
-  return workplaceType.charAt(0).toUpperCase() + workplaceType.slice(1);
-}
-
-function formatWorkplaceTypeDescription(workplaceType: WorkplaceType): string {
-  if (workplaceType === "remote") return "Work away from an office.";
-  if (workplaceType === "hybrid") return "Split home and office time.";
-  return "Primarily based at the workplace.";
 }

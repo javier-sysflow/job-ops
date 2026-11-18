@@ -6,6 +6,7 @@ import {
   type Transition,
   useReducedMotion,
 } from "framer-motion";
+import { Trans, useTranslation } from "react-i18next";
 import {
   Accordion,
   AccordionContent,
@@ -58,6 +59,7 @@ export function AutomaticSourcePickerCard({
   onSourceToggle,
   onWatchlistSourceToggle,
 }: AutomaticSourcePickerCardProps) {
+  const { t } = useTranslation("pipeline");
   const prefersReducedMotion = useReducedMotion();
   const sourceMotionTransition = prefersReducedMotion
     ? { duration: 0 }
@@ -86,10 +88,8 @@ export function AutomaticSourcePickerCard({
             4
           </span>
           <div className="flex min-w-0 flex-col gap-1">
-            <CardTitle>Where should Job Ops search?</CardTitle>
-            <CardDescription>
-              Review the sources that are ready for this location and search.
-            </CardDescription>
+            <CardTitle>{t("sources.title")}</CardTitle>
+            <CardDescription>{t("sources.description")}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -97,7 +97,7 @@ export function AutomaticSourcePickerCard({
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="sources" className="border-b-0">
             <AccordionTrigger
-              aria-label="Review and edit sources"
+              aria-label={t("sources.reviewAria")}
               className="gap-4 py-2 hover:no-underline"
             >
               <motion.div
@@ -112,8 +112,8 @@ export function AutomaticSourcePickerCard({
                 >
                   <p className="text-sm font-semibold text-foreground">
                     {selectedCount === 0
-                      ? "Choose sources for this run"
-                      : `${selectedCount} source${selectedCount === 1 ? "" : "s"} selected`}
+                      ? t("sources.chooseSources")
+                      : t("sources.sourcesSelected", { count: selectedCount })}
                   </p>
                 </motion.div>
                 <motion.div
@@ -122,14 +122,18 @@ export function AutomaticSourcePickerCard({
                   className="flex shrink-0 flex-wrap gap-2"
                 >
                   <Badge variant="outline" className="rounded-full">
-                    {selectedCount} selected
+                    {t("sources.selectedBadge", { total: selectedCount })}
                   </Badge>
                   <Badge variant="outline" className="rounded-full">
-                    {availableCount + watchlistSources.length} available
+                    {t("sources.availableBadge", {
+                      total: availableCount + watchlistSources.length,
+                    })}
                   </Badge>
                   {unavailableSourceRows.length > 0 ? (
                     <Badge variant="outline" className="rounded-full">
-                      {unavailableSourceRows.length} unavailable
+                      {t("sources.unavailableBadge", {
+                        total: unavailableSourceRows.length,
+                      })}
                     </Badge>
                   ) : null}
                 </motion.div>
@@ -143,7 +147,7 @@ export function AutomaticSourcePickerCard({
                 className="flex flex-col gap-5"
               >
                 <SourceGroup
-                  label="Selected"
+                  label={t("sources.selectedGroup")}
                   rows={selectedSourceRows}
                   transition={sourceMotionTransition}
                   rowInitial={sourceRowInitial}
@@ -153,7 +157,7 @@ export function AutomaticSourcePickerCard({
                   onSourceToggle={onSourceToggle}
                 />
                 <SourceGroup
-                  label="Available"
+                  label={t("sources.availableGroup")}
                   rows={readySourceRows}
                   transition={sourceMotionTransition}
                   rowInitial={sourceRowInitial}
@@ -208,6 +212,7 @@ function WatchlistSourceGroup({
   rowExit,
   onSourceToggle,
 }: WatchlistSourceGroupProps) {
+  const { t } = useTranslation("pipeline");
   return (
     <motion.div layout transition={transition} className="space-y-2">
       <motion.div
@@ -220,32 +225,40 @@ function WatchlistSourceGroup({
           transition={transition}
           className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
         >
-          Watchlist
+          {t("sources.watchlist.title")}
         </motion.p>
         {sources.length > 0 ? (
           <Badge
             variant="outline"
             className="rounded-full text-[10px] font-semibold uppercase tracking-[0.18em]"
           >
-            {selectedSourceIds.length} of {sources.length} selected
+            {t("sources.watchlist.selectedOf", {
+              selected: selectedSourceIds.length,
+              total: sources.length,
+            })}
           </Badge>
         ) : null}
       </motion.div>
 
       {isLoading ? (
         <p className="text-xs text-muted-foreground">
-          Loading Watchlist sources...
+          {t("sources.watchlist.loading")}
         </p>
       ) : sources.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          No Watchlist sources saved yet. Add company career pages on the{" "}
-          <a
-            href="/watchlist"
-            className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
-          >
-            Watchlist page
-          </a>{" "}
-          to include them in pipeline runs.
+          <Trans
+            t={t}
+            i18nKey="sources.watchlist.empty"
+            components={{
+              link: (
+                // biome-ignore lint/a11y/useAnchorContent: Trans fills in the link text.
+                <a
+                  href="/watchlist"
+                  className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                />
+              ),
+            }}
+          />
         </p>
       ) : (
         <motion.div
@@ -269,12 +282,14 @@ function WatchlistSourceGroup({
                   <Button
                     type="button"
                     variant="ghost"
-                    aria-label={`Watchlist: ${source.label}`}
+                    aria-label={t("sources.watchlist.ariaLabel", {
+                      label: source.label,
+                    })}
                     aria-pressed={isSelected}
                     title={
                       isSelected
-                        ? "Included in this run. Click to exclude."
-                        : "Click to include in this run."
+                        ? t("sources.watchlist.includedTitle")
+                        : t("sources.watchlist.excludedTitle")
                     }
                     onClick={() => onSourceToggle?.(source.id, !isSelected)}
                     className={
@@ -295,7 +310,7 @@ function WatchlistSourceGroup({
                       variant="outline"
                       className="shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em]"
                     >
-                      Watchlist
+                      {t("sources.watchlist.title")}
                     </Badge>
                   </Button>
                 </motion.div>
@@ -329,6 +344,7 @@ function SourceGroup({
   rowExit,
   onSourceToggle,
 }: SourceGroupProps) {
+  const { t } = useTranslation("pipeline");
   if (rows.length === 0) return null;
 
   return (
@@ -362,8 +378,8 @@ function SourceGroup({
                 aria-pressed={selected}
                 title={
                   selected
-                    ? "Included in this run."
-                    : "Available for this location setup."
+                    ? t("sources.includedTitle")
+                    : t("sources.availableTitle")
                 }
                 className={
                   selected
@@ -401,6 +417,7 @@ function UnavailableSourceGroup({
   rowAnimate,
   rowExit,
 }: UnavailableSourceGroupProps) {
+  const { t } = useTranslation("pipeline");
   if (rows.length === 0) return null;
 
   return (
@@ -410,7 +427,7 @@ function UnavailableSourceGroup({
         transition={transition}
         className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
       >
-        Currently unavailable
+        {t("sources.unavailableGroup")}
       </motion.p>
       <motion.div
         layout

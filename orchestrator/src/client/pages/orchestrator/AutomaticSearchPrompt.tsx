@@ -1,25 +1,23 @@
 import { ArrowRight, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 const SEARCH_PROMPT_EXAMPLES = [
   {
-    label: "Backend roles",
-    prompt:
-      "Backend engineering jobs in Manchester. Prefer TypeScript or Python and hybrid or remote roles.",
+    labelKey: "prompt.examples.backend.label",
+    promptKey: "prompt.examples.backend.prompt",
   },
   {
-    label: "Graduate jobs",
-    prompt:
-      "Graduate software engineering jobs in Manchester. Prefer backend or API work and hybrid or remote roles.",
+    labelKey: "prompt.examples.graduate.label",
+    promptKey: "prompt.examples.graduate.prompt",
   },
   {
-    label: "Paid internships",
-    prompt:
-      "Paid data analyst internships in the UK. Prefer roles using SQL, Python, or dashboards.",
+    labelKey: "prompt.examples.internships.label",
+    promptKey: "prompt.examples.internships.prompt",
   },
-];
+] as const;
 
 interface AutomaticSearchPromptProps {
   searchPrompt: string;
@@ -36,42 +34,44 @@ export function AutomaticSearchPrompt({
   onGenerateSearchPlan,
   onConfigureManually,
 }: AutomaticSearchPromptProps) {
+  const { t } = useTranslation("pipeline");
   return (
     <div className="flex w-full flex-col">
       <header className="mb-6 space-y-3">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Find your next role
+          {t("prompt.title")}
         </h1>
         <p className="max-w-lg text-sm leading-6 text-muted-foreground sm:text-base">
-          Tell us what you’re looking for. We’ll prepare a search you can
-          review.
+          {t("prompt.intro")}
         </p>
       </header>
 
       <Label htmlFor="search-plan-prompt" className="mb-2">
-        What kind of jobs are you looking for?
+        {t("prompt.label")}
       </Label>
       <Textarea
         id="search-plan-prompt"
         value={searchPrompt}
         onChange={(event) => onSearchPromptChange(event.target.value)}
-        placeholder="Backend roles in Manchester. Hybrid or remote, using TypeScript or Python."
+        placeholder={t("prompt.placeholder")}
         className="min-h-36 resize-y rounded-lg bg-background px-4 py-3 text-base leading-7 shadow-none"
       />
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground">Try:</span>
+        <span className="text-xs text-muted-foreground">
+          {t("prompt.tryLabel")}
+        </span>
         {SEARCH_PROMPT_EXAMPLES.map((example) => (
           <Button
-            key={example.label}
+            key={example.labelKey}
             type="button"
             variant="outline"
             size="sm"
             className="h-7 px-2.5 text-xs font-normal"
             disabled={isPlanningSearch}
-            onClick={() => onSearchPromptChange(example.prompt)}
+            onClick={() => onSearchPromptChange(t(example.promptKey))}
           >
-            {example.label}
+            {t(example.labelKey)}
           </Button>
         ))}
       </div>
@@ -86,7 +86,7 @@ export function AutomaticSearchPrompt({
           {isPlanningSearch ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : null}
-          {isPlanningSearch ? "Building your search…" : "Build my search"}
+          {isPlanningSearch ? t("prompt.building") : t("prompt.build")}
           {!isPlanningSearch ? <ArrowRight className="h-4 w-4" /> : null}
         </Button>
         <Button
@@ -96,11 +96,11 @@ export function AutomaticSearchPrompt({
           disabled={isPlanningSearch}
           onClick={onConfigureManually}
         >
-          Enter search details instead
+          {t("prompt.configureManually")}
         </Button>
       </div>
       <p className="mt-4 text-xs text-muted-foreground">
-        Nothing runs until you start the search.
+        {t("prompt.nothingRuns")}
       </p>
     </div>
   );
