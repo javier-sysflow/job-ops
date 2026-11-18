@@ -740,4 +740,36 @@ describe("JobPage back navigation", () => {
       expect(celebrateOffer).toHaveBeenCalled();
     });
   });
+
+  it("logs an event for an applied job without asking to move it first", async () => {
+    vi.mocked(api.getJob).mockResolvedValue(
+      createJob({ status: "applied" }) as Job,
+    );
+    vi.mocked(api.transitionJobStage).mockResolvedValue({
+      id: "evt-offer",
+      applicationId: "job-1",
+      title: "Offer Received",
+      groupId: null,
+      fromStage: "applied",
+      toStage: "offer",
+      occurredAt: 1_700_000_000,
+      metadata: null,
+      outcome: null,
+    });
+
+    renderJobPage("/job/job-1");
+
+    const logButton = await screen.findByRole("button", { name: /log event/i });
+    fireEvent.click(logButton);
+    fireEvent.click(await screen.findByTestId("mock-log-submit"));
+
+    await waitFor(() =>
+      expect(api.transitionJobStage).toHaveBeenCalledWith(
+        "job-1",
+        expect.objectContaining({ toStage: "offer" }),
+      ),
+    );
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith("Event logged");
+  });
 });

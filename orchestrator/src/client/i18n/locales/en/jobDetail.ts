@@ -138,7 +138,6 @@ const jobDetail = {
       loadJobFailed: "Failed to load job details. Please try again.",
       loadTimelineFailed: "Failed to load job timeline. Please try again.",
       loadTasksFailed: "Failed to load job tasks. Please try again.",
-      moveToInProgress: "Move this job to In Progress to track stages.",
       eventUpdated: "Event updated",
       eventLogged: "Event logged",
       logEventFailed: "Failed to log event",

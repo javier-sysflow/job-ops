@@ -143,8 +143,6 @@ const jobDetail: typeof en = {
         "求人のタイムラインを読み込めませんでした。もう一度お試しください。",
       loadTasksFailed:
         "求人のタスクを読み込めませんでした。もう一度お試しください。",
-      moveToInProgress:
-        "選考ステージを記録するには、この求人を「選考中」に移動してください。",
       eventUpdated: "イベントを更新しました",
       eventLogged: "イベントを記録しました",
       logEventFailed: "イベントを記録できませんでした",

@@ -299,8 +299,10 @@ export const JobPage: React.FC = () => {
     eventId?: string,
   ) => {
     if (!job) return;
-    if (job.status !== "in_progress") {
-      toast.error(t("page.toasts.moveToInProgress"));
+    // Applied jobs log events directly; the server moves them to
+    // in_progress once a later stage is recorded (matches the board).
+    if (job.status !== "in_progress" && job.status !== "applied") {
+      toast.error(t("page.markAppliedToTrack"));
       return;
     }
 
