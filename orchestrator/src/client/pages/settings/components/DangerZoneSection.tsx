@@ -4,10 +4,9 @@ import {
   STATUS_DESCRIPTIONS,
 } from "@client/pages/settings/constants";
 import type { JobStatus } from "@shared/types";
-import { AlertTriangle, Trash2 } from "lucide-react";
-
 import type React from "react";
 import { useState } from "react";
+import { AlertTriangle, Trash2 } from "@/components/icons";
 
 import {
   AlertDialog,

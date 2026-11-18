@@ -1,5 +1,5 @@
-import { CheckCircle2 } from "lucide-react";
 import type React from "react";
+import { CheckCircle2 } from "@/components/icons";
 import type { ValidationState } from "../types";
 
 export const InlineValidation: React.FC<{

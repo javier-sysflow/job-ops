@@ -34,6 +34,12 @@ import type {
   JobListItem,
   ResumeProjectCatalogItem,
 } from "@shared/types.js";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { parseJobBrief } from "@/client/components/JobBriefPane";
+import { showErrorToast } from "@/client/lib/error-toast";
 import {
   AlertTriangle,
   ArrowRight,
@@ -53,13 +59,7 @@ import {
   Star,
   Upload,
   XCircle,
-} from "lucide-react";
-import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { parseJobBrief } from "@/client/components/JobBriefPane";
-import { showErrorToast } from "@/client/lib/error-toast";
+} from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {

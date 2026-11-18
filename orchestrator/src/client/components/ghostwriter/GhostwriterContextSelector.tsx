@@ -18,12 +18,18 @@ import type {
   JobNote,
   PostApplicationJobEmailItem,
 } from "@shared/types";
-import { ChevronDown, FileText, Info, Mail, Paperclip } from "lucide-react";
 import type React from "react";
 import {
   canUseJobDocumentForTextContext,
   formatJobDocumentByteSize,
 } from "@/client/lib/job-documents";
+import {
+  ChevronDown,
+  FileText,
+  Info,
+  Mail,
+  Paperclip,
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

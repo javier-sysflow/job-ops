@@ -1,6 +1,6 @@
 import type { VariantProps } from "class-variance-authority";
-import { ExternalLink } from "lucide-react";
 import type React from "react";
+import { ExternalLink } from "@/components/icons";
 import { Button, type buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { KbdHint } from "./KbdHint";

@@ -1,9 +1,15 @@
 import { isAwaitingAiScore, ScoreRing } from "@client/components";
 import type { AppliedDuplicateMatch, Job, JobListItem } from "@shared/types.js";
-import { Calendar, DollarSign, Loader2, MapPin, Search } from "lucide-react";
 import type React from "react";
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import {
+  Calendar,
+  DollarSign,
+  Loader2,
+  MapPin,
+  Search,
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { cn, formatDate, formatJobSourceLabel, sourceLabel } from "@/lib/utils";
 import { useSettings } from "../hooks/useSettings";

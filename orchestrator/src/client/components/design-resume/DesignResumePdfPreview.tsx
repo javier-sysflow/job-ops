@@ -4,13 +4,13 @@ import type {
   PdfRenderer,
   TypstTheme,
 } from "@shared/types";
-import { FileText, Loader2, Minus, Plus } from "lucide-react";
 import {
   GlobalWorkerOptions,
   getDocument,
   type PDFDocumentProxy,
 } from "pdfjs-dist";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { FileText, Loader2, Minus, Plus } from "@/components/icons";
 import { trackProductEvent } from "@/lib/analytics";
 
 type DesignResumePdfPreviewProps = {

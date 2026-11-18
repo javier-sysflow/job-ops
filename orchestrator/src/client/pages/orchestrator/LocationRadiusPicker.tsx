@@ -1,9 +1,9 @@
 import { detectLocationCountry } from "@client/api";
 import { formatCountryLabel } from "@shared/location-support.js";
 import type { LocationProximity } from "@shared/types";
-import { LocateFixed, MapPin } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { LocateFixed, MapPin } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Field,

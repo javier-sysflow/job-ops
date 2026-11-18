@@ -3,17 +3,17 @@ import type {
   PostApplicationProcessingStatus,
 } from "@shared/types.js";
 import { useQuery } from "@tanstack/react-query";
+import React from "react";
+import * as api from "@/client/api";
+import { useQueryErrorToast } from "@/client/hooks/useQueryErrorToast";
+import { queryKeys } from "@/client/lib/queryKeys";
 import {
   CircleUserRound,
   ExternalLink,
   Inbox,
   Mail,
   MailWarning,
-} from "lucide-react";
-import React from "react";
-import * as api from "@/client/api";
-import { useQueryErrorToast } from "@/client/hooks/useQueryErrorToast";
-import { queryKeys } from "@/client/lib/queryKeys";
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatDateTime } from "@/lib/utils";

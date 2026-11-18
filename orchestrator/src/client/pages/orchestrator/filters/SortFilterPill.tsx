@@ -1,5 +1,5 @@
-import { ArrowDownUp } from "lucide-react";
 import type React from "react";
+import { ArrowDownUp } from "@/components/icons";
 import {
   Select,
   SelectContent,

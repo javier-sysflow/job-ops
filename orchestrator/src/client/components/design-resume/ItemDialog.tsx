@@ -4,8 +4,8 @@ import type {
   DesignResumeAiFieldValueType,
   DesignResumeJson,
 } from "@shared/types";
-import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Plus, Trash2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

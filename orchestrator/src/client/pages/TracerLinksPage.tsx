@@ -6,12 +6,12 @@ import type {
   TracerAnalyticsTopJob,
 } from "@shared/types.js";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, Copy, ExternalLink, Loader2 } from "lucide-react";
 import type React from "react";
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { queryKeys } from "@/client/lib/queryKeys";
+import { BarChart3, Copy, ExternalLink, Loader2 } from "@/components/icons";
 import {
   Accordion,
   AccordionContent,

@@ -1,5 +1,5 @@
-import { ChevronDown, ChevronUp } from "lucide-react";
 import type React from "react";
+import { ChevronDown, ChevronUp } from "@/components/icons";
 
 interface CollapsibleSectionProps {
   isOpen: boolean;

@@ -3,13 +3,13 @@ import type {
   JobChatImageAttachment,
   JobChatMessageStatus,
 } from "@shared/types";
-import { Check, Copy, Pencil, RefreshCcw } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { showErrorToast } from "@/client/lib/error-toast";
+import { Check, Copy, Pencil, RefreshCcw } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { BranchNavigator } from "./BranchNavigator";

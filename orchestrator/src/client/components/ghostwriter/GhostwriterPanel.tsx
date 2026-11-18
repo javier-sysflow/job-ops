@@ -9,12 +9,12 @@ import type {
   JobNote,
   PostApplicationJobEmailItem,
 } from "@shared/types";
-import { Settings2 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { showErrorToast } from "@/client/lib/error-toast";
+import { Settings2 } from "@/components/icons";
 import {
   AlertDialog,
   AlertDialogAction,

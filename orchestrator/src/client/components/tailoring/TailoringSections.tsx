@@ -4,6 +4,9 @@ import type {
   ResumeProjectCatalogItem,
   ResumeProjectsSettings,
 } from "@shared/types.js";
+import type React from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Tip } from "@/client/components/Tip";
 import {
   CheckCircle2,
   Circle,
@@ -14,10 +17,7 @@ import {
   Sparkles,
   Trash2,
   Undo2,
-} from "lucide-react";
-import type React from "react";
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Tip } from "@/client/components/Tip";
+} from "@/components/icons";
 import {
   Accordion,
   AccordionContent,

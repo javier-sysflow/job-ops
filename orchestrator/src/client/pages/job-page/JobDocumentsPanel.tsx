@@ -1,18 +1,6 @@
 import * as api from "@client/api";
 import type { Job, JobDocument } from "@shared/types.js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  Download,
-  ExternalLink,
-  File as FileIcon,
-  FileText,
-  ImageIcon,
-  Loader2,
-  RefreshCcw,
-  Trash2,
-  Upload,
-} from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -36,6 +24,18 @@ import {
 } from "@/client/lib/private-pdf";
 import { queryKeys } from "@/client/lib/queryKeys";
 import { useObjectUrl } from "@/client/lib/useObjectUrl";
+import {
+  AlertTriangle,
+  Download,
+  ExternalLink,
+  File as FileIcon,
+  FileText,
+  ImageIcon,
+  Loader2,
+  RefreshCcw,
+  Trash2,
+  Upload,
+} from "@/components/icons";
 import {
   Accordion,
   AccordionContent,

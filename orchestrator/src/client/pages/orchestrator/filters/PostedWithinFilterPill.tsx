@@ -1,5 +1,5 @@
-import { Clock } from "lucide-react";
 import type React from "react";
+import { Clock } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { postedWithinOptions } from "../constants";
 import { FilterPill } from "./FilterPill";

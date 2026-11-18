@@ -19,6 +19,8 @@ import { PageHeader, PageMain } from "@client/components/layout";
 import { SectionWorkspacePanel } from "@client/components/section-workspace/SectionWorkspace";
 import { useDesignResumeStudio } from "@client/hooks/useDesignResumeStudio";
 import type { DesignResumeJson } from "@shared/types";
+import type React from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import {
   Download,
   FileDown,
@@ -26,9 +28,7 @@ import {
   ListPlus,
   MoreHorizontal,
   PenSquare,
-} from "lucide-react";
-import type React from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+} from "@/components/icons";
 import {
   AlertDialog,
   AlertDialogAction,

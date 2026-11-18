@@ -1,5 +1,5 @@
-import { Search } from "lucide-react";
 import type React from "react";
+import { Search } from "@/components/icons";
 import {
   Accordion,
   AccordionContent,

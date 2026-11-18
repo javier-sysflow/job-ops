@@ -9,11 +9,11 @@ import type {
   DesignResumeJson,
   JobChatImageAttachment,
 } from "@shared/types";
-import { Check, GripHorizontal, Sparkles, X } from "lucide-react";
 import type React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { showErrorToast } from "@/client/lib/error-toast";
+import { Check, GripHorizontal, Sparkles, X } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Popover,

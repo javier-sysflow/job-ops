@@ -8,7 +8,7 @@ import {
   Link2,
   Settings,
   Shield,
-} from "lucide-react";
+} from "@/components/icons";
 
 export type NavLink = {
   to: string;

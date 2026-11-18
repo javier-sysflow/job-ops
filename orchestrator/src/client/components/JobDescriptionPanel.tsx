@@ -3,6 +3,9 @@ import {
   getRenderableJobDescription,
   looksLikeHtmlJobDescription,
 } from "@client/lib/jobDescription";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   Copy,
   Edit2,
@@ -10,10 +13,7 @@ import {
   FileText,
   Loader2,
   Save,
-} from "lucide-react";
-import type React from "react";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+} from "@/components/icons";
 import {
   Accordion,
   AccordionContent,

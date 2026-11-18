@@ -1,7 +1,7 @@
 import type { Job } from "@shared/types.js";
-import { Send, Sparkles } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Send, Sparkles } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 

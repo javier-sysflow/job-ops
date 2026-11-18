@@ -4,9 +4,9 @@ import { SettingsSectionFrame } from "@client/pages/settings/components/Settings
 import type { BackupValues } from "@client/pages/settings/types";
 import type { UpdateSettingsInput } from "@shared/settings-schema.js";
 import type { BackupInfo } from "@shared/types.js";
-import { Archive, Clock, Trash2 } from "lucide-react";
 import type React from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import { Archive, Clock, Trash2 } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

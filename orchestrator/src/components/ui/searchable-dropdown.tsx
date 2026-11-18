@@ -1,5 +1,5 @@
-import { Check, ChevronsUpDown, Search } from "lucide-react";
 import * as React from "react";
+import { Check, ChevronsUpDown, Search } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Popover,

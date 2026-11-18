@@ -3,8 +3,8 @@
  */
 
 import type { ManualJobDraft } from "@shared/types.js";
-import { FileText } from "lucide-react";
 import type React from "react";
+import { FileText } from "@/components/icons";
 import {
   Sheet,
   SheetContent,

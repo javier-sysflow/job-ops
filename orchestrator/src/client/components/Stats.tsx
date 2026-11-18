@@ -3,6 +3,7 @@
  */
 
 import type { JobStatus } from "@shared/types.js";
+import type React from "react";
 import {
   CheckCircle2,
   Clock,
@@ -10,8 +11,7 @@ import {
   Search,
   Sparkles,
   XCircle,
-} from "lucide-react";
-import type React from "react";
+} from "@/components/icons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StatsProps {

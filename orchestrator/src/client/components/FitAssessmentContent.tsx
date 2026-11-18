@@ -1,5 +1,5 @@
-import { Glasses } from "lucide-react";
 import type React from "react";
+import { Glasses } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 interface FitAssessmentContentProps {

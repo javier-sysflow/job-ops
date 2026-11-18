@@ -1,7 +1,7 @@
 import { PageHeader, StatusIndicator } from "@client/components/layout";
 import type { JobSource } from "@shared/types.js";
-import { FileText, Loader2, Search, Square, X } from "lucide-react";
 import type React from "react";
+import { FileText, Loader2, Search, Square, X } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 interface OrchestratorHeaderProps {

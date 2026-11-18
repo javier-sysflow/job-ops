@@ -5,7 +5,7 @@ import type {
 } from "@shared/location-preferences.js";
 import { formatCountryLabel } from "@shared/location-support.js";
 import type { LocationProximity } from "@shared/types";
-import { Info } from "lucide-react";
+import { Info } from "@/components/icons";
 import {
   Accordion,
   AccordionContent,

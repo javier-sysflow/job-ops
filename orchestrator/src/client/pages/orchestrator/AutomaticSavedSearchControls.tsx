@@ -1,5 +1,5 @@
 import type { PipelineSearchPreset } from "@shared/types";
-import { BookmarkPlus, Save, Trash2 } from "lucide-react";
+import { BookmarkPlus, Save, Trash2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {

@@ -1,4 +1,4 @@
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

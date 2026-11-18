@@ -1,5 +1,5 @@
-import { CalendarDays } from "lucide-react";
 import type React from "react";
+import { CalendarDays } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

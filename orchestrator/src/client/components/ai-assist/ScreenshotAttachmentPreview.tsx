@@ -1,6 +1,6 @@
 import type { JobChatImageAttachment } from "@shared/types";
-import { X } from "lucide-react";
 import { useState } from "react";
+import { X } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

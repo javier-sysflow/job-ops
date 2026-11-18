@@ -1,8 +1,13 @@
-import { AlertTriangle, ExternalLink, Home, RotateCcw } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ApiClientError } from "@/client/api/core";
 import { showErrorToast } from "@/client/lib/error-toast";
+import {
+  AlertTriangle,
+  ExternalLink,
+  Home,
+  RotateCcw,
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { GITHUB_REPO, getCurrentAppVersion } from "../lib/version";
 

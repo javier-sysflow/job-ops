@@ -1,5 +1,5 @@
-import { GripVertical } from "lucide-react";
 import type React from "react";
+import { GripVertical } from "@/components/icons";
 import {
   AccordionContent,
   AccordionItem,

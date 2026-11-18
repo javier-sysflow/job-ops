@@ -1,3 +1,6 @@
+import type { DragEvent } from "react";
+import { useId, useMemo, useRef, useState } from "react";
+import { Tip } from "@/client/components/Tip";
 import {
   Bot,
   Eye,
@@ -7,10 +10,7 @@ import {
   Pencil,
   Plus,
   Trash2,
-} from "lucide-react";
-import type { DragEvent } from "react";
-import { useId, useMemo, useRef, useState } from "react";
-import { Tip } from "@/client/components/Tip";
+} from "@/components/icons";
 import {
   AlertDialog,
   AlertDialogAction,

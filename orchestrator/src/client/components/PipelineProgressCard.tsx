@@ -1,7 +1,7 @@
 import NumberFlow from "@number-flow/react";
 import type { PipelineProgressState } from "@shared/types";
 import { useReducedMotion } from "framer-motion";
-import { CircleX } from "lucide-react";
+import { CircleX } from "@/components/icons";
 import "slot-text/style.css";
 import { SlotText } from "slot-text/react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

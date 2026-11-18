@@ -1,7 +1,7 @@
-import { FileText, Upload } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import type { LlmProviderId } from "@/client/pages/settings/utils";
+import { FileText, Upload } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";

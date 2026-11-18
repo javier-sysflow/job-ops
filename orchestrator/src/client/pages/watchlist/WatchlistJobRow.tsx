@@ -4,6 +4,8 @@ import type {
   WatchlistSelectedSource,
   WatchlistWorkspaceJobReference,
 } from "@shared/types.js";
+import { useState } from "react";
+import { Tip } from "@/client/components/Tip";
 import {
   ExternalLinkIcon,
   Eye,
@@ -13,9 +15,7 @@ import {
   Loader2,
   MoreHorizontal,
   RotateCcw,
-} from "lucide-react";
-import { useState } from "react";
-import { Tip } from "@/client/components/Tip";
+} from "@/components/icons";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {

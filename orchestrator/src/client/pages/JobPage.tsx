@@ -9,17 +9,6 @@ import {
   type StageEvent,
 } from "@shared/types.js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  ClipboardList,
-  DollarSign,
-  ExternalLink,
-  FileText,
-  MessageSquareText,
-  PlusCircle,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
 import React from "react";
 import {
   Link,
@@ -58,6 +47,17 @@ import {
 } from "@/client/lib/pdf-freshness";
 import { downloadJobPdf, openJobPdf } from "@/client/lib/private-pdf";
 import { queryKeys } from "@/client/lib/queryKeys";
+import {
+  ArrowLeft,
+  ClipboardList,
+  DollarSign,
+  ExternalLink,
+  FileText,
+  MessageSquareText,
+  PlusCircle,
+  Sparkles,
+  Trash2,
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

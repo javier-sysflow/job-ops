@@ -3,9 +3,9 @@
  * Shows daily application volume over a selected time range.
  */
 
-import { TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { TrendingDown, TrendingUp } from "@/components/icons";
 
 import {
   Card,

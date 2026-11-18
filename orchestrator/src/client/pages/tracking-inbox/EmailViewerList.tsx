@@ -1,6 +1,6 @@
 import type { JobListItem, PostApplicationInboxItem } from "@shared/types";
-import { CheckCircle2, CircleUserRound, XCircle } from "lucide-react";
 import type React from "react";
+import { CheckCircle2, CircleUserRound, XCircle } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { SearchableDropdown } from "@/components/ui/searchable-dropdown";
 import { formatDateTime } from "@/lib/utils";

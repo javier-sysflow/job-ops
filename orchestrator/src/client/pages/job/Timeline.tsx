@@ -4,6 +4,7 @@ import {
   STAGE_LABELS,
   type StageEvent,
 } from "@shared/types.js";
+import React from "react";
 import {
   CheckCircle2,
   ClipboardList,
@@ -16,8 +17,7 @@ import {
   Trash2,
   UserRound,
   Video,
-} from "lucide-react";
-import React from "react";
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatTimestamp, formatTimestampWithTime } from "@/lib/utils";
 

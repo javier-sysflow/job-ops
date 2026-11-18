@@ -1,8 +1,8 @@
 import { isAwaitingAiScore } from "@client/components";
 import type { JobListItem } from "@shared/types.js";
-import { Loader2, XCircle } from "lucide-react";
 import { Tip } from "@/client/components/Tip";
 import { isPdfRegenerating, isPdfStale } from "@/client/lib/pdf-freshness";
+import { Loader2, XCircle } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { defaultStatusToken, statusTokens } from "./constants";
 

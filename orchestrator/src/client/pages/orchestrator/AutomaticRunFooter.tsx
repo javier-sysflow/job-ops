@@ -1,4 +1,4 @@
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

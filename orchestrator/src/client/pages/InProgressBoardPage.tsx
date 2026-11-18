@@ -11,13 +11,6 @@ import {
   type StageEvent,
 } from "@shared/types.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowDownAZ,
-  ChevronLeft,
-  ChevronRight,
-  Columns3,
-  Plus,
-} from "lucide-react";
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -27,6 +20,13 @@ import { celebrateOffer } from "@/client/lib/celebrate";
 import { showErrorToast } from "@/client/lib/error-toast";
 import { logJobStageEvent } from "@/client/lib/logJobStageEvent";
 import { queryKeys } from "@/client/lib/queryKeys";
+import {
+  ArrowDownAZ,
+  ChevronLeft,
+  ChevronRight,
+  Columns3,
+  Plus,
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

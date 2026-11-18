@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
 import type React from "react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { X } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";

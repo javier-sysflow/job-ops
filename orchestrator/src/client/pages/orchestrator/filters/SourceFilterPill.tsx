@@ -1,5 +1,5 @@
-import { Globe } from "lucide-react";
 import type React from "react";
+import { Globe } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { sourceLabel } from "@/lib/utils";
 import { orderedFilterSources } from "../constants";

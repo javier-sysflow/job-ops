@@ -1,7 +1,7 @@
 import type { Job } from "@shared/types";
-import { Maximize2, Minimize2, PanelRightOpen } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { Maximize2, Minimize2, PanelRightOpen } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,

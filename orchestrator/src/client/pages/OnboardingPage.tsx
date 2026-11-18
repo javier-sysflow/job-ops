@@ -12,6 +12,11 @@ import type {
   ResumeProfile,
 } from "@shared/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Navigate } from "react-router-dom";
+import * as api from "@/client/api";
+import { queryKeys } from "@/client/lib/queryKeys";
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,12 +28,7 @@ import {
   MapPin,
   Sparkles,
   UserPlus,
-} from "lucide-react";
-import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Navigate } from "react-router-dom";
-import * as api from "@/client/api";
-import { queryKeys } from "@/client/lib/queryKeys";
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";

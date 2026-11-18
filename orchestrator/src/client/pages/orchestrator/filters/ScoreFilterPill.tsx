@@ -1,5 +1,5 @@
-import { Star } from "lucide-react";
 import type React from "react";
+import { Star } from "@/components/icons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {

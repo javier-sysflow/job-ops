@@ -1,5 +1,5 @@
-import { XCircle } from "lucide-react";
 import type React from "react";
+import { XCircle } from "@/components/icons";
 
 import { Progress } from "@/components/ui/progress";
 

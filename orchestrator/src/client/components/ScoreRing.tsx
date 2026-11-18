@@ -1,9 +1,9 @@
 import NumberFlow from "@number-flow/react";
 import type { Job } from "@shared/types.js";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
+import { Loader2 } from "@/components/icons";
 import {
   Popover,
   PopoverContent,

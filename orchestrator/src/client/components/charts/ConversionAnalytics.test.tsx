@@ -68,7 +68,7 @@ vi.mock("recharts", () => ({
   ),
 }));
 
-vi.mock("lucide-react", () => ({
+vi.mock("@/components/icons", () => ({
   TrendingUp: () => <div data-testid="trending-up">TrendingUp</div>,
   TrendingDown: () => <div data-testid="trending-down">TrendingDown</div>,
 }));

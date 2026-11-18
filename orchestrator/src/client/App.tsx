@@ -2,7 +2,6 @@
  * Main App component.
  */
 
-import { X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Navigate,
@@ -12,6 +11,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
+import { X } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";

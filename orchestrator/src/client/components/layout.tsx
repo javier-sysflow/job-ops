@@ -4,15 +4,15 @@
 
 import { getAppStatus, logout } from "@client/api";
 import { useQuery } from "@tanstack/react-query";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ExternalLink,
   LogOut,
   type LucideIcon,
   Menu,
   UserRound,
-} from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

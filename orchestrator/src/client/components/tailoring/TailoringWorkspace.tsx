@@ -4,13 +4,6 @@ import { useSettings } from "@client/hooks/useSettings";
 import { useTracerReadiness } from "@client/hooks/useTracerReadiness";
 import { resolveResumeProjectSelection } from "@shared/resume-projects";
 import type { Job } from "@shared/types.js";
-import {
-  Check,
-  CircleAlert,
-  FileText,
-  Loader2,
-  RefreshCcw,
-} from "lucide-react";
 import type React from "react";
 import type { ComponentProps } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -18,6 +11,13 @@ import { toast } from "sonner";
 import { Tip } from "@/client/components/Tip";
 import { formatUserFacingError } from "@/client/lib/error-format";
 import { showErrorToast } from "@/client/lib/error-toast";
+import {
+  Check,
+  CircleAlert,
+  FileText,
+  Loader2,
+  RefreshCcw,
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   fromEditableSkillGroups,

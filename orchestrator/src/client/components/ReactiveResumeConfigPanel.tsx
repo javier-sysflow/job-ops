@@ -17,8 +17,8 @@ import {
   TYPST_THEME_VALUES,
   type TypstTheme,
 } from "@shared/types.js";
-import { AlertCircle, AlertTriangle } from "lucide-react";
 import type React from "react";
+import { AlertCircle, AlertTriangle } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
