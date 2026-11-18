@@ -23,6 +23,17 @@ const enums: typeof en = {
     closed: "終了",
     no_change: "変更なし",
   },
+  applicationStageJapanese: {
+    applied: "応募済み",
+    recruiter_screen: "書類選考",
+    assessment: "適性検査",
+    hiring_manager_screen: "一次面接",
+    technical_interview: "二次面接",
+    onsite: "最終面接",
+    offer: "内定",
+    closed: "終了",
+    no_change: "変更なし",
+  },
   outcome: {
     offer_accepted: "内定承諾",
     offer_declined: "内定辞退",

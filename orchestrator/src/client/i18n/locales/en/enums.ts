@@ -22,6 +22,19 @@ const enums = {
     closed: "Closed",
     no_change: "No change",
   },
+  // Fork: the same stages labelled as the Japanese hiring sequence, used when
+  // the "Application stages" display setting is "Japanese hiring process".
+  applicationStageJapanese: {
+    applied: "Applied",
+    recruiter_screen: "Document screening",
+    assessment: "Aptitude test",
+    hiring_manager_screen: "1st interview",
+    technical_interview: "2nd interview",
+    onsite: "Final interview",
+    offer: "Offer",
+    closed: "Closed",
+    no_change: "No change",
+  },
   outcome: {
     offer_accepted: "Offer accepted",
     offer_declined: "Offer declined",

@@ -82,6 +82,15 @@ export const PDF_PAPER_SIZE_LABELS: Record<PdfPaperSize, string> = {
   letter: "US Letter",
 };
 
+/**
+ * Fork: how application stages are labelled in the UI. "japanese" relabels
+ * the same stages as the Japanese hiring sequence (書類選考 → 適性検査 →
+ * 一次面接 → 二次面接 → 最終面接 → 内定). Stored stage values do not change.
+ */
+export const APPLICATION_STAGE_STYLE_VALUES = ["standard", "japanese"] as const;
+export type ApplicationStageStyle =
+  (typeof APPLICATION_STAGE_STYLE_VALUES)[number];
+
 export const CHAT_STYLE_LANGUAGE_MODE_VALUES = [
   "manual",
   "match-resume",
@@ -263,6 +272,7 @@ export interface AppSettings {
   pdfRenderer: Resolved<PdfRenderer>;
   typstTheme: Resolved<TypstTheme>;
   pdfPaperSize: Resolved<PdfPaperSize>;
+  applicationStageStyle: Resolved<ApplicationStageStyle>;
   ukvisajobsMaxJobs: Resolved<number>;
   adzunaMaxJobsPerTerm: Resolved<number>;
   gradcrackerMaxJobsPerTerm: Resolved<number>;

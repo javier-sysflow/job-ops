@@ -174,6 +174,7 @@ async function classifyWithSmartRouterImpl(args: {
 - Choose bestMatchIndex only from listed job numbers (1-based), or null.
 - confidence is 0..100.
 - stageTarget must be one of: ${POST_APPLICATION_ROUTER_STAGE_TARGETS.join("|")}.
+- Japanese hiring steps map to: 書類選考=recruiter_screen, 適性検査/SPI/Webテスト=assessment, 一次面接=hiring_manager_screen, 二次面接=technical_interview, 最終面接/役員面接=onsite, 内定=offer, お見送り/不採用=rejected.
 - isRelevant should be true for recruitment/application lifecycle emails.
 - stageEventPayload should be minimal structured data or null.
 

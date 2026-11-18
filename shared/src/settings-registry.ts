@@ -6,6 +6,8 @@ import {
 } from "./location-preferences";
 import { getDefaultPromptTemplate } from "./prompt-template-definitions";
 import {
+  APPLICATION_STAGE_STYLE_VALUES,
+  type ApplicationStageStyle,
   CHAT_STYLE_LANGUAGE_MODE_VALUES,
   CHAT_STYLE_MANUAL_LANGUAGE_VALUES,
   type ChatStyleLanguageMode,
@@ -222,6 +224,9 @@ const parseChatStyleManualLanguageOrNull = createEnumParser(
 const parsePdfRendererOrNull = createEnumParser(PDF_RENDERER_VALUES);
 const parseTypstThemeOrNull = createEnumParser(TYPST_THEME_VALUES);
 const parsePdfPaperSizeOrNull = createEnumParser(PDF_PAPER_SIZE_VALUES);
+const parseApplicationStageStyleOrNull = createEnumParser(
+  APPLICATION_STAGE_STYLE_VALUES,
+);
 
 const llmPurposeOverrideSchema = z.object({
   provider: z.preprocess(
@@ -474,6 +479,16 @@ export const settingsRegistry = {
     parse: parsePdfPaperSizeOrNull,
     serialize: (value: PdfPaperSize | null | undefined): string | null =>
       value ?? null,
+  },
+  // Fork: label application stages as the Japanese hiring sequence.
+  applicationStageStyle: {
+    kind: "typed" as const,
+    schema: z.enum(APPLICATION_STAGE_STYLE_VALUES),
+    default: (): ApplicationStageStyle => "standard",
+    parse: parseApplicationStageStyleOrNull,
+    serialize: (
+      value: ApplicationStageStyle | null | undefined,
+    ): string | null => value ?? null,
   },
   ukvisajobsMaxJobs: {
     kind: "typed" as const,

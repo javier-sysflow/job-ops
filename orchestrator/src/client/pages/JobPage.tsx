@@ -1,4 +1,4 @@
-import { stageLabel } from "@client/i18n/labels";
+import { stageEventTitle, stageLabel } from "@client/i18n/labels";
 import { resolveResumeProjectSelection } from "@shared/resume-projects";
 import type {
   ApplicationStage,
@@ -551,8 +551,12 @@ export const JobPage: React.FC = () => {
   const baseJobPath = id ? `/job/${id}` : "";
   const latestNote = notes[0] ?? null;
   const latestEvent = events.at(-1) ?? null;
-  const latestEventTitle =
-    latestEvent?.metadata?.eventLabel || latestEvent?.title || null;
+  const latestEventTitle = latestEvent
+    ? stageEventTitle(
+        latestEvent.metadata?.eventLabel || latestEvent.title,
+        latestEvent.toStage,
+      )
+    : null;
   const jobDescriptionPreview = summarizeMemoryText(job?.jobDescription, 260);
   const latestNotePreview = summarizeMemoryText(latestNote?.content, 180);
   const initialGhostwriterPrompt =

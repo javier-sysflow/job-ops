@@ -1,4 +1,5 @@
 import type {
+  ApplicationStageStyle,
   ChatStyleLanguageMode,
   ChatStyleManualLanguage,
   LlmPurposeApiKeyHints,
@@ -26,6 +27,7 @@ export type DisplayValues = {
   showSponsorInfo: EffectiveDefault<boolean>;
   renderMarkdownInJobDescriptions: EffectiveDefault<boolean>;
   autoTailorOnManualImport: EffectiveDefault<boolean>;
+  applicationStageStyle: EffectiveDefault<ApplicationStageStyle>;
 };
 export type ChatValues = {
   tone: EffectiveDefault<string>;

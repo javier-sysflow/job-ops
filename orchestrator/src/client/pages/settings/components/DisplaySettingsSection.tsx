@@ -1,10 +1,21 @@
 import { SettingsSectionFrame } from "@client/pages/settings/components/SettingsSectionFrame";
 import type { DisplayValues } from "@client/pages/settings/types";
 import type { UpdateSettingsInput } from "@shared/settings-schema.js";
+import {
+  APPLICATION_STAGE_STYLE_VALUES,
+  type ApplicationStageStyle,
+} from "@shared/types.js";
 import type React from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
 type DisplaySettingsSectionProps = {
@@ -27,6 +38,7 @@ export const DisplaySettingsSection: React.FC<DisplaySettingsSectionProps> = ({
     showSponsorInfo,
     renderMarkdownInJobDescriptions,
     autoTailorOnManualImport,
+    applicationStageStyle,
   } = values;
   const { control } = useFormContext<UpdateSettingsInput>();
 
@@ -129,6 +141,47 @@ export const DisplaySettingsSection: React.FC<DisplaySettingsSectionProps> = ({
               {t("display.autoTailorHelp")}
             </p>
           </div>
+        </div>
+
+        <Separator />
+
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="applicationStageStyle"
+            className="text-sm font-medium leading-none"
+          >
+            {t("display.stageStyleLabel")}
+          </label>
+          <Controller
+            name="applicationStageStyle"
+            control={control}
+            render={({ field }) => (
+              <Select
+                value={field.value ?? applicationStageStyle.default}
+                onValueChange={(value) =>
+                  field.onChange(value as ApplicationStageStyle)
+                }
+                disabled={isLoading || isSaving}
+              >
+                <SelectTrigger
+                  id="applicationStageStyle"
+                  className="w-full sm:w-72"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {APPLICATION_STAGE_STYLE_VALUES.map((style) => (
+                    <SelectItem key={style} value={style}>
+                      {t(`display.stageStyles.${style}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          <p className="text-xs text-muted-foreground">
+            {t("display.stageStyleHelp")}
+          </p>
         </div>
 
         <Separator />

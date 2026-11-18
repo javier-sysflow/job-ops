@@ -1,5 +1,5 @@
 import { CollapsibleSection } from "@client/components/discovered-panel/CollapsibleSection";
-import { stageLabel } from "@client/i18n/labels";
+import { stageEventTitle } from "@client/i18n/labels";
 import type { ApplicationStage, StageEvent } from "@shared/types.js";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -157,7 +157,7 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
         }
 
         if (entry.kind === "event") {
-          const title = entry.event.title || stageLabel(entry.event.toStage);
+          const title = stageEventTitle(entry.event.title, entry.event.toStage);
           const note = entry.event.metadata?.note;
           const reason = entry.event.metadata?.reasonCode;
           const isCurrent =
@@ -240,7 +240,7 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
                     <TimelineRow
                       key={event.id}
                       date={formatTimestampWithTime(event.occurredAt)}
-                      title={event.title || stageLabel(event.toStage)}
+                      title={stageEventTitle(event.title, event.toStage)}
                       icon={stageIcons[event.toStage]}
                       isCompact
                       isLast={false}

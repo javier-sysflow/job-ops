@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { AppModeContext, AppShell } from "./components/layout";
 import { OnboardingGate } from "./components/OnboardingGate";
+import { StageStyleSync } from "./components/StageStyleSync";
 import { TimeZoneSync } from "./components/TimeZoneSync";
 import { WelcomeGuideDialog } from "./components/WelcomeGuideDialog";
 import { useAnalyticsIdentity } from "./hooks/useAnalyticsIdentity";
@@ -119,6 +120,7 @@ export const App: React.FC = () => {
     <>
       <OnboardingGate />
       <TimeZoneSync />
+      <StageStyleSync />
       <WelcomeGuideDialog enabled={!isStandaloneRoute} />
       {showDemoBanners && (
         <div className="sticky top-0 z-50 w-full border-b border-amber-400/50 bg-amber-500/20 px-4 py-2 text-xs text-amber-100 shadow-sm backdrop-blur">

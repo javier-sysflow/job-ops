@@ -174,6 +174,11 @@ export const createAppSettings = (
     default: "auto",
     override: null,
   },
+  applicationStageStyle: {
+    value: "standard",
+    default: "standard",
+    override: null,
+  },
   rxresumeBaseResumeId: null,
   timeZone: null,
   ukvisajobsMaxJobs: { value: 50, default: 50, override: null },

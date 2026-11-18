@@ -88,6 +88,7 @@ const DEFAULT_FORM_VALUES: UpdateSettingsInput = {
   showSponsorInfo: null,
   renderMarkdownInJobDescriptions: null,
   autoTailorOnManualImport: null,
+  applicationStageStyle: "standard",
   chatStyleTone: "",
   chatStyleFormality: "",
   chatStyleConstraints: "",
@@ -355,6 +356,7 @@ const SECTION_FIELD_MAP: Record<
     "showSponsorInfo",
     "renderMarkdownInJobDescriptions",
     "autoTailorOnManualImport",
+    "applicationStageStyle",
   ],
   backup: ["backupEnabled", "backupHour", "backupMaxCount"],
   "danger-zone": [],
@@ -431,6 +433,7 @@ const NULL_SETTINGS_PAYLOAD: UpdateSettingsInput = {
   showSponsorInfo: null,
   renderMarkdownInJobDescriptions: null,
   autoTailorOnManualImport: null,
+  applicationStageStyle: null,
   chatStyleTone: null,
   chatStyleFormality: null,
   chatStyleConstraints: null,
@@ -500,6 +503,8 @@ const mapSettingsToForm = (data: AppSettings): UpdateSettingsInput => ({
   renderMarkdownInJobDescriptions:
     data.renderMarkdownInJobDescriptions.override,
   autoTailorOnManualImport: data.autoTailorOnManualImport.override,
+  applicationStageStyle:
+    data.applicationStageStyle.override ?? data.applicationStageStyle.value,
   chatStyleTone: data.chatStyleTone.override ?? "",
   chatStyleFormality: data.chatStyleFormality.override ?? "",
   chatStyleConstraints: data.chatStyleConstraints.override ?? "",
@@ -678,6 +683,10 @@ const getDerivedSettings = (settings: AppSettings | null) => {
       autoTailorOnManualImport: {
         effective: settings?.autoTailorOnManualImport?.value ?? true,
         default: settings?.autoTailorOnManualImport?.default ?? true,
+      },
+      applicationStageStyle: {
+        effective: settings?.applicationStageStyle?.value ?? "standard",
+        default: settings?.applicationStageStyle?.default ?? "standard",
       },
     },
     chat: {
@@ -1252,6 +1261,10 @@ export const SettingsPage: React.FC = () => {
         autoTailorOnManualImport: nullIfSame(
           data.autoTailorOnManualImport,
           display.autoTailorOnManualImport.default,
+        ),
+        applicationStageStyle: nullIfSame(
+          data.applicationStageStyle,
+          display.applicationStageStyle.default,
         ),
         chatStyleTone: normalizeString(data.chatStyleTone),
         chatStyleFormality: normalizeString(data.chatStyleFormality),

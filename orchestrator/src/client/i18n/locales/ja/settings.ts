@@ -391,6 +391,13 @@ const settings: typeof en = {
     markdownDefault: "Markdown表示（既定）",
     autoTailorEffective: "取り込み時の自動最適化（適用中）",
     autoTailorDefault: "取り込み時の自動最適化（既定）",
+    stageStyleLabel: "選考ステップの表示",
+    stageStyleHelp:
+      "選考ボード、求人のタイムライン、「イベントを記録」で使うステップ名です。「日本の選考フロー」では 書類選考 → 適性検査 → 一次面接 → 二次面接 → 最終面接 → 内定 と表示します。登録済みの求人の選考状況はそのまま変わりません。",
+    stageStyles: {
+      standard: "標準",
+      japanese: "日本の選考フロー",
+    },
   },
   environment: {
     title: "環境とワークスペース",

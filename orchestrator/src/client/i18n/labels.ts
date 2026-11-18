@@ -7,24 +7,49 @@
  */
 
 import { getCountryIso2Code } from "@shared/location-support";
-import type {
-  ApplicationStage,
-  ApplicationTaskType,
-  InterviewOutcome,
-  InterviewType,
-  JobOutcome,
-  JobStatus,
-  PdfRenderer,
-  TypstTheme,
+import {
+  type ApplicationStage,
+  type ApplicationTaskType,
+  type InterviewOutcome,
+  type InterviewType,
+  type JobOutcome,
+  type JobStatus,
+  type PdfRenderer,
+  STAGE_LABELS,
+  type TypstTheme,
 } from "@shared/types";
 import i18n from "./index";
 import { getUiLocale } from "./language";
+import { getApplicationStageStyle } from "./stageStyle";
 
 export const jobStatusLabel = (status: JobStatus): string =>
   i18n.t(`enums:jobStatus.${status}`);
 
+/** Follows the user's stage style (standard or the Japanese sequence). */
 export const stageLabel = (stage: ApplicationStage | "no_change"): string =>
-  i18n.t(`enums:applicationStage.${stage}`);
+  getApplicationStageStyle() === "japanese"
+    ? i18n.t(`enums:applicationStageJapanese.${stage}`)
+    : i18n.t(`enums:applicationStage.${stage}`);
+
+/**
+ * Title shown for a stage event. Stored titles are English text written by
+ * the app ("Applied", "Moved to Technical Interview") or the raw stage id;
+ * those show as the translated stage label so they follow the UI language and
+ * stage style. Titles the user typed are shown as entered.
+ */
+export function stageEventTitle(
+  title: string | null | undefined,
+  toStage: ApplicationStage,
+): string {
+  const trimmed = title?.trim() ?? "";
+  const englishLabel = STAGE_LABELS[toStage];
+  const isAppTitle =
+    trimmed === "" ||
+    trimmed === toStage ||
+    trimmed === englishLabel ||
+    trimmed === `Moved to ${englishLabel}`; // i18n-ignore
+  return isAppTitle ? stageLabel(toStage) : trimmed;
+}
 
 export const outcomeLabel = (outcome: JobOutcome): string =>
   i18n.t(`enums:outcome.${outcome}`);

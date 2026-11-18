@@ -855,6 +855,40 @@ describe("SettingsPage", () => {
     await waitFor(() => expect(saveButton).toBeEnabled());
   });
 
+  it("saves the Japanese application stage style from display settings", async () => {
+    vi.mocked(api.getSettings).mockResolvedValue(baseSettings);
+    vi.mocked(api.updateSettings).mockResolvedValue(
+      createAppSettings({
+        applicationStageStyle: {
+          value: "japanese",
+          default: "standard",
+          override: "japanese",
+        },
+      }),
+    );
+
+    renderPage();
+    await openDisplaySection();
+
+    const stageSelect = screen.getByRole("combobox", {
+      name: /application stages/i,
+    });
+    await waitFor(() => expect(stageSelect).toBeEnabled());
+    expect(stageSelect).toHaveTextContent("Standard");
+
+    fireEvent.click(stageSelect);
+    fireEvent.click(await screen.findByText("Japanese hiring process"));
+
+    const saveButton = getSaveButton();
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    fireEvent.click(saveButton);
+
+    await waitFor(() => expect(api.updateSettings).toHaveBeenCalled());
+    expect(api.updateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ applicationStageStyle: "japanese" }),
+    );
+  });
+
   it("allows saving when Reactive Resume credentials are present", async () => {
     const settingsWithRxResumeAuth = createAppSettings({
       rxresumeApiKeyHint: "api_",

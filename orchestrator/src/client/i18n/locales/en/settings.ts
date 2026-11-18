@@ -385,6 +385,13 @@ const settings = {
     markdownDefault: "Markdown rendering default",
     autoTailorEffective: "Auto-tailor on import effective",
     autoTailorDefault: "Auto-tailor on import default",
+    stageStyleLabel: "Application stages",
+    stageStyleHelp:
+      "How stages are named on the In Progress Board, the job timeline and Log event. The Japanese hiring process shows Document screening → Aptitude test → 1st interview → 2nd interview → Final interview → Offer. Your existing jobs keep their stage.",
+    stageStyles: {
+      standard: "Standard",
+      japanese: "Japanese hiring process",
+    },
   },
   environment: {
     title: "Environment & Workspaces",
