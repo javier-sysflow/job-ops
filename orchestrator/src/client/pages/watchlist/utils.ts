@@ -7,6 +7,8 @@ import {
   workdayUrlToCompanyLabel,
   workdayUrlToSourceKey,
 } from "@career-boards/workday";
+import i18n from "@client/i18n";
+import { formatDateTime, isJapaneseUi } from "@client/i18n/format";
 import { matchJobLocationIntent } from "@shared/job-matching.js";
 import type { LocationIntent } from "@shared/location-intelligence.js";
 import { normalizeCountryKey } from "@shared/location-support.js";
@@ -42,7 +44,7 @@ export function getEmployerFromCareersUrl(careersUrl: string): string {
     const [tenant] = host.split(".");
     return tenant || host;
   } catch {
-    return "Careers";
+    return i18n.t("watchlist:sources.careersFallback");
   }
 }
 
@@ -90,7 +92,7 @@ export function getWatchlistPreviewLabel(
     sourceType,
     careersUrl,
   );
-  if (!normalizedCareersUrl) return "Custom source";
+  if (!normalizedCareersUrl) return i18n.t("watchlist:sources.customSource");
 
   try {
     if (sourceType === "bamboohr") {
@@ -180,7 +182,7 @@ export function getWatchlistSourceKey(value: string): string {
 
 function formatFallbackEmployerLabel(careersUrl: string): string {
   const employer = getEmployerFromCareersUrl(careersUrl).trim();
-  if (!employer) return "Custom source";
+  if (!employer) return i18n.t("watchlist:sources.customSource");
   return employer.length <= 3
     ? employer.toUpperCase()
     : employer.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -192,10 +194,13 @@ export function formatWatchlistCheckTimestamp(
   if (!value) return null;
 
   try {
-    return new Intl.DateTimeFormat(undefined, {
+    const options: Intl.DateTimeFormatOptions = {
       dateStyle: "medium",
       timeStyle: "short",
-    }).format(new Date(value));
+    };
+    // English keeps the browser-locale format; Japanese uses the UI locale.
+    if (isJapaneseUi()) return formatDateTime(value, options) || value;
+    return new Intl.DateTimeFormat(undefined, options).format(new Date(value));
   } catch {
     return value;
   }

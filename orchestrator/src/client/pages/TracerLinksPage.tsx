@@ -1,5 +1,7 @@
 import * as api from "@client/api";
 import { PageHeader, PageMain, SectionCard } from "@client/components/layout";
+import i18n from "@client/i18n";
+import { formatDate, formatDateTime, formatTime } from "@client/i18n/format";
 import type {
   JobTracerLinkAnalyticsItem,
   TracerAnalyticsResponse,
@@ -9,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BarChart3, Copy, ExternalLink, Loader2 } from "lucide-react";
 import type React from "react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { queryKeys } from "@/client/lib/queryKeys";
@@ -45,16 +48,16 @@ import {
 import { bucketClicks, bucketCount, trackProductEvent } from "@/lib/analytics";
 import { copyTextToClipboard } from "@/lib/utils";
 
-const chartConfig = {
-  clicks: {
-    label: "Clicks",
-    color: "var(--chart-1)",
-  },
-};
-
 function formatUnixTimestamp(value: number | null): string {
   if (value === null || !Number.isFinite(value)) return "-";
-  return new Date(value * 1000).toLocaleString();
+  return formatDateTime(value * 1000, {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+  });
 }
 
 function formatRecentActivity(value: number | null): string {
@@ -64,13 +67,15 @@ function formatRecentActivity(value: number | null): string {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
-  const timeText = date.toLocaleTimeString([], {
+  const timeText = formatTime(date, {
     hour: "numeric",
     minute: "2-digit",
   });
-  if (date >= today) return `Today ${timeText}`;
-  if (date >= yesterday) return `Yesterday ${timeText}`;
-  return date.toLocaleDateString([], {
+  if (date >= today) return i18n.t("tracer:time.today", { time: timeText });
+  if (date >= yesterday) {
+    return i18n.t("tracer:time.yesterday", { time: timeText });
+  }
+  return formatDate(date, {
     month: "short",
     day: "numeric",
   });
@@ -93,28 +98,38 @@ function toUnixEndOfDay(value: string): number | undefined {
 function formatDayLabel(day: string): string {
   const date = new Date(`${day}T00:00:00`);
   if (Number.isNaN(date.getTime())) return day;
-  return date.toLocaleDateString("en-US", {
+  return formatDate(date, {
     month: "short",
     day: "numeric",
   });
 }
 
 function formatRelativeTime(value: number | null): string {
-  if (value === null || !Number.isFinite(value)) return "No activity yet";
+  if (value === null || !Number.isFinite(value)) {
+    return i18n.t("tracer:time.noActivity");
+  }
   const diffSeconds = Math.max(0, Math.floor(Date.now() / 1000) - value);
-  if (diffSeconds < 60) return "just now";
+  if (diffSeconds < 60) return i18n.t("tracer:time.justNow");
   const diffMinutes = Math.floor(diffSeconds / 60);
   if (diffMinutes < 60) {
-    return `${diffMinutes} minute${diffMinutes === 1 ? "" : "s"} ago`;
+    return i18n.t("tracer:time.minutesAgo", { count: diffMinutes });
   }
   const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24)
-    return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+  if (diffHours < 24) {
+    return i18n.t("tracer:time.hoursAgo", { count: diffHours });
+  }
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+  return i18n.t("tracer:time.daysAgo", { count: diffDays });
 }
 
 export const TracerLinksPage: React.FC = () => {
+  const { t } = useTranslation("tracer");
+  const chartConfig = {
+    clicks: {
+      label: t("chart.series"),
+      color: "var(--chart-1)",
+    },
+  };
   const [selectedDrilldownJobId, setSelectedDrilldownJobId] = useState<
     string | null
   >(null);
@@ -240,9 +255,9 @@ export const TracerLinksPage: React.FC = () => {
         drilldown_mode: drilldownMode,
         is_active_link: isActiveLink,
       });
-      toast.success("Link copied");
+      toast.success(t("toasts.linkCopied"));
     } catch {
-      toast.error("Could not copy link");
+      toast.error(t("toasts.copyFailed"));
     }
   };
   const getRowClicks = (row: JobTracerLinkAnalyticsItem) =>
@@ -286,8 +301,8 @@ export const TracerLinksPage: React.FC = () => {
     <>
       <PageHeader
         icon={BarChart3}
-        title="Tracer Links"
-        subtitle="Outbound resume link analytics"
+        title={t("page.title")}
+        subtitle={t("page.subtitle")}
       />
 
       <PageMain>
@@ -295,12 +310,16 @@ export const TracerLinksPage: React.FC = () => {
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="filters" className="border-none">
               <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <div className="text-sm font-semibold">Filters</div>
+                <div className="text-sm font-semibold">
+                  {t("filters.title")}
+                </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
                   <div className="space-y-1">
-                    <Label htmlFor="tracer-from-date">From date</Label>
+                    <Label htmlFor="tracer-from-date">
+                      {t("filters.fromDate")}
+                    </Label>
                     <Input
                       id="tracer-from-date"
                       type="date"
@@ -310,7 +329,9 @@ export const TracerLinksPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="tracer-to-date">To date</Label>
+                    <Label htmlFor="tracer-to-date">
+                      {t("filters.toDate")}
+                    </Label>
                     <Input
                       id="tracer-to-date"
                       type="date"
@@ -336,7 +357,7 @@ export const TracerLinksPage: React.FC = () => {
                         });
                       }}
                     />
-                    <span className="text-sm">Include likely bots</span>
+                    <span className="text-sm">{t("filters.includeBots")}</span>
                   </label>
                 </div>
               </AccordionContent>
@@ -352,19 +373,25 @@ export const TracerLinksPage: React.FC = () => {
 
         <div className="grid gap-3 md:grid-cols-3">
           <SectionCard className="space-y-1">
-            <p className="text-xs text-muted-foreground">Total Views</p>
+            <p className="text-xs text-muted-foreground">
+              {t("stats.totalViews")}
+            </p>
             <p className="text-3xl font-semibold tabular-nums">
               {totalViews.toLocaleString()}
             </p>
           </SectionCard>
           <SectionCard className="space-y-1">
-            <p className="text-xs text-muted-foreground">Unique Jobs Reached</p>
+            <p className="text-xs text-muted-foreground">
+              {t("stats.uniqueJobsReached")}
+            </p>
             <p className="text-3xl font-semibold tabular-nums">
               {uniqueJobsReached.toLocaleString()}
             </p>
           </SectionCard>
           <SectionCard className="space-y-1">
-            <p className="text-xs text-muted-foreground">Human Clicks</p>
+            <p className="text-xs text-muted-foreground">
+              {t("stats.humanClicks")}
+            </p>
             <p className="text-3xl font-semibold tabular-nums">
               {humanClicks.toLocaleString()}
             </p>
@@ -375,17 +402,17 @@ export const TracerLinksPage: React.FC = () => {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-sm font-semibold">
-                Resume Clicks Last {visibleDays} Days
+                {t("chart.title", { days: visibleDays })}
               </h2>
               <p className="text-xs text-muted-foreground">
-                Daily click activity from tracer links.
+                {t("chart.description")}
               </p>
             </div>
           </div>
           {isLoading ? (
             <div className="flex h-[240px] items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading analytics...
+              {t("chart.loading")}
             </div>
           ) : (
             <ChartContainer config={chartConfig} className="h-[240px] w-full">
@@ -424,14 +451,18 @@ export const TracerLinksPage: React.FC = () => {
 
         <SectionCard>
           <div className="mb-3">
-            <h3 className="text-sm font-semibold">Application Activity</h3>
+            <h3 className="text-sm font-semibold">{t("activity.title")}</h3>
           </div>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Job</TableHead>
-                <TableHead className="w-[90px]">Clicks</TableHead>
-                <TableHead className="w-[140px]">Last active</TableHead>
+                <TableHead>{t("activity.job")}</TableHead>
+                <TableHead className="w-[90px]">
+                  {t("activity.clicks")}
+                </TableHead>
+                <TableHead className="w-[140px]">
+                  {t("activity.lastActive")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -462,7 +493,7 @@ export const TracerLinksPage: React.FC = () => {
                     colSpan={3}
                     className="text-sm text-muted-foreground"
                   >
-                    No tracer-link activity yet.
+                    {t("activity.empty")}
                   </TableCell>
                 </TableRow>
               )}
@@ -474,36 +505,40 @@ export const TracerLinksPage: React.FC = () => {
           <DialogContent className="max-h-[80vh] max-w-3xl overflow-hidden">
             <DialogHeader>
               <DialogTitle>
-                Job Links{jobDrilldown ? `: ${jobDrilldown.job.title}` : ""}
+                {jobDrilldown
+                  ? t("drilldown.titleWithJob", {
+                      title: jobDrilldown.job.title,
+                    })
+                  : t("drilldown.title")}
               </DialogTitle>
               <DialogDescription>
-                Destination links and click activity for the selected job.
+                {t("drilldown.description")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2 overflow-y-auto pr-1">
               {isDrilldownLoading ? (
                 <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading links...
+                  {t("drilldown.loading")}
                 </div>
               ) : jobDrilldown ? (
                 <>
                   <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
                     <div className="grid gap-2 text-xs sm:grid-cols-3">
                       <p>
-                        Human clicks:{" "}
+                        {t("drilldown.humanClicks")}{" "}
                         <span className="font-semibold tabular-nums">
                           {drilldownSummary?.humanClicks ?? 0}
                         </span>
                       </p>
                       <p>
-                        Total clicks:{" "}
+                        {t("drilldown.totalClicks")}{" "}
                         <span className="font-semibold tabular-nums">
                           {drilldownSummary?.totalClicks ?? 0}
                         </span>
                       </p>
                       <p>
-                        Last activity:{" "}
+                        {t("drilldown.lastActivity")}{" "}
                         <span className="font-semibold">
                           {formatRelativeTime(
                             drilldownSummary?.lastActivityAt ?? null,
@@ -520,7 +555,7 @@ export const TracerLinksPage: React.FC = () => {
                         }
                         onClick={() => handleSetDrilldownMode("human")}
                       >
-                        Human only
+                        {t("drilldown.humanOnly")}
                       </Button>
                       <Button
                         type="button"
@@ -530,7 +565,7 @@ export const TracerLinksPage: React.FC = () => {
                         }
                         onClick={() => handleSetDrilldownMode("all")}
                       >
-                        Human + bots
+                        {t("drilldown.humanAndBots")}
                       </Button>
                     </div>
                   </div>
@@ -542,12 +577,16 @@ export const TracerLinksPage: React.FC = () => {
                       <div className="min-w-0">
                         <p className="truncate text-sm">{row.destinationUrl}</p>
                         <p className="truncate text-xs text-muted-foreground">
-                          Last click: {formatUnixTimestamp(row.lastClickedAt)}
+                          {t("drilldown.lastClick", {
+                            date: formatUnixTimestamp(row.lastClickedAt),
+                          })}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold tabular-nums">
-                          {getRowClicks(row)} Clicks
+                          {t("drilldown.rowClicks", {
+                            value: getRowClicks(row),
+                          })}
                         </p>
                         <a
                           href={row.destinationUrl}
@@ -588,8 +627,9 @@ export const TracerLinksPage: React.FC = () => {
                     <Accordion type="single" collapsible className="w-full">
                       <AccordionItem value="inactive-links">
                         <AccordionTrigger className="py-2 text-sm hover:no-underline">
-                          No activity yet (
-                          {drilldownGroupedLinks.inactive.length})
+                          {t("drilldown.inactiveLinks", {
+                            value: drilldownGroupedLinks.inactive.length,
+                          })}
                         </AccordionTrigger>
                         <AccordionContent className="space-y-2 pt-1">
                           {drilldownGroupedLinks.inactive.map((row) => (
@@ -602,13 +642,18 @@ export const TracerLinksPage: React.FC = () => {
                                   {row.destinationUrl}
                                 </p>
                                 <p className="truncate text-xs text-muted-foreground">
-                                  Last click:{" "}
-                                  {formatUnixTimestamp(row.lastClickedAt)}
+                                  {t("drilldown.lastClick", {
+                                    date: formatUnixTimestamp(
+                                      row.lastClickedAt,
+                                    ),
+                                  })}
                                 </p>
                               </div>
                               <div className="flex items-center gap-2">
                                 <p className="text-sm font-semibold tabular-nums">
-                                  {getRowClicks(row)} Clicks
+                                  {t("drilldown.rowClicks", {
+                                    value: getRowClicks(row),
+                                  })}
                                 </p>
                                 <a
                                   href={row.destinationUrl}
@@ -657,13 +702,13 @@ export const TracerLinksPage: React.FC = () => {
                   )}
                   {jobDrilldown.links.length === 0 && (
                     <p className="text-sm text-muted-foreground">
-                      No tracer links recorded for this job yet.
+                      {t("drilldown.noLinks")}
                     </p>
                   )}
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Select a job from Application Activity.
+                  {t("drilldown.selectJob")}
                 </p>
               )}
             </div>

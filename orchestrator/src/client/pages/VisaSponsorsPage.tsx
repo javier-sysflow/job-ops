@@ -1,4 +1,6 @@
-import { formatCountryLabel } from "@shared/location-support.js";
+import { isJapaneseUi } from "@client/i18n/format";
+import { countryLabel } from "@client/i18n/labels";
+import { formatCountryLabel as formatEnglishCountryLabel } from "@shared/location-support.js";
 import type {
   VisaSponsor,
   VisaSponsorSearchResult,
@@ -21,6 +23,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useQueryErrorToast } from "@/client/hooks/useQueryErrorToast";
 import { showErrorToast } from "@/client/lib/error-toast";
@@ -64,14 +67,18 @@ const getScoreTokens = (score: number) => {
 
 const ALL_SOURCES_VALUE = "__all_sources__";
 
-const getSearchScopeLabel = (countryLabel: string) =>
-  countryLabel === "All sources" ? "all sources" : `the ${countryLabel} source`;
+// English keeps the shared labels; Japanese uses Intl country names (イギリス).
+const formatCountryLabel = (countryKey: string) => {
+  const englishLabel = formatEnglishCountryLabel(countryKey);
+  return isJapaneseUi() ? countryLabel(countryKey, englishLabel) : englishLabel;
+};
 
 const getResultKey = (
   result: Pick<VisaSponsorSearchResult, "providerId" | "sponsor">,
 ) => `${result.providerId}::${result.sponsor.organisationName}`;
 
 export const VisaSponsorsPage: React.FC = () => {
+  const { t } = useTranslation(["visa", "common"]);
   const queryClient = useQueryClient();
   // State
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,7 +101,7 @@ export const VisaSponsorsPage: React.FC = () => {
     queryFn: api.getVisaSponsorStatus,
   });
   const status = statusQuery.data ?? null;
-  useQueryErrorToast(statusQuery.error, "Failed to fetch status");
+  useQueryErrorToast(statusQuery.error, t("toasts.statusFailed"));
   const statusProviders = status?.providers ?? [];
   const providerOptions = statusProviders.map((provider) => ({
     value: provider.countryKey,
@@ -103,8 +110,7 @@ export const VisaSponsorsPage: React.FC = () => {
   }));
   const selectedCountryLabel =
     providerOptions.find((option) => option.value === selectedCountry)?.label ??
-    "All sources";
-  const searchScopeLabel = getSearchScopeLabel(selectedCountryLabel);
+    null;
   const activeProviders = selectedCountry
     ? statusProviders.filter(
         (provider) => provider.countryKey === selectedCountry,
@@ -148,7 +154,7 @@ export const VisaSponsorsPage: React.FC = () => {
       }),
     enabled: Boolean(debouncedSearchQuery.trim()),
   });
-  useQueryErrorToast(searchQueryResult.error, "Search failed");
+  useQueryErrorToast(searchQueryResult.error, t("toasts.searchFailed"));
 
   const results = useMemo<VisaSponsorSearchResult[]>(() => {
     if (!debouncedSearchQuery.trim()) return [];
@@ -176,7 +182,7 @@ export const VisaSponsorsPage: React.FC = () => {
     enabled: Boolean(selectedOrg),
   });
   const orgDetails = orgDetailsQuery.data ?? [];
-  useQueryErrorToast(orgDetailsQuery.error, "Failed to fetch details");
+  useQueryErrorToast(orgDetailsQuery.error, t("toasts.detailsFailed"));
 
   // Auto-select first result
   useEffect(() => {
@@ -235,7 +241,7 @@ export const VisaSponsorsPage: React.FC = () => {
       toast.success(result.message);
     },
     onError: (error) => {
-      showErrorToast(error, "Update failed");
+      showErrorToast(error, t("toasts.updateFailed"));
     },
   });
 
@@ -265,9 +271,9 @@ export const VisaSponsorsPage: React.FC = () => {
 
   const detailPanelContent = !selectedResult ? (
     <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-      <div className="text-base font-semibold">Select a company</div>
+      <div className="text-base font-semibold">{t("detail.selectTitle")}</div>
       <p className="text-sm text-muted-foreground">
-        Pick a company from the results to see details here.
+        {t("detail.selectDescription")}
       </p>
     </div>
   ) : isLoadingDetails ? (
@@ -281,7 +287,7 @@ export const VisaSponsorsPage: React.FC = () => {
         <div className="flex items-center gap-2 mb-2">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-200">
             <CheckCircle2 className="h-3 w-3" />
-            Licensed Sponsor
+            {t("detail.licensedSponsor")}
           </span>
           {selectedResult && (
             <span
@@ -290,13 +296,15 @@ export const VisaSponsorsPage: React.FC = () => {
                 getScoreTokens(selectedResult.score).badge,
               )}
             >
-              {selectedResult.score}% Match
+              {t("detail.match", { score: selectedResult.score })}
             </span>
           )}
         </div>
         <h2 className="text-lg font-semibold text-foreground">{selectedOrg}</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Source: {formatCountryLabel(selectedResult.countryKey)}
+          {t("detail.source", {
+            country: formatCountryLabel(selectedResult.countryKey),
+          })}
         </p>
       </div>
 
@@ -305,7 +313,7 @@ export const VisaSponsorsPage: React.FC = () => {
         (orgDetails[0].townCity || orgDetails[0].county) && (
           <div>
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
-              Location
+              {t("detail.location")}
             </div>
             <div className="flex items-center gap-2 text-sm text-foreground">
               <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -319,7 +327,7 @@ export const VisaSponsorsPage: React.FC = () => {
       {/* Licence types / routes */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
-          Licensed Routes ({orgDetails.length})
+          {t("detail.licensedRoutes", { value: orgDetails.length })}
         </div>
         <div className="space-y-2">
           {orgDetails.map((entry) => (
@@ -334,7 +342,7 @@ export const VisaSponsorsPage: React.FC = () => {
               </div>
               <div className="text-xs text-muted-foreground">
                 <span className="font-medium text-foreground">
-                  Type & Rating:
+                  {t("detail.typeRating")}
                 </span>{" "}
                 {entry.typeRating}
               </div>
@@ -346,13 +354,9 @@ export const VisaSponsorsPage: React.FC = () => {
       {/* Info box */}
       <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 p-3 text-sm">
         <div className="font-medium text-sky-200 mb-1">
-          What does this mean?
+          {t("detail.infoTitle")}
         </div>
-        <p className="text-xs text-sky-300/80">
-          This organisation appears in the selected sponsor source and may be
-          able to sponsor workers on the routes listed above. Always verify the
-          latest source entry before relying on it.
-        </p>
+        <p className="text-xs text-sky-300/80">{t("detail.infoBody")}</p>
       </div>
     </div>
   );
@@ -361,22 +365,26 @@ export const VisaSponsorsPage: React.FC = () => {
     <>
       <PageHeader
         icon={Shield}
-        title="Visa Sponsors"
+        title={t("page.title")}
         statusIndicator={
-          isUpdateInProgress ? <StatusIndicator label="Updating" /> : undefined
+          isUpdateInProgress ? (
+            <StatusIndicator label={t("page.updating")} />
+          ) : undefined
         }
-        subtitle="Search sponsor data across available sources"
+        subtitle={t("page.subtitle")}
         actions={
           <>
             {status && (
               <div className="hidden md:flex items-center gap-4 text-xs text-muted-foreground mr-2">
                 <span className="flex items-center gap-1.5">
                   <FileSpreadsheet className="h-3.5 w-3.5" />
-                  {totalSponsors.toLocaleString()} sponsors
+                  {t("page.sponsorCount", {
+                    value: totalSponsors.toLocaleString(),
+                  })}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
-                  {formatDateTime(latestUpdatedAt) || "Never"}
+                  {formatDateTime(latestUpdatedAt) || t("page.never")}
                 </span>
               </div>
             )}
@@ -385,7 +393,7 @@ export const VisaSponsorsPage: React.FC = () => {
               size="icon"
               onClick={handleUpdate}
               disabled={isUpdateInProgress}
-              aria-label="Update sponsor list"
+              aria-label={t("page.updateList")}
             >
               {isUpdateInProgress ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -407,13 +415,13 @@ export const VisaSponsorsPage: React.FC = () => {
                   htmlFor="sponsor-search"
                   className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                 >
-                  Company name
+                  {t("search.companyName")}
                 </label>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="sponsor-search"
-                    placeholder="Search for a company name..."
+                    placeholder={t("search.placeholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 pr-10 h-10"
@@ -430,15 +438,16 @@ export const VisaSponsorsPage: React.FC = () => {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Enter a company name to check if they&apos;re a licensed visa
-                  sponsor in {searchScopeLabel}.
+                  {selectedCountryLabel
+                    ? t("search.hintCountry", { country: selectedCountryLabel })
+                    : t("search.hintAll")}
                 </p>
               </div>
               <label
                 htmlFor="sponsor-source"
                 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
               >
-                Source
+                {t("search.source")}
               </label>
               <Select
                 value={selectedCountry ?? ALL_SOURCES_VALUE}
@@ -446,12 +455,14 @@ export const VisaSponsorsPage: React.FC = () => {
               >
                 <SelectTrigger
                   id="sponsor-source"
-                  aria-label="Select sponsor source"
+                  aria-label={t("search.selectSource")}
                 >
-                  <SelectValue placeholder="All sources" />
+                  <SelectValue placeholder={t("search.allSources")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL_SOURCES_VALUE}>All sources</SelectItem>
+                  <SelectItem value={ALL_SOURCES_VALUE}>
+                    {t("search.allSources")}
+                  </SelectItem>
                   {providerOptions.map((option) => (
                     <SelectItem key={option.providerId} value={option.value}>
                       {option.label}
@@ -469,7 +480,7 @@ export const VisaSponsorsPage: React.FC = () => {
             footer={
               results.length > 0 ? (
                 <div className="text-xs text-muted-foreground">
-                  {results.length} result{results.length !== 1 ? "s" : ""}
+                  {t("results.count", { count: results.length })}
                   {isSearching && (
                     <span className="ml-2">
                       <Loader2 className="inline h-3 w-3 animate-spin" />
@@ -482,8 +493,8 @@ export const VisaSponsorsPage: React.FC = () => {
             {!isLoadingStatus && status && totalSponsors === 0 && (
               <EmptyState
                 icon={AlertCircle}
-                title="No sponsor data available"
-                description="The visa sponsor list hasn't been downloaded yet."
+                title={t("results.noDataTitle")}
+                description={t("results.noDataDescription")}
                 action={
                   <Button
                     size="sm"
@@ -493,12 +504,12 @@ export const VisaSponsorsPage: React.FC = () => {
                     {isUpdateInProgress ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Downloading...
+                        {t("results.downloading")}
                       </>
                     ) : (
                       <>
                         <Download className="h-4 w-4 mr-2" />
-                        Download List
+                        {t("results.downloadList")}
                       </>
                     )}
                   </Button>
@@ -509,16 +520,24 @@ export const VisaSponsorsPage: React.FC = () => {
             {status && totalSponsors > 0 && !searchQuery && (
               <EmptyState
                 icon={Search}
-                title="Search for a company"
-                description={`Enter a company name above to search ${searchScopeLabel}.`}
+                title={t("results.searchTitle")}
+                description={
+                  selectedCountryLabel
+                    ? t("results.searchPromptCountry", {
+                        country: selectedCountryLabel,
+                      })
+                    : t("results.searchPromptAll")
+                }
               />
             )}
 
             {searchQuery && !isSearching && results.length === 0 && (
               <EmptyState
                 icon={AlertCircle}
-                title="No matches found"
-                description={`No sponsors match "${searchQuery}". Try a different spelling.`}
+                title={t("results.noMatchesTitle")}
+                description={t("results.noMatchesDescription", {
+                  query: searchQuery,
+                })}
               />
             )}
 
@@ -576,11 +595,11 @@ export const VisaSponsorsPage: React.FC = () => {
         <DrawerContent className="max-h-[90vh]">
           <div className="flex items-center justify-between px-4 pt-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Sponsor details
+              {t("detail.drawerTitle")}
             </div>
             <DrawerClose asChild>
               <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
-                Close
+                {t("common:actions.close")}
               </Button>
             </DrawerClose>
           </div>

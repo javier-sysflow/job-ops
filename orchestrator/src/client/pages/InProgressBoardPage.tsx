@@ -3,6 +3,7 @@ import {
   LogEventModal,
 } from "@client/components/LogEventModal";
 import { PageHeader, PageMain } from "@client/components/layout";
+import { stageLabel } from "@client/i18n/labels";
 import {
   APPLICATION_STAGES,
   type ApplicationStage,
@@ -19,6 +20,7 @@ import {
   Plus,
 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { invalidateJobData } from "@/client/hooks/queries/invalidate";
@@ -94,6 +96,7 @@ const resolveCurrentStage = (
 };
 
 export const InProgressBoardPage: React.FC = () => {
+  const { t } = useTranslation(["inProgress", "common"]);
   const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
@@ -168,13 +171,14 @@ export const InProgressBoardPage: React.FC = () => {
         metadata: {
           actor: "user",
           eventType: "status_update",
-          eventLabel: `Moved to ${STAGE_LABELS[toStage]}`,
+          // Stored event metadata stays in English (server-side data).
+          eventLabel: `Moved to ${STAGE_LABELS[toStage]}`, // i18n-ignore
           reasonCode: "in_progress_board_drag",
         },
       }),
   });
 
-  useQueryErrorToast(boardQuery.error, "Failed to load in-progress board");
+  useQueryErrorToast(boardQuery.error, t("toasts.loadFailed"));
 
   const cards = boardQuery.data ?? [];
   const isLoading = boardQuery.isPending;
@@ -236,7 +240,7 @@ export const InProgressBoardPage: React.FC = () => {
 
       try {
         await transitionMutation.mutateAsync({ jobId, toStage });
-        toast.success(`Moved to ${STAGE_LABELS[toStage]}`);
+        toast.success(t("toasts.movedTo", { stage: stageLabel(toStage) }));
         await queryClient.invalidateQueries({
           queryKey: queryKeys.jobs.inProgressBoard(),
         });
@@ -248,14 +252,14 @@ export const InProgressBoardPage: React.FC = () => {
           queryKeys.jobs.inProgressBoard(),
           previousCards,
         );
-        showErrorToast(error, "Failed to move stage");
+        showErrorToast(error, t("toasts.moveFailed"));
       } finally {
         setMovingJobId(null);
         setDragging(null);
         setDropTargetStage(null);
       }
     },
-    [dragging, queryClient, transitionMutation],
+    [dragging, queryClient, transitionMutation, t],
   );
 
   const handleBoardLogEvent = React.useCallback(
@@ -274,24 +278,24 @@ export const InProgressBoardPage: React.FC = () => {
 
         await invalidateJobData(queryClient, job.id);
         setLogEventTarget(null);
-        toast.success("Event logged");
+        toast.success(t("toasts.eventLogged"));
 
         if (effectiveStage === "offer") {
           celebrateOffer();
         }
       } catch (error) {
-        showErrorToast(error, "Failed to log event");
+        showErrorToast(error, t("toasts.logFailed"));
       }
     },
-    [logEventTarget, queryClient],
+    [logEventTarget, queryClient, t],
   );
 
   return (
     <>
       <PageHeader
         icon={Columns3}
-        title="In Progress Board"
-        subtitle="Kanban view of application stages"
+        title={t("page.title")}
+        subtitle={t("page.subtitle")}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Select
@@ -305,9 +309,9 @@ export const InProgressBoardPage: React.FC = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="updated">Recent</SelectItem>
-                <SelectItem value="title">Title</SelectItem>
-                <SelectItem value="company">Company</SelectItem>
+                <SelectItem value="updated">{t("sort.recent")}</SelectItem>
+                <SelectItem value="title">{t("sort.title")}</SelectItem>
+                <SelectItem value="company">{t("sort.company")}</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -316,7 +320,7 @@ export const InProgressBoardPage: React.FC = () => {
               onClick={() => navigate("/jobs/ready")}
             >
               <Plus className="h-3.5 w-3.5" />
-              Add
+              {t("common:actions.add")}
             </Button>
           </div>
         }
@@ -324,7 +328,7 @@ export const InProgressBoardPage: React.FC = () => {
       <PageMain className="flex h-[calc(100dvh-5rem)] max-w-[1600px] flex-col">
         {isLoading ? (
           <div className="rounded-lg border border-dashed border-border/60 p-6 text-sm text-muted-foreground">
-            Loading board...
+            {t("board.loading")}
           </div>
         ) : (
           <div className="min-h-0 flex-1 overflow-x-auto pb-2">
@@ -336,7 +340,9 @@ export const InProgressBoardPage: React.FC = () => {
                 return (
                   <section
                     key={stage}
-                    aria-label={`${STAGE_LABELS[stage]} lane`}
+                    aria-label={t("board.laneLabel", {
+                      stage: stageLabel(stage),
+                    })}
                     onDragOver={(event) => {
                       event.preventDefault();
                       if (!dragging || dragging.fromStage === stage) return;
@@ -374,8 +380,8 @@ export const InProgressBoardPage: React.FC = () => {
                           className="h-6 w-6 shrink-0 text-muted-foreground"
                           aria-label={
                             isAppliedCollapsed
-                              ? "Expand Applied lane"
-                              : "Collapse Applied lane"
+                              ? t("board.expandApplied")
+                              : t("board.collapseApplied")
                           }
                           onClick={() =>
                             setIsAppliedCollapsed((collapsed) => !collapsed)
@@ -394,7 +400,7 @@ export const InProgressBoardPage: React.FC = () => {
                           isCollapsedApplied && "[writing-mode:vertical-rl]",
                         )}
                       >
-                        {STAGE_LABELS[stage]}
+                        {stageLabel(stage)}
                       </h2>
                       <Badge
                         variant="outline"
@@ -413,7 +419,7 @@ export const InProgressBoardPage: React.FC = () => {
                       >
                         {laneCards.length === 0 ? (
                           <div className="rounded-md border border-dashed border-border/35 bg-background/20 px-2.5 py-2 text-[11px] text-muted-foreground/80">
-                            Drop a card here or log a stage.
+                            {t("board.emptyLane")}
                           </div>
                         ) : (
                           laneCards.map(({ job, latestEventAt, stage }) => (

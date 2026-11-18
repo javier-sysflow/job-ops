@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import type { PipelineRun } from "@shared/types";
 
 export type PipelineRunDisplayStatus = PipelineRun["status"] | "incomplete";
@@ -22,15 +23,15 @@ export function getPipelineRunStatusLabel(
 ): string {
   switch (status) {
     case "running":
-      return "Running";
+      return i18n.t("overview:runs.status.running");
     case "completed":
-      return "Completed";
+      return i18n.t("overview:runs.status.completed");
     case "failed":
-      return "Failed";
+      return i18n.t("overview:runs.status.failed");
     case "cancelled":
-      return "Cancelled";
+      return i18n.t("overview:runs.status.cancelled");
     case "incomplete":
-      return "Incomplete";
+      return i18n.t("overview:runs.status.incomplete");
   }
 }
 
@@ -42,7 +43,14 @@ export function formatPipelineDuration(durationMs: number | null): string {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${seconds}s`;
-  return `${seconds}s`;
+  if (hours > 0) {
+    return i18n.t("overview:runs.duration.hoursMinutes", { hours, minutes });
+  }
+  if (minutes > 0) {
+    return i18n.t("overview:runs.duration.minutesSeconds", {
+      minutes,
+      seconds,
+    });
+  }
+  return i18n.t("overview:runs.duration.seconds", { seconds });
 }

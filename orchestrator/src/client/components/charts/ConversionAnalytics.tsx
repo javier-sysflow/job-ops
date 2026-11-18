@@ -3,9 +3,11 @@
  * Shows Application → Response conversion metrics including funnel, time-series, and insights.
  */
 
+import { formatDate } from "@client/i18n/format";
 import { getEffectiveStageHistory } from "@shared/stage-history";
 import type { StageEvent } from "@shared/types.js";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Bar,
   BarChart,
@@ -50,21 +52,16 @@ type JobWithEvents = {
   events: StageEvent[];
 };
 
-const chartConfig = {
-  conversionRate: {
-    label: "Conversion Rate",
-    color: "var(--chart-1)",
-  },
-};
-
 // Stage definitions for funnel
 const FUNNEL_STAGES = [
-  { key: "applied", label: "Applied", color: "#3b82f6" },
-  { key: "screening", label: "Screening", color: "#8b5cf6" },
-  { key: "interview", label: "Interview", color: "#f59e0b" },
-  { key: "offer", label: "Offer", color: "#10b981" },
-  { key: "rejected", label: "Rejected", color: "#ef4444" },
+  { key: "applied", color: "#3b82f6" },
+  { key: "screening", color: "#8b5cf6" },
+  { key: "interview", color: "#f59e0b" },
+  { key: "offer", color: "#10b981" },
+  { key: "rejected", color: "#ef4444" },
 ] as const;
+
+type FunnelStageKey = (typeof FUNNEL_STAGES)[number]["key"];
 
 // Stages that count as "screening"
 const SCREENING_STAGES = new Set(["recruiter_screen", "assessment"]);
@@ -100,7 +97,10 @@ const toDateKey = (value: Date) => {
 };
 
 // Build funnel data from jobs with their stage events
-const buildFunnelData = (jobsWithEvents: JobWithEvents[]): FunnelStage[] => {
+const buildFunnelData = (
+  jobsWithEvents: JobWithEvents[],
+  labels: Record<FunnelStageKey, string>,
+): FunnelStage[] => {
   let applied = 0;
   let screening = 0;
   let interview = 0;
@@ -147,11 +147,11 @@ const buildFunnelData = (jobsWithEvents: JobWithEvents[]): FunnelStage[] => {
   }
 
   return [
-    { name: "Applied", value: applied, fill: FUNNEL_STAGES[0].color },
-    { name: "Screening", value: screening, fill: FUNNEL_STAGES[1].color },
-    { name: "Interview", value: interview, fill: FUNNEL_STAGES[2].color },
-    { name: "Offer", value: offer, fill: FUNNEL_STAGES[3].color },
-    { name: "Rejected", value: rejected, fill: FUNNEL_STAGES[4].color },
+    { name: labels.applied, value: applied, fill: FUNNEL_STAGES[0].color },
+    { name: labels.screening, value: screening, fill: FUNNEL_STAGES[1].color },
+    { name: labels.interview, value: interview, fill: FUNNEL_STAGES[2].color },
+    { name: labels.offer, value: offer, fill: FUNNEL_STAGES[3].color },
+    { name: labels.rejected, value: rejected, fill: FUNNEL_STAGES[4].color },
   ];
 };
 
@@ -273,6 +273,13 @@ export function ConversionAnalytics({
   error,
   daysToShow,
 }: ConversionAnalyticsProps) {
+  const { t } = useTranslation("overview");
+  const chartConfig = {
+    conversionRate: {
+      label: t("conversion.rateLabel"),
+      color: "var(--chart-1)",
+    },
+  };
   const effectiveJobs = useMemo(
     () =>
       jobsWithEvents.map((job) => ({
@@ -283,8 +290,14 @@ export function ConversionAnalytics({
   );
 
   const funnelData = useMemo(() => {
-    return buildFunnelData(effectiveJobs);
-  }, [effectiveJobs]);
+    return buildFunnelData(effectiveJobs, {
+      applied: t("funnel.applied"),
+      screening: t("funnel.screening"),
+      interview: t("funnel.interview"),
+      offer: t("funnel.offer"),
+      rejected: t("funnel.rejected"),
+    });
+  }, [effectiveJobs, t]);
 
   const conversionTimeSeries = useMemo(() => {
     return buildConversionTimeSeries(effectiveJobs, daysToShow);
@@ -298,15 +311,16 @@ export function ConversionAnalytics({
     <Card className="py-0">
       <CardHeader className="flex flex-col gap-2 border-b !p-0 sm:flex-row sm:items-stretch">
         <div className="flex flex-1 flex-col justify-center gap-1 px-6 pt-4 pb-3 sm:!py-0">
-          <CardTitle>Application → Response Conversion</CardTitle>
-          <CardDescription>
-            How many applications received a positive response from the company.
-          </CardDescription>
+          <CardTitle>{t("conversion.title")}</CardTitle>
+          <CardDescription>{t("conversion.description")}</CardDescription>
         </div>
         <ChartKpiPanel
-          label="Conversion Rate"
+          label={t("conversion.rateLabel")}
           rate={overallConversion.rate}
-          subtext={`${overallConversion.converted} of ${overallConversion.total} applications`}
+          subtext={t("conversion.subtext", {
+            converted: overallConversion.converted,
+            total: overallConversion.total,
+          })}
         />
       </CardHeader>
       <CardContent className="px-2 sm:p-6">
@@ -317,7 +331,7 @@ export function ConversionAnalytics({
             {/* Funnel Chart */}
             <div>
               <h4 className="mb-3 text-sm font-medium text-muted-foreground">
-                Funnel: Applied → Screening → Interview → Offer → Rejected
+                {t("conversion.funnelTitle")}
               </h4>
               <ChartContainer
                 config={chartConfig}
@@ -348,7 +362,9 @@ export function ConversionAnalytics({
                           <div className="rounded-lg border border-border/60 bg-background px-3 py-2 text-xs shadow-sm">
                             <div className="font-medium">{data.name}</div>
                             <div className="mt-1 text-muted-foreground">
-                              {data.value} applications
+                              {t("conversion.funnelTooltip", {
+                                value: data.value,
+                              })}
                             </div>
                           </div>
                         );
@@ -373,8 +389,9 @@ export function ConversionAnalytics({
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <h4 className="text-sm font-medium text-muted-foreground">
-                  Conversion rate over time (rolling {Math.min(7, daysToShow)}
-                  -day average)
+                  {t("conversion.timeSeriesTitle", {
+                    days: Math.min(7, daysToShow),
+                  })}
                 </h4>
               </div>
               <ChartContainer
@@ -392,13 +409,12 @@ export function ConversionAnalytics({
                     axisLine={false}
                     tickMargin={8}
                     minTickGap={32}
-                    tickFormatter={(value) => {
-                      const date = new Date(value);
-                      return date.toLocaleDateString("en-GB", {
+                    tickFormatter={(value) =>
+                      formatDate(value, {
                         month: "short",
                         day: "numeric",
-                      });
-                    }}
+                      })
+                    }
                   />
                   <YAxis
                     tickLine={false}
@@ -414,19 +430,16 @@ export function ConversionAnalytics({
                       return (
                         <div className="rounded-lg border border-border/60 bg-background px-3 py-2 text-xs shadow-sm">
                           <div className="mb-2 text-[11px] font-medium text-muted-foreground">
-                            {new Date(label as string).toLocaleDateString(
-                              "en-GB",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              },
-                            )}
+                            {formatDate(label as string, {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
                           </div>
                           <div className="space-y-1">
                             <div className="flex items-center justify-between gap-3">
                               <span className="text-muted-foreground">
-                                Conversion Rate
+                                {t("conversion.rateLabel")}
                               </span>
                               <span className="font-semibold text-foreground">
                                 {data.conversionRate.toFixed(1)}%
@@ -434,7 +447,9 @@ export function ConversionAnalytics({
                             </div>
                             <div className="flex items-center justify-between gap-3">
                               <span className="text-muted-foreground">
-                                Applied ({Math.min(7, daysToShow)}d window)
+                                {t("conversion.tooltipApplied", {
+                                  days: Math.min(7, daysToShow),
+                                })}
                               </span>
                               <span className="font-semibold text-foreground">
                                 {data.appliedCount}
@@ -442,7 +457,7 @@ export function ConversionAnalytics({
                             </div>
                             <div className="flex items-center justify-between gap-3">
                               <span className="text-muted-foreground">
-                                Converted
+                                {t("conversion.tooltipConverted")}
                               </span>
                               <span className="font-semibold text-foreground">
                                 {data.convertedCount}
