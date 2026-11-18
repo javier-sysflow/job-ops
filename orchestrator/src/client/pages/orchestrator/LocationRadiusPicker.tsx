@@ -1,8 +1,8 @@
 import { detectLocationCountry } from "@client/api";
-import { formatCountryLabel } from "@shared/location-support.js";
 import type { LocationProximity } from "@shared/types";
 import { LocateFixed, MapPin } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { localizedCountryLabel } from "./automatic-run-i18n";
 import type { MapPoint } from "./LocationRadiusMap";
 
 const LocationRadiusMap = lazy(() => import("./LocationRadiusMap"));
@@ -39,6 +40,7 @@ export function LocationRadiusPicker({
   onChange,
   onCountryChange,
 }: LocationRadiusPickerProps) {
+  const { t } = useTranslation("pipeline");
   const detectionRequest = useRef(0);
   const [isDetectingCountry, setIsDetectingCountry] = useState(false);
   const [viewportCenter, setViewportCenter] = useState<MapPoint>(
@@ -62,7 +64,7 @@ export function LocationRadiusPicker({
       })
       .catch(() => {
         if (request === detectionRequest.current) {
-          toast.error("The country at this map point could not be detected.");
+          toast.error(t("radius.countryNotDetected"));
         }
       })
       .finally(() => {
@@ -79,7 +81,7 @@ export function LocationRadiusPicker({
 
   const useCurrentLocation = () => {
     if (!navigator.geolocation) {
-      toast.error("Location is not available in this browser.");
+      toast.error(t("radius.geolocationUnavailable"));
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -91,7 +93,7 @@ export function LocationRadiusPicker({
         setViewportCenter(center);
         setCenter(center);
       },
-      () => toast.error("Your location could not be read."),
+      () => toast.error(t("radius.geolocationFailed")),
       { enableHighAccuracy: false, timeout: 10_000 },
     );
   };
@@ -103,7 +105,7 @@ export function LocationRadiusPicker({
           <Suspense
             fallback={
               <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">
-                Loading map…
+                {t("radius.loadingMap")}
               </div>
             }
           >
@@ -125,7 +127,7 @@ export function LocationRadiusPicker({
             onClick={() => setCenter(viewportCenter)}
           >
             <MapPin data-icon="inline-start" />
-            Use map centre
+            {t("radius.useMapCentre")}
           </Button>
           <Button
             type="button"
@@ -134,7 +136,7 @@ export function LocationRadiusPicker({
             onClick={useCurrentLocation}
           >
             <LocateFixed data-icon="inline-start" />
-            Use my location
+            {t("radius.useMyLocation")}
           </Button>
           {value ? (
             <span className="ml-auto text-xs tabular-nums text-muted-foreground">
@@ -142,29 +144,24 @@ export function LocationRadiusPicker({
             </span>
           ) : null}
         </div>
-        <FieldDescription>
-          Click the map to place the centre. Drag the centre or edge handle to
-          adjust the search area.
-        </FieldDescription>
-        {!value ? (
-          <FieldError>Select a centre point on the map.</FieldError>
-        ) : null}
+        <FieldDescription>{t("radius.help")}</FieldDescription>
+        {!value ? <FieldError>{t("radius.centreRequired")}</FieldError> : null}
       </Field>
 
       <div className={cn("grid gap-4", value && "sm:grid-cols-2")}>
         {value ? (
           <Field>
             <FieldLabel htmlFor="location-detected-country">
-              Detected country
+              {t("radius.detectedCountry")}
             </FieldLabel>
             <Input
               id="location-detected-country"
               value={
                 isDetectingCountry
-                  ? "Detecting…"
+                  ? t("radius.detecting")
                   : country
-                    ? formatCountryLabel(country)
-                    : "Not detected"
+                    ? localizedCountryLabel(country)
+                    : t("radius.notDetected")
               }
               readOnly
               aria-live="polite"
@@ -174,7 +171,7 @@ export function LocationRadiusPicker({
 
         <Field>
           <FieldLabel htmlFor="location-radius-miles">
-            Radius in miles
+            {t("radius.radiusMiles")}
           </FieldLabel>
           <Input
             id="location-radius-miles"

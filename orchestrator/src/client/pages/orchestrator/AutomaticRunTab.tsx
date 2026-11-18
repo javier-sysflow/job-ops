@@ -8,7 +8,6 @@ import type {
   LocationSearchScope,
 } from "@shared/location-preferences.js";
 import {
-  formatCountryLabel,
   normalizeCountryKey,
   SUPPORTED_COUNTRY_KEYS,
 } from "@shared/location-support.js";
@@ -27,6 +26,7 @@ import {
 import { ArrowLeft } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { showErrorToast } from "@/client/lib/error-toast";
 import {
   Accordion,
@@ -65,6 +65,11 @@ import {
   summarizeLocationPreferences,
   type WorkplaceType,
 } from "./automatic-run";
+import {
+  localizedCountryLabel,
+  localizedLocationSummary,
+  localizeSourceStatus,
+} from "./automatic-run-i18n";
 import { getSourceStatus } from "./automatic-run-source-status";
 
 interface AutomaticRunTabProps {
@@ -164,6 +169,7 @@ export const AutomaticRunTab: React.FC<AutomaticRunTabProps> = ({
   onDeleteSavedSearch,
   onApplySavedSearch,
 }) => {
+  const { t } = useTranslation("pipeline");
   const [isSaving, setIsSaving] = useState(false);
   const [nearbyPlaceCount, setNearbyPlaceCount] = useState<number | null>(null);
   const [isPlanningSearch, setIsPlanningSearch] = useState(false);
@@ -475,10 +481,13 @@ export const AutomaticRunTab: React.FC<AutomaticRunTabProps> = ({
           {
             source,
             selected: pipelineSources.includes(source),
-            status: getSourceStatus({
-              countrySelected: !countrySelectionInvalid,
-              plan,
-            }),
+            status: localizeSourceStatus(
+              getSourceStatus({
+                countrySelected: !countrySelectionInvalid,
+                plan,
+              }),
+              plan.requestedCountry,
+            ),
           },
         ];
       }),
@@ -526,7 +535,8 @@ export const AutomaticRunTab: React.FC<AutomaticRunTabProps> = ({
   ]);
 
   const locationSummary = useMemo(
-    () => summarizeLocationPreferences(values),
+    () =>
+      localizedLocationSummary(values, summarizeLocationPreferences(values)),
     [values],
   );
   const selectedSavedSearch = useMemo(
@@ -621,7 +631,7 @@ export const AutomaticRunTab: React.FC<AutomaticRunTabProps> = ({
         watchlistSelectedSourceIds: [...selectedWatchlistSourceIds],
       });
     } catch (error) {
-      showErrorToast(error, "Failed to start search");
+      showErrorToast(error, t("automatic.errors.startFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -709,7 +719,7 @@ export const AutomaticRunTab: React.FC<AutomaticRunTabProps> = ({
         result: "error",
         prompt_length_bucket: promptLengthBucket,
       });
-      showErrorToast(error, "Failed to generate search settings");
+      showErrorToast(error, t("automatic.errors.planFailed"));
     } finally {
       setIsPlanningSearch(false);
     }
@@ -767,7 +777,7 @@ export const AutomaticRunTab: React.FC<AutomaticRunTabProps> = ({
         (country) => !HIDDEN_COUNTRY_KEYS.has(country),
       ).map((country) => ({
         value: country,
-        label: formatCountryLabel(country),
+        label: localizedCountryLabel(country),
       })),
     [],
   );
@@ -792,8 +802,12 @@ export const AutomaticRunTab: React.FC<AutomaticRunTabProps> = ({
         className="flex min-h-0 flex-1 flex-col"
       >
         <TabsList className="sr-only">
-          <TabsTrigger value="describe">Describe search</TabsTrigger>
-          <TabsTrigger value="details">Configure details</TabsTrigger>
+          <TabsTrigger value="describe">
+            {t("automatic.tabs.describe")}
+          </TabsTrigger>
+          <TabsTrigger value="details">
+            {t("automatic.tabs.details")}
+          </TabsTrigger>
         </TabsList>
 
         <div
@@ -831,14 +845,13 @@ export const AutomaticRunTab: React.FC<AutomaticRunTabProps> = ({
                   onClick={() => setAutomaticTab("describe")}
                 >
                   <ArrowLeft data-icon="inline-start" />
-                  Describe search
+                  {t("automatic.backToDescribe")}
                 </Button>
                 <h1 className="text-3xl font-semibold tracking-tight">
-                  Configure your search
+                  {t("automatic.title")}
                 </h1>
                 <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                  Tell Job Ops what matters, review the plan, then search your
-                  selected sources.
+                  {t("automatic.intro")}
                 </p>
               </div>
             </header>
@@ -848,15 +861,16 @@ export const AutomaticRunTab: React.FC<AutomaticRunTabProps> = ({
                 role="alert"
                 className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm"
               >
-                AI couldn’t build this search. Review the existing details or
-                try again.
+                {t("automatic.fallbackAlert")}
               </p>
             ) : null}
             {planWarnings.length > 0 ? (
               <Accordion type="single" collapsible>
                 <AccordionItem value="notes" className="border-b-0">
                   <AccordionTrigger className="py-2 text-sm text-muted-foreground hover:no-underline">
-                    Search notes ({planWarnings.length})
+                    {t("automatic.searchNotes", {
+                      total: planWarnings.length,
+                    })}
                   </AccordionTrigger>
                   <AccordionContent>
                     <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">

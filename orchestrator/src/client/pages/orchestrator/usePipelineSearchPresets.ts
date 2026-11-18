@@ -1,4 +1,5 @@
 import * as api from "@client/api";
+import i18n from "@client/i18n";
 import { showErrorToast } from "@client/lib/error-toast";
 import { queryKeys } from "@client/lib/queryKeys";
 import type {
@@ -46,10 +47,13 @@ export function usePipelineSearchPresets({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.pipeline.searchPresets(),
       });
-      toast.success("Saved search created");
+      toast.success(i18n.t("pipeline:savedSearches.toasts.created"));
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to create saved search");
+      showErrorToast(
+        error,
+        i18n.t("pipeline:savedSearches.toasts.createFailed"),
+      );
     },
   });
 
@@ -65,10 +69,13 @@ export function usePipelineSearchPresets({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.pipeline.searchPresets(),
       });
-      toast.success("Saved search updated");
+      toast.success(i18n.t("pipeline:savedSearches.toasts.updated"));
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to update saved search");
+      showErrorToast(
+        error,
+        i18n.t("pipeline:savedSearches.toasts.updateFailed"),
+      );
     },
   });
 
@@ -78,10 +85,13 @@ export function usePipelineSearchPresets({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.pipeline.searchPresets(),
       });
-      toast.success("Saved search deleted");
+      toast.success(i18n.t("pipeline:savedSearches.toasts.deleted"));
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to delete saved search");
+      showErrorToast(
+        error,
+        i18n.t("pipeline:savedSearches.toasts.deleteFailed"),
+      );
     },
   });
 

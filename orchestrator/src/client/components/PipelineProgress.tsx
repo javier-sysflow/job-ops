@@ -5,6 +5,7 @@ import {
   skipPipelineChallengeSearch,
   solvePipelineChallenge,
 } from "@client/api";
+import i18n from "@client/i18n";
 import type { PipelineProgressState } from "@shared/types";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
@@ -12,6 +13,10 @@ import { showErrorToast } from "@/client/lib/error-toast";
 import { subscribeToEventSource } from "@/client/lib/sse";
 import { PipelineFanoutCard } from "./PipelineFanoutCard";
 import { PipelineProgressCard } from "./PipelineProgressCard";
+import {
+  progressDetailText,
+  progressMessageText,
+} from "./pipelineProgressText";
 
 interface PipelineProgressProps {
   isRunning: boolean;
@@ -56,7 +61,7 @@ export const PipelineProgress: React.FC<PipelineProgressProps> = ({
       }
     } catch (error) {
       viewerWindow?.close();
-      showErrorToast(error, "Failed to solve challenge");
+      showErrorToast(error, i18n.t("pipeline:progress.errors.solveFailed"));
     } finally {
       setSolvingExtractor(null);
     }
@@ -67,7 +72,7 @@ export const PipelineProgress: React.FC<PipelineProgressProps> = ({
     try {
       await skipPipelineChallengeSearch(extractorId);
     } catch (error) {
-      showErrorToast(error, "Failed to skip search");
+      showErrorToast(error, i18n.t("pipeline:progress.errors.skipFailed"));
     } finally {
       setSkippingExtractor(null);
     }
@@ -79,7 +84,7 @@ export const PipelineProgress: React.FC<PipelineProgressProps> = ({
       await resumePipelineScoring();
     } catch (error) {
       setResumingScoring(false);
-      showErrorToast(error, "Failed to restart scoring");
+      showErrorToast(error, i18n.t("pipeline:progress.errors.restartFailed"));
     }
   }, []);
 
@@ -190,7 +195,7 @@ export const PipelineProgress: React.FC<PipelineProgressProps> = ({
     <PipelineFanoutCard
       fanout={progress.fanout}
       elapsedSeconds={elapsedSeconds}
-      activity={progress.detail || progress.message}
+      activity={progressDetailText(progress) || progressMessageText(progress)}
       challenges={progress.pendingChallenges}
       solvingExtractor={solvingExtractor}
       skippingExtractor={skippingExtractor}

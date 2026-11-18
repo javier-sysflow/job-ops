@@ -326,7 +326,16 @@ export interface PipelineFanoutProgress {
 export interface PipelineProgressState {
   step: PipelineProgressStep;
   message: string;
+  /**
+   * Optional UI translation key for `message` (e.g. "pipeline:progress.messages.scoringJobs").
+   * `message` always stays the English text, so older clients keep working.
+   */
+  messageKey?: string;
+  messageParams?: Record<string, string | number>;
   detail?: string;
+  /** Optional UI translation key for `detail`; same contract as `messageKey`. */
+  detailKey?: string;
+  detailParams?: Record<string, string | number>;
   pendingChallenges?: PipelinePendingChallenge[];
   fanout?: PipelineFanoutProgress;
   crawlingSource: string | null;

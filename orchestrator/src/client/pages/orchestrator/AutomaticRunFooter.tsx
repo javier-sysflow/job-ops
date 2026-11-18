@@ -1,4 +1,5 @@
 import { Loader2, Sparkles } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,60 +39,87 @@ export function AutomaticRunFooter({
   disabled,
   onRunSearch,
 }: AutomaticRunFooterProps) {
-  const presetLabel =
-    selectedPreset.charAt(0).toUpperCase() + selectedPreset.slice(1);
+  const { t } = useTranslation("pipeline");
+  const presetLabel = t(`presets.${selectedPreset}.label`);
+  const listSeparator = t("listSeparator");
+  const countStrong = (
+    <strong className="font-semibold tabular-nums text-foreground" />
+  );
   return (
     <Card className="h-fit">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
-          <CardTitle>Your search</CardTitle>
+          <CardTitle>{t("footer.title")}</CardTitle>
           <Badge variant={disabled ? "outline" : "secondary"}>
-            {disabled ? "Review" : "Ready"}
+            {disabled ? t("footer.review") : t("footer.ready")}
           </Badge>
         </div>
-        <CardDescription>
-          A plain-English preview of what Job Ops will do.
-        </CardDescription>
+        <CardDescription>{t("footer.description")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-0">
         <SummaryRow
-          label="Roles"
-          value={searchTerms.length > 0 ? searchTerms.join(", ") : "Add a role"}
+          label={t("footer.roles")}
+          value={
+            searchTerms.length > 0
+              ? searchTerms.join(listSeparator)
+              : t("footer.addRole")
+          }
         />
         <Separator />
-        <SummaryRow label="Location" value={locationSummary} />
+        <SummaryRow label={t("footer.location")} value={locationSummary} />
         <Separator />
         <SummaryRow
-          label="Arrangement"
-          value={workplaceTypes.map(formatWorkplaceType).join(", ")}
+          label={t("footer.arrangement")}
+          value={workplaceTypes
+            .map((value) => t(`workplace.${value}.label`))
+            .join(listSeparator)}
         />
         <Separator />
         <SummaryRow
-          label="Ranking"
-          value={scoringInstructions || "No extra ranking instructions"}
+          label={t("footer.ranking")}
+          value={scoringInstructions || t("footer.noRanking")}
           muted={!scoringInstructions}
         />
         <Separator />
         <SummaryRow
-          label="Coverage"
-          value={`${presetLabel} · ${jobBoardCount} source${jobBoardCount === 1 ? "" : "s"}`}
+          label={t("footer.coverageLabel")}
+          value={t("footer.coverage", {
+            preset: presetLabel,
+            count: jobBoardCount,
+          })}
         />
         <p
           data-testid="search-count-summary"
           className="mt-2 text-sm text-muted-foreground"
         >
-          <strong className="font-semibold tabular-nums text-foreground">
-            {searchTerms.length}
-          </strong>{" "}
-          {searchTerms.length === 1 ? "role" : "roles"} ·{" "}
-          <strong className="font-semibold tabular-nums text-foreground">
-            {locationCount ?? "…"}
-          </strong>{" "}
-          {locationCount === 1 ? "location" : "locations"} ·{" "}
-          <strong className="font-semibold tabular-nums text-foreground">
-            {jobBoardCount}
-          </strong>{" "}
-          {jobBoardCount === 1 ? "job board" : "job boards"}
+          <Trans
+            t={t}
+            i18nKey="footer.countRoles"
+            count={searchTerms.length}
+            components={{ strong: countStrong }}
+          />
+          {" · "}
+          {locationCount === null ? (
+            <Trans
+              t={t}
+              i18nKey="footer.countLocationsPending"
+              components={{ strong: countStrong }}
+            />
+          ) : (
+            <Trans
+              t={t}
+              i18nKey="footer.countLocations"
+              count={locationCount}
+              components={{ strong: countStrong }}
+            />
+          )}
+          {" · "}
+          <Trans
+            t={t}
+            i18nKey="footer.countJobBoards"
+            count={jobBoardCount}
+            components={{ strong: countStrong }}
+          />
         </p>
       </CardContent>
       <CardFooter className="flex-col items-stretch gap-2">
@@ -101,10 +129,10 @@ export function AutomaticRunFooter({
           ) : (
             <Sparkles data-icon="inline-start" />
           )}
-          Run search
+          {t("footer.runSearch")}
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          You can leave this page after the run starts.
+          {t("footer.leaveHint")}
         </p>
       </CardFooter>
     </Card>
@@ -130,9 +158,4 @@ function SummaryRow({
       </span>
     </div>
   );
-}
-
-function formatWorkplaceType(value: WorkplaceType): string {
-  if (value === "onsite") return "On-site";
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }

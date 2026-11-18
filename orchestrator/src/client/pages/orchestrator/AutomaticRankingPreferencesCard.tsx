@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardContent,
@@ -17,6 +18,7 @@ export function AutomaticRankingPreferencesCard({
   scoringInstructions,
   onScoringInstructionsChange,
 }: AutomaticRankingPreferencesCardProps) {
+  const { t } = useTranslation("pipeline");
   return (
     <Card>
       <CardHeader>
@@ -25,27 +27,24 @@ export function AutomaticRankingPreferencesCard({
             3
           </span>
           <div className="flex min-w-0 flex-col gap-1">
-            <CardTitle>What should Job Ops prioritise?</CardTitle>
-            <CardDescription>
-              These instructions affect ranking, not discovery. Write them in
-              plain English.
-            </CardDescription>
+            <CardTitle>{t("ranking.title")}</CardTitle>
+            <CardDescription>{t("ranking.description")}</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        <Label htmlFor="scoring-instructions">Your ideal role</Label>
+        <Label htmlFor="scoring-instructions">{t("ranking.label")}</Label>
         <Textarea
           id="scoring-instructions"
-          aria-label="Ranking preferences"
+          aria-label={t("ranking.ariaLabel")}
           value={scoringInstructions}
           onChange={(event) => onScoringInstructionsChange(event.target.value)}
-          placeholder="For example: Prioritise backend API work, visa sponsorship and roles above £40k."
+          placeholder={t("ranking.placeholder")}
           className="min-h-28 resize-y"
           maxLength={4000}
         />
         <p className="text-xs leading-5 text-muted-foreground">
-          Applied to scoring for this search only.
+          {t("ranking.hint")}
         </p>
       </CardContent>
     </Card>

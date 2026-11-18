@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardContent,
@@ -33,6 +34,7 @@ export function AutomaticSearchTermsCard({
   onSearchTermDraftChange,
   onSearchTermsChange,
 }: AutomaticSearchTermsCardProps) {
+  const { t } = useTranslation(["pipeline", "common"]);
   return (
     <Card>
       <CardHeader>
@@ -41,17 +43,14 @@ export function AutomaticSearchTermsCard({
             1
           </span>
           <div className="flex min-w-0 flex-col gap-1">
-            <CardTitle>What roles are you looking for?</CardTitle>
-            <CardDescription>
-              Add the titles a job board would recognise. Alternatives widen
-              coverage.
-            </CardDescription>
+            <CardTitle>{t("terms.title")}</CardTitle>
+            <CardDescription>{t("terms.description")}</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="search-terms-input">Search terms</Label>
+          <Label htmlFor="search-terms-input">{t("terms.label")}</Label>
           <TokenizedInput
             id="search-terms-input"
             values={searchTerms}
@@ -59,38 +58,38 @@ export function AutomaticSearchTermsCard({
             parseInput={parseSearchTermsInput}
             onDraftChange={onSearchTermDraftChange}
             onValuesChange={onSearchTermsChange}
-            placeholder="Type and press Enter"
-            helperText="Separate multiple titles with commas or press Enter."
-            removeLabelPrefix="Remove"
+            placeholder={t("terms.placeholder")}
+            helperText={t("terms.helper")}
+            removeLabelPrefix={t("common:actions.remove")}
           />
         </div>
 
         <div className="flex flex-col gap-3">
-          <Label>Search depth</Label>
+          <Label>{t("terms.depth")}</Label>
           <AutomaticChoiceCardGroup
-            ariaLabel="Search depth"
+            ariaLabel={t("terms.depth")}
             value={selectedPreset}
             columns={4}
             options={[
               {
                 value: "fast",
-                label: "Fast",
-                description: "A quicker first pass.",
+                label: t("presets.fast.label"),
+                description: t("presets.fast.description"),
               },
               {
                 value: "balanced",
-                label: "Balanced",
-                description: "Strong everyday coverage.",
+                label: t("presets.balanced.label"),
+                description: t("presets.balanced.description"),
               },
               {
                 value: "detailed",
-                label: "Detailed",
-                description: "Broader, deeper discovery.",
+                label: t("presets.detailed.label"),
+                description: t("presets.detailed.description"),
               },
               {
                 value: "custom",
-                label: "Custom",
-                description: "Keep your own run settings.",
+                label: t("presets.custom.label"),
+                description: t("presets.custom.description"),
               },
             ]}
             onValueChange={(preset) => {

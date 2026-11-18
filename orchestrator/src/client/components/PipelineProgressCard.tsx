@@ -1,7 +1,10 @@
+import { getUiLocale } from "@client/i18n/language";
 import NumberFlow from "@number-flow/react";
 import type { PipelineProgressState } from "@shared/types";
 import { useReducedMotion } from "framer-motion";
+import type { TFunction } from "i18next";
 import { CircleX } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import "slot-text/style.css";
 import { SlotText } from "slot-text/react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -17,6 +20,10 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { PipelineActionRequired } from "./PipelineActionRequired";
 import { PipelineFanoutCard } from "./PipelineFanoutCard";
+import {
+  progressDetailText,
+  progressMessageText,
+} from "./pipelineProgressText";
 
 const noop = () => {};
 
@@ -30,32 +37,6 @@ export interface PipelineProgressCardProps {
   resumingScoring?: boolean;
   onResumeScoring?: () => void;
 }
-
-const stepTitles: Record<PipelineProgressState["step"], string> = {
-  idle: "Preparing search",
-  crawling: "Searching jobs",
-  challenge_required: "Browser check needed",
-  importing: "Importing jobs",
-  scoring: "Scoring matches",
-  processing: "Preparing applications",
-  completed: "Search complete",
-  cancelled: "Search cancelled",
-  failed: "Pipeline failed",
-  configuration_required: "Scoring paused",
-};
-
-const stepLabels: Record<PipelineProgressState["step"], string> = {
-  idle: "Connecting",
-  crawling: "Searching",
-  challenge_required: "Check needed",
-  importing: "Importing",
-  scoring: "Scoring",
-  processing: "Processing",
-  completed: "Complete",
-  cancelled: "Cancelled",
-  failed: "Failed",
-  configuration_required: "Action needed",
-};
 
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
@@ -108,39 +89,35 @@ const Metric = ({ label, value }: { label: string; value: number }) => (
     <NumberFlow
       className="font-mono text-lg font-semibold tabular-nums"
       value={value}
-      locales="en-GB"
+      locales={getUiLocale()}
       isolate
     />
   </div>
 );
 
+// Stands in for the job title so the sentence can be split around it; the
+// title's position differs between English and Japanese.
+const TITLE_MARKER = "\u0000title\u0000";
+
 const liveStageCopy = (
   progress: PipelineProgressState,
-): { before: string; title: string; after: string } | null => {
+  t: TFunction<"pipeline">,
+): { before: string; title: string; after: string; text: string } | null => {
   if (!progress.currentJob) return null;
-
-  switch (progress.step) {
-    case "importing":
-      return {
-        before: "Importing",
-        title: progress.currentJob.title,
-        after: "into your workspace",
-      };
-    case "scoring":
-      return {
-        before: "Ranking",
-        title: progress.currentJob.title,
-        after: "against your profile",
-      };
-    case "processing":
-      return {
-        before: "Preparing",
-        title: progress.currentJob.title,
-        after: "for review",
-      };
-    default:
-      return null;
+  if (
+    progress.step !== "importing" &&
+    progress.step !== "scoring" &&
+    progress.step !== "processing"
+  ) {
+    return null;
   }
+
+  const key = `progress.live.${progress.step}` as const;
+  const title = progress.currentJob.title;
+  const [before = "", after = ""] = t(key, { title: TITLE_MARKER }).split(
+    TITLE_MARKER,
+  );
+  return { before, title, after, text: t(key, { title }) };
 };
 
 const RollingStageText = ({ text }: { text: string }) => {
@@ -176,6 +153,7 @@ export const PipelineProgressCard = ({
   resumingScoring = false,
   onResumeScoring,
 }: PipelineProgressCardProps) => {
+  const { t } = useTranslation("pipeline");
   if (
     progress.fanout &&
     (progress.step === "crawling" || progress.step === "challenge_required")
@@ -184,7 +162,7 @@ export const PipelineProgressCard = ({
       <PipelineFanoutCard
         fanout={progress.fanout}
         elapsedSeconds={elapsedSeconds ?? 0}
-        activity={progress.detail || progress.message}
+        activity={progressDetailText(progress) || progressMessageText(progress)}
         challenges={progress.pendingChallenges}
         solvingExtractor={solvingExtractor}
         skippingExtractor={skippingExtractor}
@@ -205,10 +183,10 @@ export const PipelineProgressCard = ({
   );
   const isScoring =
     progress.step === "scoring" || progress.step === "configuration_required";
-  const stageCopy = liveStageCopy(progress);
-  const stageText = stageCopy
-    ? `${stageCopy.before} ${stageCopy.title} ${stageCopy.after}`
-    : null;
+  const stageCopy = liveStageCopy(progress, t);
+  const stageText = stageCopy ? stageCopy.text : null;
+  const stepLabel = t(`progress.stepLabels.${progress.step}`);
+  const detailText = progressDetailText(progress);
   const showMetrics = progress.step !== "idle";
   const badgeVariant =
     progress.step === "failed"
@@ -223,7 +201,7 @@ export const PipelineProgressCard = ({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 flex-col gap-2">
             <CardTitle className="text-2xl tracking-tight">
-              {stepTitles[progress.step]}
+              {t(`progress.stepTitles.${progress.step}`)}
             </CardTitle>
             <CardDescription
               className="overflow-hidden text-base leading-6"
@@ -231,25 +209,27 @@ export const PipelineProgressCard = ({
             >
               {stageCopy ? (
                 <>
-                  {stageCopy.before} <RollingStageText text={stageCopy.title} />{" "}
+                  {stageCopy.before}
+                  <RollingStageText text={stageCopy.title} />
                   {stageCopy.after}
                 </>
               ) : (
-                progress.message
+                progressMessageText(progress)
               )}
             </CardDescription>
-            {progress.detail ? (
-              <p className="text-xs text-muted-foreground">{progress.detail}</p>
+            {detailText ? (
+              <p className="text-xs text-muted-foreground">{detailText}</p>
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-3">
             {elapsedSeconds !== undefined ? (
               <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                {String(Math.floor(elapsedSeconds / 60)).padStart(2, "0")}:
-                {String(elapsedSeconds % 60).padStart(2, "0")} elapsed
+                {t("progress.elapsed", {
+                  time: `${String(Math.floor(elapsedSeconds / 60)).padStart(2, "0")}:${String(elapsedSeconds % 60).padStart(2, "0")}`,
+                })}
               </span>
             ) : null}
-            <Badge variant={badgeVariant}>{stepLabels[progress.step]}</Badge>
+            <Badge variant={badgeVariant}>{stepLabel}</Badge>
           </div>
         </div>
         <div className="flex flex-col gap-2">
@@ -258,7 +238,7 @@ export const PipelineProgressCard = ({
           </span>
           <Progress
             value={percentage}
-            aria-label={`${stepLabels[progress.step]}: ${Math.round(percentage)}%`}
+            aria-label={`${stepLabel}: ${Math.round(percentage)}%`}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(percentage)}
@@ -272,14 +252,28 @@ export const PipelineProgressCard = ({
           <CardContent className="flex flex-col gap-4 p-6">
             {showMetrics ? (
               <section className="grid overflow-hidden rounded-lg border divide-y sm:grid-cols-4 sm:divide-x sm:divide-y-0">
-                <Metric label="Discovered" value={progress.jobsDiscovered} />
-                <Metric label="Scored" value={progress.jobsScored} />
                 <Metric
-                  label={isScoring ? "Awaiting score" : "Prepared"}
+                  label={t("progress.metrics.discovered")}
+                  value={progress.jobsDiscovered}
+                />
+                <Metric
+                  label={t("progress.metrics.scored")}
+                  value={progress.jobsScored}
+                />
+                <Metric
+                  label={
+                    isScoring
+                      ? t("progress.metrics.awaitingScore")
+                      : t("progress.metrics.prepared")
+                  }
                   value={isScoring ? awaitingScore : progress.jobsProcessed}
                 />
                 <Metric
-                  label={isScoring ? "Exceptional matches" : "To prepare"}
+                  label={
+                    isScoring
+                      ? t("progress.metrics.exceptional")
+                      : t("progress.metrics.toPrepare")
+                  }
                   value={isScoring ? progress.jobsExceptional : remaining}
                 />
               </section>
@@ -288,17 +282,17 @@ export const PipelineProgressCard = ({
             {progress.step === "failed" && progress.error ? (
               <Alert variant="destructive">
                 <CircleX />
-                <AlertTitle>Pipeline stopped</AlertTitle>
+                <AlertTitle>{t("progress.pipelineStopped")}</AlertTitle>
                 <AlertDescription>{progress.error}</AlertDescription>
               </Alert>
             ) : null}
 
             {progress.step === "configuration_required" && progress.error ? (
               <PipelineActionRequired
-                title="LLM configuration required"
+                title={t("progress.llmConfigRequired")}
                 description={progress.error}
-                actionLabel="Restart scoring"
-                pendingLabel="Resuming…"
+                actionLabel={t("progress.restartScoring")}
+                pendingLabel={t("progress.resuming")}
                 pending={resumingScoring}
                 onAction={onResumeScoring ?? noop}
               />
