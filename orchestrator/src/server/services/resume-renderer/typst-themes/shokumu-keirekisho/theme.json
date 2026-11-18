@@ -1,0 +1,7 @@
+{
+  "id": "shokumu-keirekisho",
+  "label": "職務経歴書 (Japanese career history)",
+  "description": "A conventional Japanese career-history document (shokumu keirekisho) with bordered job tables, rendered offline with Noto CJK fonts.",
+  "kind": "adapted",
+  "entrypoint": "main.typ"
+}

@@ -23,3 +23,23 @@ export async function readPdfPageSizes(
     await pdf.destroy();
   }
 }
+
+/** The PDF's text layer, every page concatenated in content order. */
+export async function readPdfText(pdfPath: string): Promise<string> {
+  const data = new Uint8Array(await readFile(pdfPath));
+  const pdf = await getDocument({ data, useSystemFonts: true }).promise;
+
+  try {
+    const pages: string[] = [];
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const content = await page.getTextContent();
+      pages.push(
+        content.items.map((item) => ("str" in item ? item.str : "")).join(""),
+      );
+    }
+    return pages.join("\n");
+  } finally {
+    await pdf.destroy();
+  }
+}

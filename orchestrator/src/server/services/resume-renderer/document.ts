@@ -362,6 +362,8 @@ function buildExperienceEntries(resumeJson: RecordLike): LatexResumeEntry[] {
       subtitle:
         joinNonEmpty([toText(item.position), toText(item.location)], " / ") ||
         null,
+      position: toText(item.position).trim() || null,
+      location: toText(item.location).trim() || null,
       date: toText(item.period) || null,
       bullets: extractBullets(item.description),
       url: toText(getByPath(item, "website.url")) || undefined,

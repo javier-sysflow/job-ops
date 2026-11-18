@@ -227,6 +227,11 @@ describe("normalizeResumeJsonToLatexDocument", () => {
     expect(document.sectionTitles?.customFields).toBe("Highlights");
     expect(document.summary).toBe("Builds resilient platform systems.");
     expect(document.experience).toHaveLength(1);
+    expect(document.experience[0]).toMatchObject({
+      subtitle: "Platform Engineer / Remote",
+      position: "Platform Engineer",
+      location: "Remote",
+    });
     expect(document.education).toHaveLength(1);
     expect(document.projects).toHaveLength(1);
     expect(document.skillGroups).toHaveLength(1);

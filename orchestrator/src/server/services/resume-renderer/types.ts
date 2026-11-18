@@ -19,6 +19,9 @@ export interface LatexResumeEntry {
   bullets: string[];
   url?: string | null;
   linkLabel?: string | null;
+  /** Experience only: the parts `subtitle` joins, for themes that lay them out separately. */
+  position?: string | null;
+  location?: string | null;
 }
 
 export interface LatexResumeSkillGroup {
