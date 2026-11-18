@@ -187,6 +187,16 @@ export function buildGmailQuery(searchDays: number): string {
     "screening call",
     "let's chat",
     "quick chat",
+    // Japanese recruiting: application, screening, document screening,
+    // interview, casual interview, offer, rejection, selection result.
+    "応募",
+    "選考",
+    "書類選考",
+    "面接",
+    "面談",
+    "内定",
+    "お見送り",
+    "選考結果",
   ];
   const fromTerms = [
     "careers@",
@@ -208,6 +218,11 @@ export function buildGmailQuery(searchDays: number): string {
     "@calendly.com",
     "@savvycal.com",
     "calendar-notification@google.com",
+    // Applicant tracking systems common in Japan
+    "@herp.cloud",
+    "@hrmos.co",
+    "@talentio.com",
+    "@jobcan.jp",
   ];
   // Full-text (subject OR body) terms. Recruiter follow-ups and calendar
   // invites often carry a plain job-title or "First and Last" subject with no
@@ -223,6 +238,9 @@ export function buildGmailQuery(searchDays: number): string {
     "microsoft teams meeting",
     "calendly.com",
     "savvycal.com",
+    // Japanese "thank you for applying"
+    "ご応募いただき",
+    "ご応募ありがとうございます",
   ];
   const excludeSubjectTerms = [
     "newsletter",
