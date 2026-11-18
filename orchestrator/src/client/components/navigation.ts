@@ -9,19 +9,23 @@ import {
   Settings,
   Shield,
 } from "lucide-react";
+import type shell from "../i18n/locales/en/shell";
+
+/** Key under `shell:nav`; render with `t(\`nav.${labelKey}\`)`. */
+export type NavLabelKey = keyof typeof shell.nav;
 
 export type NavLink = {
   to: string;
-  label: string;
+  labelKey: NavLabelKey;
   icon: typeof Home;
   activePaths?: string[];
 };
 
 export const NAV_LINKS: NavLink[] = [
-  { to: "/overview", label: "Overview", icon: Home },
+  { to: "/overview", labelKey: "overview", icon: Home },
   {
     to: "/jobs/ready",
-    label: "Jobs",
+    labelKey: "jobs",
     icon: LayoutDashboard,
     activePaths: [
       "/jobs/ready",
@@ -32,26 +36,26 @@ export const NAV_LINKS: NavLink[] = [
   },
   {
     to: "/applications/in-progress",
-    label: "In Progress",
+    labelKey: "inProgress",
     icon: Columns3,
     activePaths: ["/applications/in-progress"],
   },
   {
     to: "/design-resume",
-    label: "Resume Studio",
+    labelKey: "resumeStudio",
     icon: FilePenLine,
     activePaths: ["/design-resume"],
   },
-  { to: "/tracking-inbox", label: "Tracking Inbox", icon: Inbox },
+  { to: "/tracking-inbox", labelKey: "trackingInbox", icon: Inbox },
   {
     to: "/tracer-links",
-    label: "Tracer Links",
+    labelKey: "tracerLinks",
     icon: Link2,
     activePaths: ["/tracer-links"],
   },
-  { to: "/visa-sponsors", label: "Visa Sponsors", icon: Shield },
-  { to: "/watchlist", label: "Watchlist", icon: Eye },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/visa-sponsors", labelKey: "visaSponsors", icon: Shield },
+  { to: "/watchlist", labelKey: "watchlist", icon: Eye },
+  { to: "/settings", labelKey: "settings", icon: Settings },
 ];
 
 export const isNavActive = (

@@ -12,6 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   navOpen: controlledNavOpen,
   onNavOpenChange,
 }) => {
+  const { t } = useTranslation("shell");
   const location = useLocation();
   const navigate = useNavigate();
   const [internalNavOpen, setInternalNavOpen] = useState(false);
@@ -157,30 +159,32 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Open navigation menu</span>
+                <span className="sr-only">{t("header.openNavigation")}</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 flex flex-col">
               <SheetHeader>
-                <SheetTitle>JobOps</SheetTitle>
+                <SheetTitle>JobOps{/* i18n-ignore */}</SheetTitle>
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-2">
-                {navLinks.map(({ to, label, icon: NavIcon, activePaths }) => (
-                  <button
-                    key={to}
-                    type="button"
-                    onClick={() => handleNavClick(to, activePaths)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground text-left",
-                      isNavActive(location.pathname, to, activePaths)
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    <NavIcon className="h-4 w-4" />
-                    {label}
-                  </button>
-                ))}
+                {navLinks.map(
+                  ({ to, labelKey, icon: NavIcon, activePaths }) => (
+                    <button
+                      key={to}
+                      type="button"
+                      onClick={() => handleNavClick(to, activePaths)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground text-left",
+                        isNavActive(location.pathname, to, activePaths)
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      <NavIcon className="h-4 w-4" />
+                      {t(`nav.${labelKey}`)}
+                    </button>
+                  ),
+                )}
               </nav>
               <div className="mt-auto space-y-4 pt-6 pb-2">
                 <div className="space-y-2 border-t border-border/60 pt-4">
@@ -193,11 +197,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                         className="h-8 w-full justify-start gap-2 px-2 text-xs"
                       >
                         <UserRound className="h-3.5 w-3.5" />
-                        <span>Account</span>
+                        <span>{t("header.account")}</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-56">
-                      <DropdownMenuLabel>Remembered</DropdownMenuLabel>
+                      <DropdownMenuLabel>
+                        {t("header.remembered")}
+                      </DropdownMenuLabel>
                       {rememberedUsers.length > 0 ? (
                         rememberedUsers.map((user) => (
                           <DropdownMenuItem
@@ -222,7 +228,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                         ))
                       ) : (
                         <DropdownMenuItem disabled>
-                          Sign in once to remember a username here.
+                          {t("header.rememberedEmpty")}
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
@@ -231,7 +237,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                         className="gap-2"
                       >
                         <LogOut className="h-3.5 w-3.5" />
-                        <span>Sign out</span>
+                        <span>{t("header.signOut")}</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -244,9 +250,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                       rel="noopener noreferrer"
                       className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      <span className="truncate">Version {version}</span>
+                      <span className="truncate">
+                        {t("header.version", { version })}
+                      </span>
                       {updateAvailable && (
-                        <Tip asChild content={<p>Update available</p>}>
+                        <Tip
+                          asChild
+                          content={<p>{t("header.updateAvailable")}</p>}
+                        >
                           <span className="h-2 w-2 shrink-0 cursor-pointer rounded-full bg-emerald-500" />
                         </Tip>
                       )}
@@ -261,7 +272,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                       }}
                       className="h-7 gap-1.5 px-2 text-xs"
                     >
-                      <span>Documentation</span>
+                      <span>{t("header.documentation")}</span>
                       <ExternalLink className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -459,8 +470,13 @@ export const ScoreMeter: React.FC<ScoreMeterProps> = ({
   score,
   showLabel = true,
 }) => {
+  const { t } = useTranslation("shell");
   if (score == null) {
-    return <span className="text-xs text-muted-foreground">Not scored</span>;
+    return (
+      <span className="text-xs text-muted-foreground">
+        {t("scoreMeter.notScored")}
+      </span>
+    );
   }
 
   const tokens = getScoreTokens(score);

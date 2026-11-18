@@ -1,3 +1,7 @@
+import i18n from "@client/i18n";
+import { getUiLanguage } from "@client/i18n/language";
+import enErrors from "@client/i18n/locales/en/errors";
+
 type ZodLikeIssue = {
   code?: string;
   format?: string;
@@ -13,7 +17,89 @@ type ZodLikeIssue = {
 };
 
 const REQUEST_ID_SUFFIX_PATTERN = /\s*\(requestId:\s*[^)]+\)\s*$/i;
-const DEFAULT_UNKNOWN_ERROR_MESSAGE = "Something went wrong. Please try again.";
+
+type ErrorCode = keyof typeof enErrors.codes;
+type ServerMessageKey = keyof typeof enErrors.server;
+
+const ERROR_CODE_BY_STATUS: Record<number, ErrorCode> = {
+  400: "INVALID_REQUEST",
+  401: "UNAUTHORIZED",
+  403: "FORBIDDEN",
+  404: "NOT_FOUND",
+  408: "REQUEST_TIMEOUT",
+  409: "CONFLICT",
+  422: "UNPROCESSABLE_ENTITY",
+  500: "INTERNAL_ERROR",
+  502: "UPSTREAM_ERROR",
+  503: "SERVICE_UNAVAILABLE",
+};
+
+// Exact English server/browser messages -> their key in errors:server.
+const SERVER_MESSAGE_KEYS = new Map<string, ServerMessageKey>(
+  (Object.entries(enErrors.server) as Array<[ServerMessageKey, string]>).map(
+    ([key, message]) => [message, key],
+  ),
+);
+const HTML_INSTEAD_OF_JSON_PATTERN =
+  /^Server error \((\d+)\): Expected JSON but received HTML\. Is the backend server running\?$/;
+const STREAM_FAILED_PATTERN = /^Stream request failed with status (\d+)$/;
+// Hiragana and katakana (U+3040-30FF), CJK ideographs (U+3400-9FFF) and
+// full-width punctuation (U+FF01-FF60).
+const JAPANESE_TEXT_PATTERN = /[぀-ヿ㐀-鿿！-｠]/u;
+
+function isErrorCode(value: unknown): value is ErrorCode {
+  return typeof value === "string" && Object.hasOwn(enErrors.codes, value);
+}
+
+function resolveErrorCode(error: unknown): ErrorCode | null {
+  if (!error || typeof error !== "object") return null;
+  const { code, status } = error as { code?: unknown; status?: unknown };
+  if (isErrorCode(code)) return code;
+  if (typeof status === "number") return ERROR_CODE_BY_STATUS[status] ?? null;
+  return null;
+}
+
+function translateKnownMessage(message: string): string | null {
+  const key = SERVER_MESSAGE_KEYS.get(message);
+  if (key) return i18n.t(`errors:server.${key}`);
+  const html = HTML_INSTEAD_OF_JSON_PATTERN.exec(message);
+  if (html) {
+    return i18n.t("errors:serverPatterns.htmlInsteadOfJson", {
+      status: html[1],
+    });
+  }
+  const stream = STREAM_FAILED_PATTERN.exec(message);
+  if (stream) {
+    return i18n.t("errors:serverPatterns.streamFailed", { status: stream[1] });
+  }
+  return null;
+}
+
+/**
+ * Server and browser error text is English. In the Japanese UI, a message
+ * with a known translation is replaced by it; otherwise the error code's
+ * translated message is shown with the original text in parentheses.
+ * In the English UI the message is returned unchanged.
+ */
+export function localizeErrorMessage(message: string, error?: unknown): string {
+  if (getUiLanguage() !== "ja") return message;
+  if (!message || JAPANESE_TEXT_PATTERN.test(message)) return message;
+  const known = translateKnownMessage(message);
+  if (known) return known;
+  const code = resolveErrorCode(error);
+  if (!code) return message;
+  return i18n.t("errors:withServerDetail", {
+    message: i18n.t(`errors:codes.${code}`),
+    detail: message,
+  });
+}
+
+/** `error.message` (localized) for Error instances, otherwise the fallback. */
+export function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error
+    ? localizeErrorMessage(error.message, error)
+    : fallback;
+}
 
 function toIssuePath(path: Array<string | number> | undefined): string {
   if (!Array.isArray(path) || path.length === 0) return "";
@@ -26,14 +112,18 @@ function normalizeSectionName(section: string): string {
 
 function toFriendlyFieldLabel(path: string): string | null {
   if (!path) return null;
-  if (path === "jobDescription") return "job description";
-  if (path === "job.jobUrl" || path === "jobUrl") return "job URL";
-  if (path === "applicationLink" || path === "job.applicationLink") {
-    return "application URL";
+  if (path === "jobDescription") return i18n.t("errors:fields.jobDescription");
+  if (path === "job.jobUrl" || path === "jobUrl") {
+    return i18n.t("errors:fields.jobUrl");
   }
-  if (/^sections\.skills\.items\.\d+\.name$/.test(path)) return "skill name";
+  if (path === "applicationLink" || path === "job.applicationLink") {
+    return i18n.t("errors:fields.applicationUrl");
+  }
+  if (/^sections\.skills\.items\.\d+\.name$/.test(path)) {
+    return i18n.t("errors:fields.skillName");
+  }
   if (/^sections\.projects\.items\.\d+\.name$/.test(path))
-    return "project name";
+    return i18n.t("errors:fields.projectName");
 
   const sectionMatch =
     /^sections\.([a-z-]+)\.items\.\d+\.([a-zA-Z0-9_-]+)$/.exec(path);
@@ -83,11 +173,11 @@ function toFriendlyIssueMessage(issue: ZodLikeIssue): string | null {
   const label = toFriendlyFieldLabel(path);
 
   if (path === "jobDescription") {
-    return "Please enter a job description before continuing.";
+    return i18n.t("errors:validation.jobDescriptionRequired");
   }
 
   if (/^sections\.skills\.items\.\d+\.name$/.test(path)) {
-    return "Please enter a skill (e.g., Python, SQL).";
+    return i18n.t("errors:validation.skillRequired");
   }
 
   const normalizedIssueMessage = issue.message?.toLowerCase() ?? "";
@@ -98,8 +188,8 @@ function toFriendlyIssueMessage(issue: ZodLikeIssue): string | null {
 
   if (isInvalidUrl) {
     return label
-      ? `Please enter a valid ${label}.`
-      : "Please enter a valid URL.";
+      ? i18n.t("errors:validation.invalidField", { label })
+      : i18n.t("errors:validation.invalidUrl");
   }
 
   if (path === "password") {
@@ -107,17 +197,17 @@ function toFriendlyIssueMessage(issue: ZodLikeIssue): string | null {
       issue.minimum ?? extractNumericConstraint(issue.message, "minimum");
     if (issue.code === "too_small" || minimum !== null) {
       if (minimum === null || minimum <= 1) {
-        return "Please enter a password before continuing.";
+        return i18n.t("errors:validation.passwordRequired");
       }
-      return `Password must be at least ${minimum} characters.`;
+      return i18n.t("errors:validation.passwordTooShort", { minimum });
     }
 
     const maximum =
       issue.maximum ?? extractNumericConstraint(issue.message, "maximum");
     if (issue.code === "too_big" || maximum !== null) {
       return maximum === null
-        ? "Password is too long."
-        : `Password must be ${maximum} characters or fewer.`;
+        ? i18n.t("errors:validation.passwordTooLong")
+        : i18n.t("errors:validation.passwordMaxLength", { maximum });
     }
   }
 
@@ -134,22 +224,27 @@ function toFriendlyIssueMessage(issue: ZodLikeIssue): string | null {
     (issue.code === "too_big" || maximum !== null)
   ) {
     return maximum === null
-      ? `${toSentenceCase(label)} is too long.`
-      : `${toSentenceCase(label)} must be ${maximum} characters or fewer.`;
+      ? i18n.t("errors:validation.fieldTooLong", {
+          label: toSentenceCase(label),
+        })
+      : i18n.t("errors:validation.fieldMaxLength", {
+          label: toSentenceCase(label),
+          maximum,
+        });
   }
 
   if (issue.code === "too_small" && isStringIssue && issue.minimum === 1) {
     if (label) {
-      return `Please enter a ${label} before continuing.`;
+      return i18n.t("errors:validation.fieldRequired", { label });
     }
-    return "Please fill in the required field before continuing.";
+    return i18n.t("errors:validation.requiredField");
   }
 
   if (issue.code === "invalid_type") {
     if (label) {
-      return `Please provide a valid ${label}.`;
+      return i18n.t("errors:validation.fieldInvalidType", { label });
     }
-    return "Please check the entered value and try again.";
+    return i18n.t("errors:validation.checkValue");
   }
 
   return null;
@@ -266,7 +361,7 @@ export function stripRequestIdFromMessage(message: string): string {
 
 export function formatUserFacingError(
   error: unknown,
-  fallback = DEFAULT_UNKNOWN_ERROR_MESSAGE,
+  fallback: string = i18n.t("errors:unknown"),
 ): string {
   const raw = extractRawErrorMessage(error);
   const details = extractErrorDetails(error);
@@ -301,7 +396,9 @@ export function formatUserFacingError(
 
     const label = toFriendlyFieldLabel(toIssuePath(validationIssue.path));
     if (label) {
-      return `${toSentenceCase(label)} is invalid. Please review and try again.`;
+      return i18n.t("errors:validation.fieldInvalid", {
+        label: toSentenceCase(label),
+      });
     }
   }
 
@@ -309,5 +406,11 @@ export function formatUserFacingError(
     return fallback;
   }
 
-  return message;
+  // Only errors that reach the UI (Error instances such as ApiClientError,
+  // or objects carrying a code/status) are localized. api/core.ts formats
+  // plain { message, details } objects while building ApiClientError; those
+  // keep the English server text so the error object stays inspectable.
+  return error instanceof Error || resolveErrorCode(error)
+    ? localizeErrorMessage(message, error)
+    : message;
 }

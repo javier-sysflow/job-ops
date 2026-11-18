@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import { formatDate, formatDateTime } from "@/lib/utils";
 
 export interface PostingAgeLabel {
@@ -79,29 +80,37 @@ export function getPostingDateSortValue(
   return now.getTime() - ageDays * 86_400_000;
 }
 
-function plural(value: number, unit: string): string {
-  return `${value}${unit}`;
-}
-
 function formatRelativePostingAge(date: Date, now: Date): string {
   const elapsedMs = Math.max(0, now.getTime() - date.getTime());
   const elapsedMinutes = Math.floor(elapsedMs / 60_000);
   const elapsedHours = Math.floor(elapsedMs / 3_600_000);
   const calendarDays = getCalendarAgeDays(date, now);
 
-  if (elapsedMinutes < 1) return "just now";
-  if (elapsedMinutes < 60) return plural(elapsedMinutes, "m ago");
+  if (elapsedMinutes < 1) return i18n.t("shell:postingAge.justNow");
+  if (elapsedMinutes < 60) {
+    return i18n.t("shell:postingAge.minutesAgo", { value: elapsedMinutes });
+  }
   if (calendarDays === 0 && elapsedHours < 24) {
-    return plural(elapsedHours, "h ago");
+    return i18n.t("shell:postingAge.hoursAgo", { value: elapsedHours });
   }
-  if (calendarDays === 0) return "today";
-  if (calendarDays === 1) return "yesterday";
-  if (calendarDays < 7) return plural(calendarDays, "d ago");
-  if (calendarDays < 30) return plural(Math.floor(calendarDays / 7), "w ago");
+  if (calendarDays === 0) return i18n.t("shell:postingAge.today");
+  if (calendarDays === 1) return i18n.t("shell:postingAge.yesterday");
+  if (calendarDays < 7) {
+    return i18n.t("shell:postingAge.daysAgo", { value: calendarDays });
+  }
+  if (calendarDays < 30) {
+    return i18n.t("shell:postingAge.weeksAgo", {
+      value: Math.floor(calendarDays / 7),
+    });
+  }
   if (calendarDays < 365) {
-    return plural(Math.floor(calendarDays / 30), "mo ago");
+    return i18n.t("shell:postingAge.monthsAgo", {
+      value: Math.floor(calendarDays / 30),
+    });
   }
-  return plural(Math.floor(calendarDays / 365), "y ago");
+  return i18n.t("shell:postingAge.yearsAgo", {
+    value: Math.floor(calendarDays / 365),
+  });
 }
 
 export function formatPostingAgeLabel(
@@ -117,8 +126,8 @@ export function formatPostingAgeLabel(
     const ageDays = parseRelativeAgeDays(raw);
     return {
       label: raw,
-      inlineLabel: `Posted ${raw}`,
-      tooltip: `Source reported: ${raw}`,
+      inlineLabel: i18n.t("shell:postingAge.posted", { label: raw }),
+      tooltip: i18n.t("shell:postingAge.sourceReported", { raw }),
       tone: getPostingAgeTone(ageDays),
     };
   }
@@ -132,8 +141,8 @@ export function formatPostingAgeLabel(
 
   return {
     label,
-    inlineLabel: `Posted ${label}`,
-    tooltip: `Source posting date: ${absolute}`,
+    inlineLabel: i18n.t("shell:postingAge.posted", { label }),
+    tooltip: i18n.t("shell:postingAge.sourcePostingDate", { date: absolute }),
     tone: getPostingAgeTone(ageDays),
   };
 }
