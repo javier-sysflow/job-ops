@@ -1,6 +1,7 @@
 import type { VariantProps } from "class-variance-authority";
 import { ExternalLink } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Button, type buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { KbdHint } from "./KbdHint";
@@ -22,6 +23,7 @@ export const OpenJobListingButton: React.FC<OpenJobListingButtonProps> = ({
   disabled = false,
   onClick,
 }) => {
+  const { t } = useTranslation("jobDetail");
   if (disabled) {
     return (
       <Button
@@ -31,7 +33,7 @@ export const OpenJobListingButton: React.FC<OpenJobListingButtonProps> = ({
         disabled
       >
         <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">Open Job Listing</span>
+        <span className="truncate">{t("openListing.label")}</span>
         {shortcut ? <KbdHint shortcut={shortcut} className="ml-auto" /> : null}
       </Button>
     );
@@ -51,7 +53,7 @@ export const OpenJobListingButton: React.FC<OpenJobListingButtonProps> = ({
         onClick={onClick}
       >
         <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">Open Job Listing</span>
+        <span className="truncate">{t("openListing.label")}</span>
         {shortcut ? <KbdHint shortcut={shortcut} className="ml-auto" /> : null}
       </a>
     </Button>

@@ -1,5 +1,6 @@
 import { extractPdfJobDescription } from "@client/lib/pdf-job-description";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function PdfJobDescriptionInput({ disabled, onText, onBusy }: Props) {
+  const { t } = useTranslation("jobDetail");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const generation = useRef(0);
@@ -22,7 +24,7 @@ export function PdfJobDescriptionInput({ disabled, onText, onBusy }: Props) {
   return (
     <div className="space-y-2 rounded-lg border border-border p-3">
       <label htmlFor="pdf-job-description" className="text-sm font-medium">
-        PDF job description
+        {t("pdfInput.label")}
       </label>
       <Input
         id="pdf-job-description"
@@ -36,20 +38,16 @@ export function PdfJobDescriptionInput({ disabled, onText, onBusy }: Props) {
           const current = ++generation.current;
           setBusy(true);
           onBusy(true);
-          setMessage("Reading PDF...");
+          setMessage(t("pdfInput.reading"));
           try {
             const text = await extractPdfJobDescription(file);
             if (current !== generation.current) return;
             onText(text);
-            setMessage(
-              "PDF text loaded. Review and edit it below before analyzing.",
-            );
+            setMessage(t("pdfInput.loaded"));
           } catch (error) {
             if (current !== generation.current) return;
             setMessage(
-              error instanceof Error
-                ? error.message
-                : "Could not read this PDF. Try pasting its text instead.",
+              error instanceof Error ? error.message : t("pdfInput.readFailed"),
             );
           } finally {
             if (current === generation.current) {
@@ -59,11 +57,7 @@ export function PdfJobDescriptionInput({ disabled, onText, onBusy }: Props) {
           }
         }}
       />
-      <p className="text-xs text-muted-foreground">
-        Replaces the description below. Text PDFs only, up to 10 MB and 100
-        pages. The file stays in your browser. Analyze JD sends the reviewed
-        text to your configured AI provider.
-      </p>
+      <p className="text-xs text-muted-foreground">{t("pdfInput.help")}</p>
       {message && (
         <output className="block text-xs text-muted-foreground">
           {message}

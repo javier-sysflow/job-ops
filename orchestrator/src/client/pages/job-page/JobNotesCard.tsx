@@ -2,6 +2,7 @@ import type { JobNote } from "@shared/types.js";
 import { useQuery } from "@tanstack/react-query";
 import { Edit2, FileText, PlusCircle, Trash2 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import * as api from "@/client/api";
 import { ConfirmDelete } from "@/client/components/ConfirmDelete";
@@ -37,6 +38,7 @@ type JobNotesCardProps = {
 };
 
 export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
+  const { t } = useTranslation(["jobDetail", "common"]);
   const [editorState, setEditorState] = React.useState<
     { mode: "create" } | { mode: "edit"; noteId: string } | null
   >(null);
@@ -57,10 +59,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
   const updateNoteMutation = useUpdateJobNoteMutation();
   const deleteNoteMutation = useDeleteJobNoteMutation();
 
-  useQueryErrorToast(
-    notesQuery.error,
-    "Failed to load notes. Please try again.",
-  );
+  useQueryErrorToast(notesQuery.error, t("toasts.loadNotesFailed"));
 
   const notes = React.useMemo(
     () => sortNotesByUpdatedAtDesc(notesQuery.data ?? []),
@@ -105,7 +104,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
     const content = tipTapHtmlToMarkdown(draftContent).trim();
 
     if (!title || !content) {
-      setEditorError("Title and note content are required.");
+      setEditorError(t("notes.contentRequired"));
       return;
     }
 
@@ -122,11 +121,11 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
               input: { title, content },
             });
 
-      toast.success("Note saved");
+      toast.success(t("notes.saved"));
       setSelectedNoteId(savedNote.id);
       resetEditor();
     } catch (error) {
-      showErrorToast(error, "Failed to save note");
+      showErrorToast(error, t("notes.saveFailed"));
     }
   }, [
     createNoteMutation,
@@ -135,6 +134,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
     editorState,
     jobId,
     resetEditor,
+    t,
     updateNoteMutation,
   ]);
 
@@ -146,7 +146,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
         jobId,
         noteId: noteToDelete.id,
       });
-      toast.success("Note deleted");
+      toast.success(t("notes.deleted"));
       if (selectedNoteId === noteToDelete.id) {
         const nextNote = notes.find((note) => note.id !== noteToDelete.id);
         setSelectedNoteId(nextNote?.id ?? null);
@@ -158,7 +158,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
         resetEditor();
       }
     } catch (error) {
-      showErrorToast(error, "Failed to delete note");
+      showErrorToast(error, t("notes.deleteFailed"));
     } finally {
       setNoteToDelete(null);
     }
@@ -170,6 +170,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
     notes,
     resetEditor,
     selectedNoteId,
+    t,
   ]);
 
   const canEditOtherNotes = editorState === null;
@@ -205,12 +206,12 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4" />
-              Notes
+              {t("notes.title")}
             </CardTitle>
             {!editorState && (
               <Button size="sm" variant="outline" onClick={openCreateEditor}>
                 <PlusCircle className="mr-1.5 h-3.5 w-3.5" />
-                Add note
+                {t("notes.addNote")}
               </Button>
             )}
           </div>
@@ -220,14 +221,13 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
             <aside data-testid="job-notes-list" className="space-y-3">
               {!editorState && notesQuery.isLoading && notes.length === 0 && (
                 <div className="rounded-xl border border-dashed border-border/60 bg-muted/10 p-4 text-sm text-muted-foreground">
-                  Loading notes...
+                  {t("notes.loading")}
                 </div>
               )}
 
               {!editorState && !notesQuery.isLoading && notes.length === 0 && (
                 <div className="rounded-xl border border-dashed border-border/60 bg-muted/10 p-4 text-sm text-muted-foreground">
-                  No notes yet. Capture reminders, interview prep, or links in
-                  markdown.
+                  {t("notes.empty")}
                 </div>
               )}
 
@@ -258,12 +258,12 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                               {note.title}
                             </div>
                             <div className="mt-1 text-xs text-muted-foreground">
-                              Updated {noteTimestamp}
+                              {t("notes.updated", { date: noteTimestamp })}
                             </div>
                           </div>
                           {isSelected && !editorState && (
                             <Badge variant="secondary" className="text-[10px]">
-                              Selected
+                              {t("notes.selected")}
                             </Badge>
                           )}
                         </div>
@@ -290,18 +290,20 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                     <div className="min-w-0">
                       <div className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
                         {editorState.mode === "create"
-                          ? "New note"
-                          : "Editing note"}
+                          ? t("notes.newNote")
+                          : t("notes.editingNote")}
                       </div>
                       <div className="mt-1 text-lg font-semibold">
                         {editorState.mode === "create"
-                          ? "Draft a note"
-                          : draftTitle || selectedNote?.title || "Edit note"}
+                          ? t("notes.draftNote")
+                          : draftTitle ||
+                            selectedNote?.title ||
+                            t("notes.editNote")}
                       </div>
                     </div>
                     {editorState.mode === "edit" && selectedNote && (
                       <Badge variant="secondary" className="text-[10px]">
-                        Updated {selectedTimestamp}
+                        {t("notes.updated", { date: selectedTimestamp })}
                       </Badge>
                     )}
                   </div>
@@ -311,7 +313,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                       htmlFor="job-note-title"
                       className="text-[10px] uppercase tracking-wide text-muted-foreground"
                     >
-                      Title
+                      {t("notes.titleLabel")}
                     </label>
                     <Input
                       id="job-note-title"
@@ -321,7 +323,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                         setDraftTitle(event.target.value);
                         setEditorError(null);
                       }}
-                      placeholder="Why I am applying"
+                      placeholder={t("notes.titlePlaceholder")}
                       disabled={isSaving || isDeleting}
                     />
                   </div>
@@ -329,10 +331,10 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        Content
+                        {t("notes.content")}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        TipTap editor
+                        {t("notes.editorName")}
                       </div>
                     </div>
                     <RichTextEditor
@@ -346,7 +348,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                         setDraftContent(next);
                         setEditorError(null);
                       }}
-                      placeholder="Capture answers, reminders, interview notes, and useful links."
+                      placeholder={t("notes.contentPlaceholder")}
                       className="bg-background/20"
                     />
                   </div>
@@ -359,7 +361,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
 
                   <div className="flex flex-wrap items-center gap-2">
                     <Button type="submit" disabled={isSaving || isDeleting}>
-                      {isSaving ? "Saving..." : "Save note"}
+                      {isSaving ? t("notes.saving") : t("notes.saveNote")}
                     </Button>
                     <Button
                       type="button"
@@ -367,7 +369,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                       onClick={resetEditor}
                       disabled={isSaving || isDeleting}
                     >
-                      Cancel
+                      {t("common:actions.cancel")}
                     </Button>
                     {editorState.mode === "edit" && selectedNote && (
                       <Button
@@ -377,7 +379,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                         onClick={() => confirmDeleteNote(selectedNote)}
                         disabled={isSaving || isDeleting}
                       >
-                        Delete note
+                        {t("notes.deleteNote")}
                       </Button>
                     )}
                   </div>
@@ -390,7 +392,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                         {selectedNote.title}
                       </div>
                       <div className="mt-1 text-sm text-muted-foreground">
-                        Updated {selectedTimestamp}
+                        {t("notes.updated", { date: selectedTimestamp })}
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -399,8 +401,8 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                         variant="outline"
                         onClick={() => openEditEditor(selectedNote)}
                         disabled={!canEditOtherNotes}
-                        aria-label="Edit note"
-                        title="Edit note"
+                        aria-label={t("notes.editNote")}
+                        title={t("notes.editNote")}
                       >
                         <Edit2 className="h-4 w-4" />
                       </Button>
@@ -410,8 +412,8 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                         className="text-destructive hover:text-destructive"
                         onClick={() => confirmDeleteNote(selectedNote)}
                         disabled={!canEditOtherNotes}
-                        aria-label="Delete note"
-                        title="Delete note"
+                        aria-label={t("notes.deleteNote")}
+                        title={t("notes.deleteNote")}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -430,12 +432,10 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                 <div className="flex min-h-[280px] flex-col items-start justify-between gap-4 rounded-xl border border-dashed border-border/60 bg-background/60 p-5">
                   <div className="space-y-2">
                     <div className="text-lg font-semibold">
-                      No note selected
+                      {t("notes.noSelection")}
                     </div>
                     <div className="max-w-xl text-sm text-muted-foreground">
-                      Notes you add here can hold interview answers, contact
-                      details, and application-specific reminders. Select a note
-                      on the left or create a new one to get started.
+                      {t("notes.noSelectionDescription")}
                     </div>
                   </div>
                   {!editorState && (
@@ -445,7 +445,7 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
                       onClick={openCreateEditor}
                     >
                       <PlusCircle className="mr-1.5 h-3.5 w-3.5" />
-                      Add note
+                      {t("notes.addNote")}
                     </Button>
                   )}
                 </div>
@@ -459,8 +459,8 @@ export const JobNotesCard: React.FC<JobNotesCardProps> = ({ jobId }) => {
         isOpen={noteToDelete !== null}
         onClose={() => setNoteToDelete(null)}
         onConfirm={() => void handleDeleteNote()}
-        title="Delete note?"
-        description="This will permanently delete this note from the job."
+        title={t("notes.deleteDialog.title")}
+        description={t("notes.deleteDialog.description")}
       />
     </section>
   );

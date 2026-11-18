@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ConfirmDelete } from "@/client/components/ConfirmDelete";
 import { TooltipWhenDisabled } from "@/client/components/TooltipWhenDisabled";
@@ -78,6 +79,7 @@ function DocumentIcon({
 const DocumentPreview: React.FC<{
   document: JobDocument;
 }> = ({ document }) => {
+  const { t } = useTranslation("jobDetail");
   const [textPreview, setTextPreview] = useState<string | null>(null);
   const [textError, setTextError] = useState<string | null>(null);
   const canPreviewAsObject = canPreviewJobDocumentAsObject(document);
@@ -105,19 +107,19 @@ const DocumentPreview: React.FC<{
           if (!cancelled) setTextPreview(text.slice(0, 80_000));
         })
         .catch(() => {
-          if (!cancelled) setTextError("Preview unavailable.");
+          if (!cancelled) setTextError(t("documents.previewUnavailable"));
         });
     }
 
     return () => {
       cancelled = true;
     };
-  }, [canPreviewAsText, document.id, document.jobId]);
+  }, [canPreviewAsText, document.id, document.jobId, t]);
 
   if (!canPreviewAsObject && !canPreviewAsText) {
     return (
       <div className="rounded-md border border-dashed border-border/60 bg-background/30 p-4 text-sm text-muted-foreground">
-        This file type cannot be previewed here.
+        {t("documents.cannotPreview")}
       </div>
     );
   }
@@ -159,12 +161,13 @@ const DocumentPreview: React.FC<{
   return (
     <div className="flex min-h-32 items-center justify-center rounded-md border border-border/50 bg-background/30 text-sm text-muted-foreground">
       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      Loading preview
+      {t("documents.loadingPreview")}
     </div>
   );
 };
 
 const ResumePdfPreview: React.FC<{ jobId: string }> = ({ jobId }) => {
+  const { t } = useTranslation("jobDetail");
   const loadObjectUrl = useCallback(
     () => createJobPdfObjectUrl(jobId),
     [jobId],
@@ -183,14 +186,14 @@ const ResumePdfPreview: React.FC<{ jobId: string }> = ({ jobId }) => {
     return (
       <div className="flex min-h-32 items-center justify-center rounded-md border border-border/50 bg-background/30 text-sm text-muted-foreground">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading preview
+        {t("documents.loadingPreview")}
       </div>
     );
   }
 
   return (
     <iframe
-      title="Resume PDF"
+      title={t("documents.resumePdf")}
       src={objectUrl}
       className="h-[560px] w-full rounded-md border border-border/50 bg-background"
     />
@@ -212,6 +215,7 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
   onRegeneratePdf,
 }) => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation("jobDetail");
   const uploadDocumentInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<JobDocument | null>(
@@ -240,9 +244,9 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
       setIsUploadingDocument(true);
       await uploadJobDocumentFromFile(job.id, file);
       await refreshDocuments();
-      toast.success("Document uploaded");
+      toast.success(t("documents.uploaded"));
     } catch (error) {
-      showErrorToast(error, "Failed to upload document");
+      showErrorToast(error, t("documents.uploadFailed"));
     } finally {
       setIsUploadingDocument(false);
       if (uploadDocumentInputRef.current) {
@@ -256,9 +260,9 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
     try {
       await api.deleteJobDocument(job.id, documentToDelete.id);
       await refreshDocuments();
-      toast.success("Document deleted");
+      toast.success(t("documents.deleted"));
     } catch (error) {
-      showErrorToast(error, "Failed to delete document");
+      showErrorToast(error, t("documents.deleteFailed"));
     } finally {
       setDocumentToDelete(null);
     }
@@ -270,7 +274,7 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-4 py-3">
           <div className="flex items-center gap-2 text-base font-semibold">
             <FileText className="h-4 w-4" />
-            Documents
+            {t("documents.title")}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -284,7 +288,7 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
               ) : (
                 <Upload className="mr-1.5 h-3.5 w-3.5" />
               )}
-              Upload document
+              {t("documents.uploadDocument")}
             </Button>
             <Button
               size="sm"
@@ -294,10 +298,10 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
             >
               <Upload className="mr-1.5 h-3.5 w-3.5" />
               {isUploadingPdf
-                ? "Uploading PDF"
+                ? t("documents.uploadingPdf")
                 : job.pdfPath
-                  ? "Replace PDF"
-                  : "Upload PDF"}
+                  ? t("documents.replacePdf")
+                  : t("documents.uploadPdf")}
             </Button>
           </div>
         </div>
@@ -318,13 +322,13 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
                         <FileText className="h-3.5 w-3.5 text-sky-400/80" />
-                        Resume PDF
+                        {t("documents.resumePdf")}
                         <Badge variant="secondary" className="text-[10px]">
-                          {job.pdfFreshness}
+                          {t(`documents.freshness.${job.pdfFreshness}`)}
                         </Badge>
                       </div>
                       <p className="mt-0.5 text-xs text-muted-foreground/65">
-                        Generated or uploaded application material for this job.
+                        {t("documents.resumePdfDescription")}
                       </p>
                     </div>
                   </AccordionTrigger>
@@ -364,7 +368,7 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
                       disabled={isUploadingPdf}
                     >
                       <Upload className="mr-1.5 h-3.5 w-3.5" />
-                      Replace PDF
+                      {t("documents.replacePdf")}
                     </Button>
                     <Button
                       size="sm"
@@ -373,7 +377,7 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
                       disabled={Boolean(pdfRegeneratingReason)}
                     >
                       <RefreshCcw className="mr-1.5 h-3.5 w-3.5" />
-                      Regenerate
+                      {t("documents.regenerate")}
                     </Button>
                   </div>
                 </div>
@@ -405,11 +409,14 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
                         <span className="truncate">{document.fileName}</span>
                       </div>
                       <p className="mt-0.5 text-xs text-muted-foreground/65">
-                        {document.mediaType || "Unknown type"} ·{" "}
-                        {formatJobDocumentByteSize(document.byteSize)} ·
-                        Uploaded{" "}
-                        {formatDateTime(document.createdAt) ??
-                          document.createdAt}
+                        {t("documents.meta", {
+                          type:
+                            document.mediaType || t("documents.unknownType"),
+                          size: formatJobDocumentByteSize(document.byteSize),
+                          date:
+                            formatDateTime(document.createdAt) ??
+                            document.createdAt,
+                        })}
                       </p>
                     </div>
                   </AccordionTrigger>
@@ -419,12 +426,12 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
                       variant="ghost"
                       onClick={() =>
                         void openJobDocument(job.id, document).catch((error) =>
-                          showErrorToast(error, "Could not open document"),
+                          showErrorToast(error, t("documents.openFailed")),
                         )
                       }
                     >
                       <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-                      Open
+                      {t("documents.open")}
                     </Button>
                     <Button
                       size="sm"
@@ -435,12 +442,12 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
                           document.id,
                           document.fileName,
                         ).catch((error) =>
-                          showErrorToast(error, "Could not download document"),
+                          showErrorToast(error, t("documents.downloadFailed")),
                         )
                       }
                     >
                       <Download className="mr-1.5 h-3.5 w-3.5" />
-                      Download
+                      {t("documents.download")}
                     </Button>
                     <Button
                       size="sm"
@@ -449,7 +456,7 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
                       onClick={() => setDocumentToDelete(document)}
                     >
                       <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                      Delete
+                      {t("documents.delete")}
                     </Button>
                   </div>
                 </div>
@@ -465,13 +472,13 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
           {documentsQuery.isLoading ? (
             <div className="flex min-h-20 items-center justify-center rounded-lg border border-border/50 bg-background/25 text-sm text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading documents
+              {t("documents.loading")}
             </div>
           ) : null}
 
           {!job.pdfPath && documentsQuery.data?.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border/60 bg-background/25 p-6 text-sm text-muted-foreground">
-              No documents attached yet.
+              {t("documents.empty")}
             </div>
           ) : null}
         </div>
@@ -491,8 +498,12 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
         isOpen={Boolean(documentToDelete)}
         onClose={() => setDocumentToDelete(null)}
         onConfirm={handleDeleteDocument}
-        title="Delete document?"
-        description={`This removes ${documentToDelete?.fileName ?? "this document"} from this job.`}
+        title={t("documents.deleteDialog.title")}
+        description={t("documents.deleteDialog.description", {
+          name:
+            documentToDelete?.fileName ??
+            t("documents.deleteDialog.fallbackName"),
+        })}
       />
     </>
   );

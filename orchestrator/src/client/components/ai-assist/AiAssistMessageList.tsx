@@ -6,6 +6,7 @@ import type {
 import { Check, Copy, Pencil, RefreshCcw } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
@@ -47,14 +48,15 @@ export function AiAssistMessageList<TMessage extends AiAssistMessage>({
   branches = [],
   isStreaming,
   streamingMessageId,
-  assistantLabel = "Assistant",
-  userLabel = "You",
+  assistantLabel,
+  userLabel,
   onRegenerate,
   onEdit,
   onSwitchBranch,
   onAssistantCopy,
   renderAssistantActions,
 }: AiAssistMessageListProps<TMessage>) {
+  const { t } = useTranslation(["jobDetail", "common"]);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -94,7 +96,7 @@ export function AiAssistMessageList<TMessage extends AiAssistMessage>({
 
   const copyMessage = async (message: TMessage) => {
     if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
-      toast.error("Copy is not available in this browser context");
+      toast.error(t("aiAssist.copyUnavailable"));
       return;
     }
     try {
@@ -109,7 +111,7 @@ export function AiAssistMessageList<TMessage extends AiAssistMessage>({
         copiedTimeoutRef.current = null;
       }, 2000);
     } catch (error) {
-      showErrorToast(error, "Failed to copy response");
+      showErrorToast(error, t("aiAssist.copyFailed"));
     }
   };
 
@@ -140,7 +142,9 @@ export function AiAssistMessageList<TMessage extends AiAssistMessage>({
           >
             <div className="mb-1 flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                {isUser ? userLabel : assistantLabel}
+                {isUser
+                  ? (userLabel ?? t("aiAssist.you"))
+                  : (assistantLabel ?? t("aiAssist.assistant"))}
               </span>
               {branch && onSwitchBranch ? (
                 <BranchNavigator
@@ -154,8 +158,8 @@ export function AiAssistMessageList<TMessage extends AiAssistMessage>({
                     type="button"
                     onClick={() => startEditing(message)}
                     className="rounded p-1 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                    aria-label="Edit message"
-                    title="Edit message"
+                    aria-label={t("aiAssist.editMessage")}
+                    title={t("aiAssist.editMessage")}
                   >
                     <Pencil className="h-3 w-3" />
                   </button>
@@ -167,8 +171,8 @@ export function AiAssistMessageList<TMessage extends AiAssistMessage>({
                         type="button"
                         onClick={() => void copyMessage(message)}
                         className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-[11px] text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                        aria-label="Copy response"
-                        title="Copy response"
+                        aria-label={t("aiAssist.copyResponse")}
+                        title={t("aiAssist.copyResponse")}
                       >
                         {copiedMessageId === message.id ? (
                           <Check className="h-3 w-3" />
@@ -176,7 +180,9 @@ export function AiAssistMessageList<TMessage extends AiAssistMessage>({
                           <Copy className="h-3 w-3" />
                         )}
                         <span>
-                          {copiedMessageId === message.id ? "Copied" : "Copy"}
+                          {copiedMessageId === message.id
+                            ? t("common:actions.copied")
+                            : t("common:actions.copy")}
                         </span>
                       </button>
                     ) : null}
@@ -185,8 +191,8 @@ export function AiAssistMessageList<TMessage extends AiAssistMessage>({
                         type="button"
                         onClick={() => onRegenerate(message.id)}
                         className="rounded p-1 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                        aria-label="Regenerate response"
-                        title="Regenerate response"
+                        aria-label={t("aiAssist.regenerateResponse")}
+                        title={t("aiAssist.regenerateResponse")}
                       >
                         <RefreshCcw className="h-3 w-3" />
                       </button>
@@ -211,14 +217,14 @@ export function AiAssistMessageList<TMessage extends AiAssistMessage>({
                 />
                 <div className="flex items-center justify-end gap-1">
                   <Button size="sm" variant="ghost" onClick={cancelEditing}>
-                    Cancel
+                    {t("common:actions.cancel")}
                   </Button>
                   <Button
                     size="sm"
                     onClick={() => submitEdit(message.id)}
                     disabled={!editContent.trim()}
                   >
-                    Submit
+                    {t("aiAssist.submit")}
                   </Button>
                 </div>
               </div>

@@ -1,9 +1,6 @@
 import { CollapsibleSection } from "@client/components/discovered-panel/CollapsibleSection";
-import {
-  type ApplicationStage,
-  STAGE_LABELS,
-  type StageEvent,
-} from "@shared/types.js";
+import { stageLabel } from "@client/i18n/labels";
+import type { ApplicationStage, StageEvent } from "@shared/types.js";
 import {
   CheckCircle2,
   ClipboardList,
@@ -18,6 +15,7 @@ import {
   Video,
 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatTimestamp, formatTimestampWithTime } from "@/lib/utils";
 
@@ -31,6 +29,17 @@ const stageIcons: Record<ApplicationStage, React.ReactNode> = {
   offer: <MailCheck className="h-4 w-4" />,
   closed: <ClipboardList className="h-4 w-4" />,
 };
+
+const REASON_CODE_KEYS = new Set([
+  "Skills",
+  "Visa",
+  "Timing",
+  "Culture",
+  "Unknown",
+] as const);
+type ReasonCodeKey = typeof REASON_CODE_KEYS extends Set<infer T> ? T : never;
+const isReasonCodeKey = (value: string): value is ReasonCodeKey =>
+  REASON_CODE_KEYS.has(value as ReasonCodeKey);
 
 const formatRange = (start: number, end: number) => {
   const startLabel = formatTimestamp(start);
@@ -65,6 +74,7 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const { t } = useTranslation("jobDetail");
   const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(
     {},
   );
@@ -82,7 +92,7 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
         return;
       }
 
-      const label = event.metadata?.groupLabel || "Grouped events";
+      const label = event.metadata?.groupLabel || t("timeline.groupedEvents");
       const group = groups.get(groupId) ?? { label, events: [] };
       group.events.push(event);
       groups.set(groupId, group);
@@ -117,12 +127,12 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
     return mapped.sort((a, b) => {
       return getEntryOccurredAt(a) - getEntryOccurredAt(b);
     });
-  }, [events, discoveredAt]);
+  }, [events, discoveredAt, t]);
 
   if (entries.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-border/50 p-6 text-sm text-muted-foreground">
-        No stage events yet.
+        {t("timeline.empty")}
       </div>
     );
   }
@@ -135,19 +145,19 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
             <TimelineRow
               key="found"
               date={formatTimestampWithTime(entry.occurredAt)}
-              title="Discovered"
+              title={t("timeline.discovered")}
               icon={<SearchCheck className="h-4 w-4" />}
               isLast={entryIndex === entries.length - 1}
             >
               <div className="text-sm text-muted-foreground">
-                Job Ops discovered this job and added it to your pipeline.
+                {t("timeline.discoveredDescription")}
               </div>
             </TimelineRow>
           );
         }
 
         if (entry.kind === "event") {
-          const title = entry.event.title || STAGE_LABELS[entry.event.toStage];
+          const title = entry.event.title || stageLabel(entry.event.toStage);
           const note = entry.event.metadata?.note;
           const reason = entry.event.metadata?.reasonCode;
           const isCurrent =
@@ -185,7 +195,9 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
                   variant="outline"
                   className="mt-2 text-[10px] uppercase tracking-wide"
                 >
-                  {reason}
+                  {isReasonCodeKey(reason)
+                    ? t(`logEvent.reasons.${reason}`)
+                    : reason}
                 </Badge>
               )}
             </TimelineRow>
@@ -216,7 +228,11 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
             >
               <CollapsibleSection
                 isOpen={groupOpen}
-                label={groupOpen ? "Hide details" : "View details"}
+                label={
+                  groupOpen
+                    ? t("timeline.hideDetails")
+                    : t("timeline.viewDetails")
+                }
                 onToggle={toggleGroup}
               >
                 <div className="space-y-4">
@@ -224,7 +240,7 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
                     <TimelineRow
                       key={event.id}
                       date={formatTimestampWithTime(event.occurredAt)}
-                      title={event.title || STAGE_LABELS[event.toStage]}
+                      title={event.title || stageLabel(event.toStage)}
                       icon={stageIcons[event.toStage]}
                       isCompact
                       isLast={false}
@@ -287,6 +303,7 @@ const TimelineRow: React.FC<TimelineRowProps> = ({
   onDelete,
   children,
 }) => {
+  const { t } = useTranslation("jobDetail");
   const isHollow = Boolean(isCurrent) && !isCompleted;
   const isFilled = !isHollow;
 
@@ -348,7 +365,7 @@ const TimelineRow: React.FC<TimelineRowProps> = ({
                   onEdit();
                 }}
                 className="p-2 cursor-pointer rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                title="Edit event"
+                title={t("timeline.editEvent")}
               >
                 <Edit2 className="size-4" />
               </button>
@@ -361,7 +378,7 @@ const TimelineRow: React.FC<TimelineRowProps> = ({
                   onDelete();
                 }}
                 className="p-2 cursor-pointer rounded-md hover:bg-muted text-destructive/70 hover:text-destructive transition-colors"
-                title="Delete event"
+                title={t("timeline.deleteEvent")}
               >
                 <Trash2 className="size-4" />
               </button>

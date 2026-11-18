@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
   Accordion,
@@ -41,13 +42,10 @@ type JobDescriptionPanelProps = {
   onOpen?: () => void;
 };
 
-const defaultHelperText =
-  "Base description extracted from the job listing, editable if something looks off. Used by the Ghostwriter and for fit assessment.";
-
 export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
   className,
   description: rawDescription,
-  helperText = defaultHelperText,
+  helperText,
   jobUrl,
   defaultOpen = true,
   collapsible = true,
@@ -57,6 +55,7 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
   onSave,
   onOpen,
 }) => {
+  const { t } = useTranslation(["jobDetail", "common"]);
   const { renderMarkdownInJobDescriptions } = useSettings();
   const [isEditing, setIsEditing] = useState(false);
   const [editedDescription, setEditedDescription] = useState(
@@ -72,6 +71,7 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
     [rawDescription],
   );
   const canEdit = Boolean(onSave);
+  const resolvedHelperText = helperText ?? t("description.helperText");
 
   useEffect(() => {
     if (isEditing) return;
@@ -81,9 +81,9 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
   const handleCopy = async () => {
     try {
       await copyTextToClipboard(rawDescription || description);
-      toast.success("Copied job description");
+      toast.success(t("description.copied"));
     } catch (error) {
-      showErrorToast(error, "Failed to copy job description");
+      showErrorToast(error, t("description.copyFailed"));
     }
   };
 
@@ -98,10 +98,10 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
     try {
       setIsSaving(true);
       await onSave(editedDescription);
-      toast.success("Job description updated");
+      toast.success(t("description.updated"));
       setIsEditing(false);
     } catch (error) {
-      showErrorToast(error, "Failed to update description");
+      showErrorToast(error, t("description.updateFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -113,20 +113,20 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
         <Button size="sm" variant="ghost" asChild>
           <a href={jobUrl} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-            View job
+            {t("description.viewJob")}
           </a>
         </Button>
       ) : null}
       {!isLoading && !error && description ? (
         <Button size="sm" variant="ghost" onClick={() => void handleCopy()}>
           <Copy className="mr-1.5 h-3.5 w-3.5" />
-          Copy
+          {t("common:actions.copy")}
         </Button>
       ) : null}
       {canEdit ? (
         <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
           <Edit2 className="mr-1.5 h-3.5 w-3.5" />
-          Edit
+          {t("common:actions.edit")}
         </Button>
       ) : null}
     </>
@@ -138,7 +138,7 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
         onClick={handleCancel}
         disabled={isSaving}
       >
-        Cancel
+        {t("common:actions.cancel")}
       </Button>
       <Button
         size="sm"
@@ -151,7 +151,7 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
         ) : (
           <Save className="mr-1.5 h-3.5 w-3.5" />
         )}
-        Save
+        {t("common:actions.save")}
       </Button>
     </>
   );
@@ -166,7 +166,7 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
       {isLoading ? (
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading job description...
+          {t("description.loading")}
         </div>
       ) : error ? (
         <div className="text-sm text-destructive">{error}</div>
@@ -175,7 +175,7 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
           value={editedDescription}
           onChange={(event) => setEditedDescription(event.target.value)}
           className="min-h-[360px] bg-background/70 font-mono text-sm leading-relaxed focus-visible:ring-1"
-          placeholder="Enter job description..."
+          placeholder={t("description.placeholder")}
         />
       ) : hasHtmlDescription && rawDescription ? (
         <JobDescriptionHtml description={rawDescription} />
@@ -200,10 +200,10 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
                 <FileText className="h-3.5 w-3.5 text-sky-400/80" />
-                Job description
+                {t("description.title")}
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground/65">
-                {helperText}
+                {resolvedHelperText}
               </p>
             </div>
             <div className="flex flex-wrap justify-end gap-1">{actions}</div>
@@ -233,10 +233,10 @@ export const JobDescriptionPanel: React.FC<JobDescriptionPanelProps> = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
                 <FileText className="h-3.5 w-3.5 text-sky-400/80" />
-                Job description
+                {t("description.title")}
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground/65 max-w-3/5">
-                {helperText}
+                {resolvedHelperText}
               </p>
             </div>
           </AccordionTrigger>

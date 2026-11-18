@@ -2,6 +2,7 @@ import type { Job } from "@shared/types";
 import { Maximize2, Minimize2, PanelRightOpen } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -45,10 +46,11 @@ function getStoredDisplayMode(): DisplayMode {
 
 export const GhostwriterDrawer: React.FC<GhostwriterDrawerProps> = ({
   job,
-  triggerLabel = "Ghostwriter",
+  triggerLabel = "Ghostwriter", // i18n-ignore
   triggerClassName,
   triggerVariant = "outline",
 }) => {
+  const { t } = useTranslation("jobDetail");
   const [open, setOpen] = useState(false);
   const [displayMode, setDisplayMode] = useState<DisplayMode>(() =>
     getStoredDisplayMode(),
@@ -110,9 +112,13 @@ export const GhostwriterDrawer: React.FC<GhostwriterDrawerProps> = ({
           <SheetHeader className="text-left">
             <div className="flex items-start justify-between gap-2 w-full max-w-6xl mx-auto">
               <div className="min-w-0 text-left">
-                <SheetTitle>Ghostwriter</SheetTitle>
+                <SheetTitle>Ghostwriter{/* i18n-ignore */}</SheetTitle>
                 <SheetDescription>
-                  {job && `${job.title} at ${job.employer}.`}
+                  {job &&
+                    t("ghostwriter.jobAtEmployerSentence", {
+                      title: job.title,
+                      employer: job.employer,
+                    })}
                 </SheetDescription>
               </div>
               <div className="flex shrink-0 items-center gap-1 rounded-md border border-border/60 bg-background/70 p-1">
@@ -128,13 +134,13 @@ export const GhostwriterDrawer: React.FC<GhostwriterDrawerProps> = ({
                     }
                     aria-label={
                       isFullscreen
-                        ? "Restore Ghostwriter drawer"
-                        : "Open Ghostwriter pop-up"
+                        ? t("ghostwriter.drawer.restore")
+                        : t("ghostwriter.drawer.popOut")
                     }
                     title={
                       isFullscreen
-                        ? "Restore Ghostwriter drawer"
-                        : "Open Ghostwriter pop-up"
+                        ? t("ghostwriter.drawer.restore")
+                        : t("ghostwriter.drawer.popOut")
                     }
                   >
                     {isFullscreen ? (
@@ -149,8 +155,8 @@ export const GhostwriterDrawer: React.FC<GhostwriterDrawerProps> = ({
                     size="icon"
                     variant="ghost"
                     className="h-7 w-7"
-                    aria-label="Close Ghostwriter"
-                    title="Close Ghostwriter"
+                    aria-label={t("ghostwriter.drawer.close")}
+                    title={t("ghostwriter.drawer.close")}
                   >
                     <span className="text-base leading-none">×</span>
                   </Button>

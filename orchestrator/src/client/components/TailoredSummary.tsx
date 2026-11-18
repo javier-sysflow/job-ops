@@ -1,5 +1,6 @@
 import type { Job } from "@shared/types.js";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 interface TailoredSummaryProps {
@@ -11,6 +12,7 @@ export const TailoredSummary: React.FC<TailoredSummaryProps> = ({
   job,
   className,
 }) => {
+  const { t } = useTranslation("jobDetail");
   if (!job.tailoredSummary) return null;
 
   return (
@@ -21,7 +23,7 @@ export const TailoredSummary: React.FC<TailoredSummaryProps> = ({
       )}
     >
       <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1.5">
-        Tailored Summary
+        {t("tailoredSummary.title")}
       </div>
       <p className="text-xs text-foreground/80 leading-relaxed italic whitespace-pre-wrap">
         "{job.tailoredSummary}"
