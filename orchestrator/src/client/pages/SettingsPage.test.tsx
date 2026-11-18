@@ -62,7 +62,7 @@ vi.mock("../api", () => ({
     id: "user-1",
     username: "test",
     displayName: null,
-    isSystemAdmin: false,
+    isSystemAdmin: true,
     isDisabled: false,
     workspaceId: "tenant_default",
     workspaceName: "JobOps",
@@ -192,6 +192,22 @@ const openDangerZoneSection = async () => {
   await clickLastButtonByName(/danger zone/i);
 };
 
+// Fork: the default mock user is an admin (admins manage AI settings);
+// tests about non-admin behaviour opt in to a regular user explicitly.
+const mockNonAdminUser = () => {
+  vi.mocked(api.getCurrentAuthUser).mockResolvedValueOnce({
+    id: "user-2",
+    username: "regular",
+    displayName: null,
+    isSystemAdmin: false,
+    isDisabled: false,
+    workspaceId: "tenant_default",
+    workspaceName: "JobOps",
+    createdAt: "2026-04-27T00:00:00.000Z",
+    updatedAt: "2026-04-27T00:00:00.000Z",
+  });
+};
+
 describe("SettingsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -249,6 +265,7 @@ describe("SettingsPage", () => {
   });
 
   it("does not request system backups for non-admin users", async () => {
+    mockNonAdminUser();
     vi.mocked(api.getSettings).mockResolvedValue(baseSettings);
     renderPage();
 
@@ -257,7 +274,21 @@ describe("SettingsPage", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
+  it("hides server-wide AI model settings from non-admin users", async () => {
+    mockNonAdminUser();
+    vi.mocked(api.getSettings).mockResolvedValue(baseSettings);
+    renderPage();
+
+    await waitFor(() => expect(api.getCurrentAuthUser).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Models" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
   it("hides installation-wide database clearing from non-admin users", async () => {
+    mockNonAdminUser();
     vi.mocked(api.getSettings).mockResolvedValue(baseSettings);
     renderPage();
 
