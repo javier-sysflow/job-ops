@@ -77,7 +77,8 @@
 
 :root {
   --radius: 0.5rem;
-  --background: #20201e;
+  /* Light theme (fork): warm off-white page, lighter cards. */
+  --background: oklch(0.9663 0.008 98.8792);
   --foreground: oklch(28.815% 0.01599 96.892);
   --card: oklch(0.9818 0.0054 95.0986);
   --card-foreground: oklch(0.1908 0.002 106.5859);
@@ -91,7 +92,7 @@
   --muted-foreground: oklch(0.6059 0.0075 97.4233);
   --accent: oklch(0.9245 0.0138 92.9892);
   --accent-foreground: oklch(0.2671 0.0196 98.939);
-  --destructive: oklch(0.1908 0.002 106.5859);
+  --destructive: oklch(0.5771 0.2152 27.325);
   --border: oklch(0.8847 0.0069 97.3627);
   --input: oklch(0.7621 0.0156 98.3528);
   --ring: oklch(0.6171 0.1375 39.0427);
@@ -232,4 +233,86 @@
 
 .jobops-map-radius-handle {
   cursor: ew-resize;
+}
+
+/*
+ * Light theme contrast fixes (fork). Many components were designed for the
+ * dark theme and use pale accent text (e.g. text-amber-200) that is
+ * unreadable on a light background. In light mode, map those utilities to
+ * darker shades of the same hue. Unlayered, so these win over Tailwind's
+ * utilities layer without touching every component.
+ */
+:root:not(.dark) .text-emerald-50,
+:root:not(.dark) .text-emerald-100,
+:root:not(.dark) .text-emerald-200 {
+  color: var(--color-emerald-800);
+}
+:root:not(.dark) .text-emerald-300 {
+  color: var(--color-emerald-700);
+}
+:root:not(.dark) .text-amber-100,
+:root:not(.dark) .text-amber-200,
+:root:not(.dark) .text-amber-300 {
+  color: var(--color-amber-800);
+}
+:root:not(.dark) .text-sky-100,
+:root:not(.dark) .text-sky-200 {
+  color: var(--color-sky-800);
+}
+:root:not(.dark) .text-sky-300 {
+  color: var(--color-sky-700);
+}
+:root:not(.dark) .text-sky-300\/80 {
+  color: color-mix(in oklab, var(--color-sky-700) 80%, transparent);
+}
+:root:not(.dark) .text-rose-200 {
+  color: var(--color-rose-800);
+}
+:root:not(.dark) .text-rose-200\/80 {
+  color: color-mix(in oklab, var(--color-rose-800) 80%, transparent);
+}
+:root:not(.dark) .text-rose-300,
+:root:not(.dark) .hover\:text-rose-300:hover {
+  color: var(--color-rose-700);
+}
+:root:not(.dark) .hover\:text-amber-50:hover {
+  color: var(--color-amber-900);
+}
+:root:not(.dark) .text-red-200 {
+  color: var(--color-red-800);
+}
+:root:not(.dark) .text-orange-200 {
+  color: var(--color-orange-800);
+}
+:root:not(.dark) .text-cyan-200 {
+  color: var(--color-cyan-800);
+}
+:root:not(.dark) .text-blue-200 {
+  color: var(--color-blue-800);
+}
+:root:not(.dark) .text-slate-200 {
+  color: var(--color-slate-700);
+}
+/* Selected workspace section: white text on a pale primary tint. */
+:root:not(.dark) .bg-primary\/12.text-white {
+  color: var(--foreground);
+}
+/*
+ * Selected job-detail tabs use important pale text (e.g. !text-sky-100).
+ * Layered !important beats unlayered !important, so these must live in the
+ * utilities layer, where the more specific selector wins.
+ */
+@layer utilities {
+  :root:not(.dark) .\!text-sky-100 {
+    /* biome-ignore lint/complexity/noImportantStyles: must beat Tailwind's important utility */
+    color: var(--color-sky-800) !important;
+  }
+  :root:not(.dark) .\!text-amber-100 {
+    /* biome-ignore lint/complexity/noImportantStyles: must beat Tailwind's important utility */
+    color: var(--color-amber-800) !important;
+  }
+  :root:not(.dark) .\!text-emerald-100 {
+    /* biome-ignore lint/complexity/noImportantStyles: must beat Tailwind's important utility */
+    color: var(--color-emerald-800) !important;
+  }
 }

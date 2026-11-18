@@ -6,6 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Job Ops Orchestrator - Manage your job applications intelligently" />
     <title>Job Ops | Orchestrator</title>
+    <script>
+      // Apply the saved appearance before first paint (see client/lib/theme.ts).
+      (() => {
+        try {
+          const stored = localStorage.getItem("jobops.theme");
+          const preference =
+            stored === "light" || stored === "system" ? stored : "dark";
+          const isDark =
+            preference === "dark" ||
+            (preference === "system" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", isDark);
+          document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+        } catch {
+          // Storage unavailable: keep the default dark theme.
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <script

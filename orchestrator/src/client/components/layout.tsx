@@ -39,6 +39,7 @@ import {
 } from "../lib/remembered-auth-users";
 import { isNavActive, NAV_LINKS } from "./navigation";
 import { StatusBadgeIndicator } from "./StatusIndicator";
+import { ThemeToggle } from "./ThemeToggle";
 import { Tip } from "./Tip";
 
 export const AppModeContext = React.createContext({
@@ -285,6 +286,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
         <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
           {actions}
+          <ThemeToggle />
         </div>
       </div>
     </header>

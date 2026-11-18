@@ -1,11 +1,13 @@
+import { useThemePreference } from "@client/hooks/useThemePreference";
 import { Toaster as Sonner } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  const { isDark } = useThemePreference();
   return (
     <Sonner
-      theme="dark"
+      theme={isDark ? "dark" : "light"}
       className="toaster group"
       toastOptions={{
         classNames: {
