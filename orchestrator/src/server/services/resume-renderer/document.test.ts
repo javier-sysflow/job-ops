@@ -336,4 +336,56 @@ describe("normalizeResumeJsonToLatexDocument", () => {
       "Owned the roadmap",
     ]);
   });
+
+  it("uses full-width parentheses for Japanese role periods", () => {
+    const document = normalizeResumeJsonToLatexDocument({
+      sections: {
+        experience: {
+          items: [
+            {
+              company: "株式会社サクラ",
+              roles: [
+                {
+                  id: "r1",
+                  position: "テックリード",
+                  period: "2023年4月～現在",
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(document.experience[0]?.bullets).toEqual([
+      "<strong>テックリード</strong>（2023年4月～現在）",
+    ]);
+  });
+
+  it("drops bullet glyphs typed by hand so they are not doubled", () => {
+    const document = normalizeResumeJsonToLatexDocument({
+      sections: {
+        experience: {
+          items: [
+            {
+              company: "Acme",
+              description:
+                "<p>・要件定義を担当</p><p>● 設計レビュー</p><p>- Led migrations</p><p>• Cut costs</p><ul><li>* Wrote docs</li></ul><p>※ 注記</p><p>-5% churn</p><p>1. 手順</p>",
+            },
+          ],
+        },
+      },
+    });
+
+    expect(document.experience[0]?.bullets).toEqual([
+      "要件定義を担当",
+      "設計レビュー",
+      "Led migrations",
+      "Cut costs",
+      "Wrote docs",
+      "※ 注記",
+      "-5% churn",
+      "1. 手順",
+    ]);
+  });
 });
