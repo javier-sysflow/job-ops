@@ -1,5 +1,5 @@
 #set page(paper: __PAGE_PAPER__, margin: __PAGE_MARGIN__)
-#set text(font: "Libertinus Serif", size: __BODY_SIZE__, lang: "en")
+#set text(font: ("Libertinus Serif", "Noto Serif CJK JP"), size: __BODY_SIZE__, lang: __TEXT_LANG__)
 #set par(leading: __PAR_LEADING__)
 
 #show link: set text(fill: rgb("#0645ad"))

@@ -521,6 +521,7 @@ export function normalizeResumeJsonToLatexDocument(
     volunteer: buildVolunteerEntries(record),
     references: buildReferenceEntries(record),
     sectionOrder: getOrderedSectionKeys(record),
+    language: options.language ?? "english",
     sectionTitles: {
       profiles: getSectionTitle(record, "profiles", titles),
       summary: getSectionTitle(record, "summary", titles),

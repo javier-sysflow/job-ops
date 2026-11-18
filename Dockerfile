@@ -132,8 +132,11 @@ COPY extractors/browser-utils ./extractors/browser-utils
 # ============================================================================
 FROM build-sources AS docs-build
 
+# Set BUILD_DOCS=false to skip the Docusaurus build (the server runs fine
+# without the bundled docs), e.g. when a hosting build times out.
+ARG BUILD_DOCS=true
 WORKDIR /app/docs-site
-RUN npm run build
+RUN if [ "$BUILD_DOCS" = "false" ]; then mkdir -p build; else npm run build; fi
 
 FROM build-sources AS client-build
 
@@ -147,9 +150,11 @@ FROM runtime-base AS runtime-node-deps
 
 ARG TARGETARCH
 
-# Install virtual display dependencies for the headed Cloudflare challenge solver.
+# Install virtual display dependencies for the headed Cloudflare challenge solver,
+# plus Noto CJK fonts so Japanese resumes render in Typst/LaTeX PDFs.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    xvfb x11vnc novnc websockify && \
+    xvfb x11vnc novnc websockify \
+    fonts-noto-cjk fontconfig && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # Copy package files for production dependency installation.
@@ -182,6 +187,12 @@ RUN npm install --workspaces --include-workspace-root --omit=dev \
 
 
 FROM runtime-node-deps AS camoufox-cache
+
+# Optional GitHub token (public read-only is enough) to avoid unauthenticated
+# GitHub API rate limits when fetching Camoufox. Hosts such as Railway pass
+# service variables as build args. Only the Camoufox cache directory is copied
+# out of this stage, so the token is not part of the final image.
+ARG GITHUB_TOKEN
 
 # Fetch target-platform Camoufox binaries after production dependencies are
 # installed so arm64 images do not inherit x64 browser assets from build stages.

@@ -593,6 +593,7 @@ export function buildTypstDocument(
     .join("\n\n");
 
   return replaceSharedTypstPlaceholders(template, paperSize)
+    .replace("__TEXT_LANG__", JSON.stringify(getTypstTextLang(document)))
     .replace("__PAGE_MARGIN__", tokens.pageMargin)
     .replace("__BODY_SIZE__", tokens.bodySize)
     .replace("__PAR_LEADING__", tokens.parLeading)
@@ -608,6 +609,21 @@ export function buildTypstDocument(
     .replace("__LOCATION_BLOCK__", locationBlock)
     .replace("__CONTACT_BLOCK__", contactBlock)
     .replace("__BODY__", body);
+}
+
+const JAPANESE_TEXT_PATTERN = /[\p{Script=Hiragana}\p{Script=Katakana}]/u;
+
+/**
+ * Typst uses `lang` for line breaking (kinsoku) and punctuation. Prefer the
+ * document's output language; fall back to spotting kana in the content so a
+ * Japanese resume rendered in another language mode still breaks correctly.
+ */
+function getTypstTextLang(document: LatexResumeDocument): string {
+  if (document.language === "japanese") return "ja";
+  const sample = [document.name, document.headline, document.summary]
+    .filter(Boolean)
+    .join(" ");
+  return JAPANESE_TEXT_PATTERN.test(sample) ? "ja" : "en";
 }
 
 function truncateOutput(value: string): string {

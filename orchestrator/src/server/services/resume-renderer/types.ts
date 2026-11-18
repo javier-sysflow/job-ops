@@ -117,6 +117,8 @@ export interface LatexResumeDocument {
   references: LatexResumeEntry[];
   sectionOrder?: LatexResumeOrderedSectionKey[];
   sectionTitles?: LatexResumeSectionTitles;
+  /** Output language the document was written for; drives Typst `lang`. */
+  language?: ChatStyleManualLanguage;
 }
 
 export interface RenderResumePdfArgs {
