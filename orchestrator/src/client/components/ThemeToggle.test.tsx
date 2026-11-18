@@ -10,6 +10,7 @@ describe("ThemeToggle", () => {
   });
 
   it("switches between light and dark mode and remembers the choice", () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, "dark");
     render(<ThemeToggle />);
 
     fireEvent.click(

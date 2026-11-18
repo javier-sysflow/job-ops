@@ -8,7 +8,7 @@
 export type ThemePreference = "light" | "dark" | "system";
 
 export const THEME_STORAGE_KEY = "jobops.theme";
-export const DEFAULT_THEME_PREFERENCE: ThemePreference = "dark";
+export const DEFAULT_THEME_PREFERENCE: ThemePreference = "light";
 const THEME_CHANGE_EVENT = "jobops:theme-change";
 
 export function isThemePreference(value: unknown): value is ThemePreference {

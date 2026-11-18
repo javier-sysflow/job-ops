@@ -20,10 +20,10 @@ describe("theme preference", () => {
     document.documentElement.style.colorScheme = "";
   });
 
-  it("defaults to dark and ignores unknown stored values", () => {
-    expect(readThemePreference()).toBe("dark");
+  it("defaults to light and ignores unknown stored values", () => {
+    expect(readThemePreference()).toBe("light");
     window.localStorage.setItem(THEME_STORAGE_KEY, "sepia");
-    expect(readThemePreference()).toBe("dark");
+    expect(readThemePreference()).toBe("light");
   });
 
   it("resolves system against the OS preference", () => {

@@ -442,7 +442,9 @@ export const settingsRegistry = {
   pdfRenderer: {
     kind: "typed" as const,
     schema: z.enum(PDF_RENDERER_VALUES),
-    default: (): PdfRenderer => "rxresume",
+    // Fork: Typst renders locally with Japanese fonts and does not depend on
+    // the hosted Reactive Resume service being up.
+    default: (): PdfRenderer => "typst",
     parse: parsePdfRendererOrNull,
     serialize: (value: PdfRenderer | null | undefined): string | null =>
       value ?? null,

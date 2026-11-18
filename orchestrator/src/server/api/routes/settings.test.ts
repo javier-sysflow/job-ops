@@ -125,8 +125,8 @@ describe.sequential("Settings API routes", () => {
     expect(Array.isArray(body.data.searchTerms.value)).toBe(true);
     expect(body.data.rxresumeApiKeyHint).toBe("resu");
     expect(body.data.rxresumeUrl).toBe("https://env.rxresume.example.com");
-    expect(body.data.pdfRenderer.value).toBe("rxresume");
-    expect(body.data.pdfRenderer.default).toBe("rxresume");
+    expect(body.data.pdfRenderer.value).toBe("typst");
+    expect(body.data.pdfRenderer.default).toBe("typst");
     expect(body.data.llmApiKeyHint).toBe("secr");
     expect(body.data).not.toHaveProperty("basicAuthUser");
     expect(body.data).not.toHaveProperty("basicAuthPassword");
