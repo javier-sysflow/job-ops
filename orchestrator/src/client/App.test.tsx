@@ -27,6 +27,10 @@ vi.mock("./components/TimeZoneSync", () => ({
   TimeZoneSync: () => null,
 }));
 
+vi.mock("./components/StageStyleSync", () => ({
+  StageStyleSync: () => null,
+}));
+
 vi.mock("./components/WelcomeGuideDialog", () => ({
   WelcomeGuideDialog: () => null,
 }));
