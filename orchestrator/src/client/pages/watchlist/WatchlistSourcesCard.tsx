@@ -1,5 +1,6 @@
 import * as api from "@client/api";
 import { StatusIndicator } from "@client/components/StatusIndicator";
+import i18n from "@client/i18n";
 import {
   MAX_WATCHLIST_SOURCES,
   type WatchlistSource,
@@ -7,6 +8,7 @@ import {
 } from "@shared/types.js";
 import { Loader2, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Accordion,
   AccordionContent,
@@ -63,18 +65,16 @@ function getWatchlistStatusCopy(status: "watching" | "unsaved"): {
 } {
   if (status === "watching") {
     return {
-      label: "Watching",
+      label: i18n.t("watchlist:sources.status.watching"),
       variant: "emerald",
-      tooltip:
-        "This source matches your saved watchlist settings and is currently being monitored.",
+      tooltip: i18n.t("watchlist:sources.status.watchingTooltip"),
     };
   }
 
   return {
-    label: "Unsaved",
+    label: i18n.t("watchlist:sources.status.unsaved"),
     variant: "amber",
-    tooltip:
-      "This source has local changes that have not been saved yet, so watchlist monitoring is not using this version.",
+    tooltip: i18n.t("watchlist:sources.status.unsavedTooltip"),
   };
 }
 
@@ -95,6 +95,7 @@ export function WatchlistSourcesCard({
   onSourceSearchNoResults,
   onSave,
 }: WatchlistSourceDraftCardProps) {
+  const { t } = useTranslation("watchlist");
   const [logoDataUrls, setLogoDataUrls] = useState<
     Record<string, string | null>
   >({});
@@ -187,20 +188,24 @@ export function WatchlistSourcesCard({
             <div className="min-w-0 w-full">
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-semibold tracking-tight text-foreground/90">
-                  Watched sources
+                  {t("sources.title")}
                 </h2>
                 <Badge variant="secondary">{sourceDrafts.length}</Badge>
               </div>
               <p className="mt-0.5 max-w-3xl text-xs text-muted-foreground/70">
-                Pick the company boards you want to monitor manually or add your
-                own supported careers URL.
+                {t("sources.description")}
               </p>
               {formattedLastCheckedAt ? (
                 <p className="mt-2 text-xs text-muted-foreground/70">
-                  Last checked {formattedLastCheckedAt}
                   {formattedPreviousLastCheckedAt
-                    ? ` · ${newJobsCount} new since ${formattedPreviousLastCheckedAt}`
-                    : " · First check saved your baseline"}
+                    ? t("sources.lastCheckedWithNew", {
+                        date: formattedLastCheckedAt,
+                        newCount: newJobsCount,
+                        previous: formattedPreviousLastCheckedAt,
+                      })
+                    : t("sources.lastCheckedFirst", {
+                        date: formattedLastCheckedAt,
+                      })}
                 </p>
               ) : null}
             </div>
@@ -219,7 +224,7 @@ export function WatchlistSourcesCard({
               }}
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Add source
+              {t("sources.addSource")}
             </Button>
             <Button
               type="button"
@@ -234,7 +239,7 @@ export function WatchlistSourcesCard({
               {isSaving ? (
                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
               ) : null}
-              Save sources
+              {t("sources.saveSources")}
             </Button>
           </div>
         </div>
@@ -275,8 +280,9 @@ export function WatchlistSourcesCard({
                         draft.sourceType,
                         draft.customUrl,
                       ))
-                    : (descriptor?.customSourceInputLabel ?? "Custom source")
-                  : (selectedSource?.label ?? `New Source`);
+                    : (descriptor?.customSourceInputLabel ??
+                      t("sources.customSource"))
+                  : (selectedSource?.label ?? t("sources.newSource"));
                 const careersUrl = draft.isCustom
                   ? normalizedCustomUrl
                   : (selectedSource?.careersUrl ?? "");
@@ -346,7 +352,7 @@ export function WatchlistSourcesCard({
                                 "px-0 text-xs",
                               )}
                             >
-                              View website
+                              {t("sources.viewWebsite")}
                             </a>
                           )}
                         </div>
@@ -357,7 +363,9 @@ export function WatchlistSourcesCard({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 shrink-0 rounded-lg text-muted-foreground absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus:outline-none transition-opacity"
-                        aria-label={`Remove watchlist source ${index + 1}`}
+                        aria-label={t("sources.removeSource", {
+                          index: index + 1,
+                        })}
                         onClick={() => onRemoveSource(index)}
                       >
                         <X className="h-4 w-4" />
@@ -411,13 +419,15 @@ export function WatchlistSourcesCard({
                               catalogSourceId: value,
                             }));
                           }}
-                          placeholder="Choose company"
-                          searchPlaceholder="Search companies..."
+                          placeholder={t("sources.chooseCompany")}
+                          searchPlaceholder={t("sources.searchCompanies")}
                           emptyText={
                             descriptor?.emptyCatalogText ??
-                            "No companies found."
+                            t("sources.noCompanies")
                           }
-                          ariaLabel={`Watchlist source ${index + 1}`}
+                          ariaLabel={t("sources.sourceAria", {
+                            index: index + 1,
+                          })}
                           allowCustomValue={false}
                           onEmptyResults={(searchText) =>
                             onSourceSearchNoResults({ searchText })
@@ -438,7 +448,12 @@ export function WatchlistSourcesCard({
                               descriptor?.customSourcePlaceholder ??
                               "https://..."
                             }
-                            aria-label={`${descriptor?.customSourceInputLabel ?? "Custom source URL"} ${index + 1}`}
+                            aria-label={t("sources.customUrlAria", {
+                              label:
+                                descriptor?.customSourceInputLabel ??
+                                t("sources.customSourceUrl"),
+                              index: index + 1,
+                            })}
                             className="rounded-xl"
                           />
                         ) : null}
@@ -451,7 +466,7 @@ export function WatchlistSourcesCard({
 
             {sourceDrafts.length === 0 ? (
               <div className="mt-3 rounded-2xl border border-dashed border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
-                No watchlist sources selected yet.
+                {t("sources.empty")}
               </div>
             ) : null}
           </div>

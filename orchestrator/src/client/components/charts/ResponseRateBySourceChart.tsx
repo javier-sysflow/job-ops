@@ -9,6 +9,7 @@ import { isExtractorSourceId, sourceLabel } from "@shared/extractors";
 import { getEffectiveStageHistory } from "@shared/stage-history";
 import type { JobSource, StageEvent } from "@shared/types.js";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Bar,
   BarChart,
@@ -44,13 +45,6 @@ type SourceRateDataPoint = {
   applied: number;
   responded: number;
   rate: number;
-};
-
-const chartConfig = {
-  rate: {
-    label: "Response Rate",
-    color: "var(--chart-2)",
-  },
 };
 
 /**
@@ -120,6 +114,13 @@ export function ResponseRateBySourceChart({
   jobs,
   error,
 }: ResponseRateBySourceChartProps) {
+  const { t } = useTranslation("overview");
+  const chartConfig = {
+    rate: {
+      label: t("responseRate.rateLabel"),
+      color: "var(--chart-2)",
+    },
+  };
   const [includeSmall, setIncludeSmall] = useState(false);
 
   const allData = useMemo(() => buildResponseRateBySource(jobs), [jobs]);
@@ -155,15 +156,16 @@ export function ResponseRateBySourceChart({
     <Card className="py-0">
       <CardHeader className="flex flex-col gap-2 border-b !p-0 sm:flex-row sm:items-stretch">
         <div className="flex flex-1 flex-col justify-center gap-1 px-6 pt-4 pb-3 sm:!py-0">
-          <CardTitle>Response Rate by Source</CardTitle>
-          <CardDescription>
-            % of applications that got a response (not rejected or ghosted).
-          </CardDescription>
+          <CardTitle>{t("responseRate.title")}</CardTitle>
+          <CardDescription>{t("responseRate.description")}</CardDescription>
         </div>
         <ChartKpiPanel
-          label="Response Rate"
+          label={t("responseRate.rateLabel")}
           rate={overallRate}
-          subtext={`${totalResponded} of ${totalApplied} applications`}
+          subtext={t("responseRate.subtext", {
+            responded: totalResponded,
+            total: totalApplied,
+          })}
         />
       </CardHeader>
       <CardContent className="px-2 sm:p-6">
@@ -171,7 +173,7 @@ export function ResponseRateBySourceChart({
           <div className="px-4 py-6 text-sm text-destructive">{error}</div>
         ) : allData.length === 0 ? (
           <div className="px-4 py-6 text-sm text-muted-foreground">
-            No application data available.
+            {t("responseRate.empty")}
           </div>
         ) : (
           <div className="space-y-4">
@@ -182,10 +184,12 @@ export function ResponseRateBySourceChart({
                 className="text-xs text-muted-foreground cursor-pointer"
               >
                 {includeSmall ? (
-                  "All sources"
+                  t("responseRate.allSources")
                 ) : (
                   <>
-                    n &lt; {MIN_SAMPLE_DEFAULT} hidden
+                    {t("responseRate.smallHidden", {
+                      min: MIN_SAMPLE_DEFAULT,
+                    })}
                     {hiddenCount > 0 && (
                       <span className="ml-1 text-muted-foreground/60">
                         ({hiddenCount})
@@ -198,14 +202,13 @@ export function ResponseRateBySourceChart({
                 id="include-small-toggle"
                 checked={includeSmall}
                 onCheckedChange={setIncludeSmall}
-                aria-label="Include small samples"
+                aria-label={t("responseRate.includeSmall")}
               />
             </div>
 
             {data.length === 0 ? (
               <div className="px-4 py-4 text-sm text-muted-foreground">
-                All sources have fewer than {MIN_SAMPLE_DEFAULT} applications.
-                Enable the toggle above to show them.
+                {t("responseRate.allBelowMin", { min: MIN_SAMPLE_DEFAULT })}
               </div>
             ) : (
               <ChartContainer
@@ -246,20 +249,22 @@ export function ResponseRateBySourceChart({
                             <div className="mb-1.5 font-medium">{d.source}</div>
                             <div className="space-y-1 text-muted-foreground">
                               <div className="flex items-center justify-between gap-4">
-                                <span>Response rate</span>
+                                <span>{t("responseRate.tooltipRate")}</span>
                                 <span className="font-semibold text-foreground">
                                   {d.rate.toFixed(1)}%
                                 </span>
                               </div>
                               <div className="flex items-center justify-between gap-4">
-                                <span>Responded</span>
+                                <span>
+                                  {t("responseRate.tooltipResponded")}
+                                </span>
                                 <span className="font-semibold text-foreground">
                                   {d.responded}
                                 </span>
                               </div>
                             </div>
                             <div className="mt-2 border-t pt-1.5 text-[10px] text-muted-foreground/70">
-                              Screening, interview, or offer only
+                              {t("responseRate.tooltipFootnote")}
                             </div>
                           </div>
                         );

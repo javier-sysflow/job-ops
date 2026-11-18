@@ -4,14 +4,15 @@
  */
 
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DURATION_OPTIONS = [
-  { value: 7, label: "7d" },
-  { value: 14, label: "14d" },
-  { value: 30, label: "30d" },
-  { value: 90, label: "90d" },
+  { value: 7 },
+  { value: 14 },
+  { value: 30 },
+  { value: 90 },
 ] as const;
 
 export type DurationValue = (typeof DURATION_OPTIONS)[number]["value"];
@@ -22,6 +23,7 @@ interface DurationSelectorProps {
 }
 
 export function DurationSelector({ value, onChange }: DurationSelectorProps) {
+  const { t } = useTranslation("overview");
   const handleChange = useCallback(
     (newValue: string) => {
       const parsed = Number(newValue) as DurationValue;
@@ -40,7 +42,7 @@ export function DurationSelector({ value, onChange }: DurationSelectorProps) {
               value={String(option.value)}
               className="px-3 text-xs"
             >
-              {option.label}
+              {t("duration.days", { days: option.value })}
             </TabsTrigger>
           ))}
         </TabsList>

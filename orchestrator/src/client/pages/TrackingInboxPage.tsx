@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import type {
   JobListItem,
   PostApplicationInboxItem,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useQueryErrorToast } from "@/client/hooks/useQueryErrorToast";
 import { showErrorToast } from "@/client/lib/error-toast";
@@ -73,11 +75,15 @@ type GmailOauthResultMessage = {
 };
 
 function formatEpochMs(value?: number | null): string {
-  if (!value) return "n/a";
-  return formatDateTime(new Date(value).toISOString()) ?? "n/a";
+  if (!value) return i18n.t("tracking:notAvailable");
+  return (
+    formatDateTime(new Date(value).toISOString()) ??
+    i18n.t("tracking:notAvailable")
+  );
 }
 
 export const TrackingInboxPage: React.FC = () => {
+  const { t } = useTranslation(["tracking", "common"]);
   const [provider, setProvider] = useState<PostApplicationProvider>("gmail");
   const [accountKey, setAccountKey] = useState("default");
   const [maxMessages, setMaxMessages] = useState("100");
@@ -185,11 +191,11 @@ export const TrackingInboxPage: React.FC = () => {
         hasReviewItems ? appliedJobsQuery.refetch() : Promise.resolve(),
       ]);
     } catch (error) {
-      showErrorToast(error, "Failed to refresh tracking inbox");
+      showErrorToast(error, t("toasts.refreshFailed"));
     } finally {
       setIsRefreshing(false);
     }
-  }, [appliedJobsQuery, hasReviewItems, inboxQuery, runsQuery, statusQuery]);
+  }, [appliedJobsQuery, hasReviewItems, inboxQuery, runsQuery, statusQuery, t]);
 
   useEffect(() => {
     if (!provider || !accountKey) return;
@@ -269,18 +275,18 @@ export const TrackingInboxPage: React.FC = () => {
         };
 
         const timeoutId = window.setTimeout(() => {
-          finishReject("Timed out waiting for Gmail OAuth response.");
+          finishReject(t("errors.oauthTimeout"));
         }, GMAIL_OAUTH_TIMEOUT_MS);
 
         const closedCheckId = window.setInterval(() => {
           if (!popup.closed) return;
-          finishReject("Gmail OAuth window was closed before completion.");
+          finishReject(t("errors.oauthWindowClosed"));
         }, 250);
 
         window.addEventListener("message", onMessage);
       });
     },
-    [],
+    [t],
   );
 
   const runProviderAction = useCallback(
@@ -299,9 +305,7 @@ export const TrackingInboxPage: React.FC = () => {
               provider,
               result: "error",
             });
-            toast.error(
-              `${provider} connect is not implemented yet. Use Gmail for now.`,
-            );
+            toast.error(t("toasts.providerNotImplemented", { provider }));
             return;
           }
 
@@ -318,9 +322,7 @@ export const TrackingInboxPage: React.FC = () => {
               provider,
               result: "error",
             });
-            toast.error(
-              "Browser blocked the Gmail OAuth popup. Allow popups and retry.",
-            );
+            toast.error(t("toasts.popupBlocked"));
             return;
           }
 
@@ -329,12 +331,12 @@ export const TrackingInboxPage: React.FC = () => {
             popup,
           );
           if (oauthResult.error) {
-            throw new Error(`Gmail OAuth failed: ${oauthResult.error}`);
+            throw new Error(
+              t("errors.oauthFailed", { error: oauthResult.error }),
+            );
           }
           if (!oauthResult.code) {
-            throw new Error(
-              "Gmail OAuth did not return an authorization code.",
-            );
+            throw new Error(t("errors.oauthNoCode"));
           }
 
           await api.postApplicationGmailOauthExchange({
@@ -346,7 +348,7 @@ export const TrackingInboxPage: React.FC = () => {
             provider,
             result: "success",
           });
-          toast.success("Provider connected");
+          toast.success(t("toasts.providerConnected"));
         } else if (action === "sync") {
           const parsedMaxMessages = Number.parseInt(maxMessages, 10);
           const parsedSearchDays = Number.parseInt(searchDays, 10);
@@ -358,14 +360,10 @@ export const TrackingInboxPage: React.FC = () => {
             parsedSearchDays < 1 ||
             parsedSearchDays > 365
           ) {
-            toast.error(
-              "Max messages must be 1-500 and search days must be 1-365 before syncing.",
-            );
+            toast.error(t("toasts.invalidSyncSettings"));
             return;
           }
-          syncToastId = toast.loading(
-            "Sync in progress. This may take up to a couple of minutes.",
-          );
+          syncToastId = toast.loading(t("toasts.syncInProgress"));
           trackProductEvent("tracking_inbox_sync_started", {
             provider,
             max_messages: parsedMaxMessages,
@@ -382,7 +380,7 @@ export const TrackingInboxPage: React.FC = () => {
             provider,
             result: "success",
           });
-          toast.success("Sync completed", {
+          toast.success(t("toasts.syncCompleted"), {
             ...(syncToastId ? { id: syncToastId } : {}),
           });
         } else {
@@ -390,7 +388,7 @@ export const TrackingInboxPage: React.FC = () => {
           trackProductEvent("tracking_inbox_disconnect_confirmed", {
             provider,
           });
-          toast.success("Provider disconnected");
+          toast.success(t("toasts.providerDisconnected"));
         }
 
         await refresh();
@@ -399,11 +397,14 @@ export const TrackingInboxPage: React.FC = () => {
           const rawMessage = error instanceof Error ? error.message : "";
           trackProductEvent("tracking_inbox_connect_completed", {
             provider,
-            result: rawMessage.includes("Timed out")
-              ? "timeout"
-              : rawMessage.includes("window was closed")
-                ? "cancelled"
-                : "error",
+            result:
+              rawMessage.includes("Timed out") ||
+              rawMessage === t("errors.oauthTimeout")
+                ? "timeout"
+                : rawMessage.includes("window was closed") ||
+                    rawMessage === t("errors.oauthWindowClosed")
+                  ? "cancelled"
+                  : "error",
           });
         }
         if (action === "sync") {
@@ -412,12 +413,18 @@ export const TrackingInboxPage: React.FC = () => {
             result: "error",
           });
         }
+        const failureMessage =
+          action === "connect"
+            ? t("toasts.connectFailed")
+            : action === "sync"
+              ? t("toasts.syncFailed")
+              : t("toasts.disconnectFailed");
         if (syncToastId) {
-          showErrorToast(error, `Failed to ${action} provider connection`, {
+          showErrorToast(error, failureMessage, {
             id: syncToastId,
           });
         } else {
-          showErrorToast(error, `Failed to ${action} provider connection`);
+          showErrorToast(error, failureMessage);
         }
       } finally {
         setActiveAction(null);
@@ -431,6 +438,7 @@ export const TrackingInboxPage: React.FC = () => {
       provider,
       refresh,
       searchDays,
+      t,
       waitForGmailOauthResult,
     ],
   );
@@ -445,7 +453,7 @@ export const TrackingInboxPage: React.FC = () => {
         appliedJobByMessageId[item.message.id] || item.message.matchedJobId;
 
       if (decision === "approve" && !selectedJobId) {
-        toast.error("Select an applied job before making a decision.");
+        toast.error(t("toasts.selectJobFirst"));
         return;
       }
 
@@ -466,7 +474,7 @@ export const TrackingInboxPage: React.FC = () => {
             provider,
             result: "success",
           });
-          toast.success("Message linked");
+          toast.success(t("toasts.messageLinked"));
         } else {
           await api.denyPostApplicationInboxItem({
             messageId: item.message.id,
@@ -480,7 +488,7 @@ export const TrackingInboxPage: React.FC = () => {
             provider,
             result: "success",
           });
-          toast.success("Message ignored");
+          toast.success(t("toasts.messageIgnored"));
         }
 
         await refresh();
@@ -492,12 +500,17 @@ export const TrackingInboxPage: React.FC = () => {
           provider,
           result: "error",
         });
-        showErrorToast(error, `Failed to ${decision} message`);
+        showErrorToast(
+          error,
+          decision === "approve"
+            ? t("toasts.approveMessageFailed")
+            : t("toasts.denyMessageFailed"),
+        );
       } finally {
         setIsActionLoading(false);
       }
     },
-    [accountKey, appliedJobByMessageId, provider, refresh],
+    [accountKey, appliedJobByMessageId, provider, refresh, t],
   );
 
   const handleInboxAction = useCallback(
@@ -515,7 +528,7 @@ export const TrackingInboxPage: React.FC = () => {
         });
 
         const { succeeded, failed, skipped } = result;
-        const actionLabel = action === "approve" ? "approved" : "ignored";
+        const isApprove = action === "approve";
         trackProductEvent("tracking_inbox_review_action_completed", {
           action,
           context: "main_inbox",
@@ -528,14 +541,22 @@ export const TrackingInboxPage: React.FC = () => {
         });
 
         if (failed === 0 && skipped === 0) {
-          toast.success(`All ${succeeded} messages ${actionLabel}`);
+          toast.success(
+            isApprove
+              ? t("toasts.approveAllSucceeded", { succeeded })
+              : t("toasts.ignoreAllSucceeded", { succeeded }),
+          );
         } else if (failed === 0) {
           toast.success(
-            `${succeeded} messages ${actionLabel}, ${skipped} skipped (no suggested match)`,
+            isApprove
+              ? t("toasts.approvePartial", { succeeded, skipped })
+              : t("toasts.ignorePartial", { succeeded, skipped }),
           );
         } else {
           toast.error(
-            `${succeeded} ${actionLabel}, ${failed} failed, ${skipped} skipped`,
+            isApprove
+              ? t("toasts.approveMixed", { succeeded, failed, skipped })
+              : t("toasts.ignoreMixed", { succeeded, failed, skipped }),
           );
         }
 
@@ -548,12 +569,17 @@ export const TrackingInboxPage: React.FC = () => {
           provider,
           result: "error",
         });
-        showErrorToast(error, `Failed to ${action} messages`);
+        showErrorToast(
+          error,
+          action === "approve"
+            ? t("toasts.approveMessagesFailed")
+            : t("toasts.denyMessagesFailed"),
+        );
       } finally {
         setIsActionLoading(false);
       }
     },
-    [accountKey, inbox.length, provider, refresh],
+    [accountKey, inbox.length, provider, refresh, t],
   );
 
   const openInboxActionDialog = useCallback(
@@ -566,8 +592,8 @@ export const TrackingInboxPage: React.FC = () => {
       if (eligibleCount === 0) {
         toast.error(
           action === "approve"
-            ? "No messages with suggested job matches to approve"
-            : "No messages to ignore",
+            ? t("toasts.noMatchesToApprove")
+            : t("toasts.noMessagesToIgnore"),
         );
         return;
       }
@@ -578,7 +604,7 @@ export const TrackingInboxPage: React.FC = () => {
         itemCount: eligibleCount,
       });
     },
-    [inbox],
+    [inbox, t],
   );
 
   const handleOpenRunMessages = useCallback((run: PostApplicationSyncRun) => {
@@ -586,29 +612,20 @@ export const TrackingInboxPage: React.FC = () => {
     setIsRunModalOpen(true);
   }, []);
 
-  useQueryErrorToast(
-    statusQuery.error,
-    "Failed to load provider connection status",
-  );
-  useQueryErrorToast(inboxQuery.error, "Failed to load inbox");
-  useQueryErrorToast(runsQuery.error, "Failed to load sync runs");
-  useQueryErrorToast(
-    appliedJobsQuery.error,
-    "Failed to load jobs for inbox matching",
-  );
-  useQueryErrorToast(
-    runMessagesQuery.error,
-    "Failed to load messages for selected sync run",
-  );
+  useQueryErrorToast(statusQuery.error, t("toasts.loadStatusFailed"));
+  useQueryErrorToast(inboxQuery.error, t("toasts.loadInboxFailed"));
+  useQueryErrorToast(runsQuery.error, t("toasts.loadRunsFailed"));
+  useQueryErrorToast(appliedJobsQuery.error, t("toasts.loadJobsFailed"));
+  useQueryErrorToast(runMessagesQuery.error, t("toasts.loadRunMessagesFailed"));
 
   const pendingCount = inbox.length;
   const isConnected = Boolean(status?.connected);
   const connectionLabel = useMemo(() => {
-    if (!status) return "Unknown";
-    if (!status.connected) return "Disconnected";
-    if (status.integration?.status === "error") return "Error";
-    return "Connected";
-  }, [status]);
+    if (!status) return t("connection.unknown");
+    if (!status.connected) return t("connection.disconnected");
+    if (status.integration?.status === "error") return t("connection.error");
+    return t("connection.connected");
+  }, [status, t]);
 
   const handleAppliedJobChange = useCallback(
     (messageId: string, value: string) => {
@@ -624,8 +641,8 @@ export const TrackingInboxPage: React.FC = () => {
     <>
       <PageHeader
         icon={Inbox}
-        title="Tracking Inbox"
-        subtitle="Post-application message review"
+        title={t("page.title")}
+        subtitle={t("page.subtitle")}
         actions={
           <Button
             size="sm"
@@ -639,7 +656,7 @@ export const TrackingInboxPage: React.FC = () => {
             ) : (
               <RefreshCcw className="h-4 w-4" />
             )}
-            Refresh
+            {t("common:actions.refresh")}
           </Button>
         }
       />
@@ -648,24 +665,20 @@ export const TrackingInboxPage: React.FC = () => {
         <section className="space-y-1 px-1">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold tracking-tight">
-              Application Inbox Matching
+              {t("page.heading")}
             </h1>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Connect your inbox to ingest related emails, review the suggested
-            job matches, and approve or deny to automatically update your
-            tracking timeline.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("page.intro")}</p>
         </section>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Provider Controls</CardTitle>
+            <CardTitle className="text-base">{t("controls.title")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="provider">Provider</Label>
+                <Label htmlFor="provider">{t("controls.provider")}</Label>
                 <Select
                   value={provider}
                   onValueChange={(value) =>
@@ -673,7 +686,7 @@ export const TrackingInboxPage: React.FC = () => {
                   }
                 >
                   <SelectTrigger id="provider">
-                    <SelectValue placeholder="Provider" />
+                    <SelectValue placeholder={t("controls.provider")} />
                   </SelectTrigger>
                   <SelectContent>
                     {PROVIDER_OPTIONS.map((option) => (
@@ -686,7 +699,7 @@ export const TrackingInboxPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="accountKey">Account Key</Label>
+                <Label htmlFor="accountKey">{t("controls.accountKey")}</Label>
                 <Input
                   id="accountKey"
                   value={accountKey}
@@ -695,13 +708,12 @@ export const TrackingInboxPage: React.FC = () => {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Gmail connect uses Google OAuth popup and stores credentials
-              server-side. No manual refresh token paste is needed.
+              {t("controls.gmailHint")}
             </p>
 
             <div className="grid gap-3 md:grid-cols-4">
               <div className="space-y-2">
-                <Label htmlFor="maxMessages">Max Messages</Label>
+                <Label htmlFor="maxMessages">{t("controls.maxMessages")}</Label>
                 <Input
                   id="maxMessages"
                   inputMode="numeric"
@@ -710,7 +722,7 @@ export const TrackingInboxPage: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="searchDays">Search Days</Label>
+                <Label htmlFor="searchDays">{t("controls.searchDays")}</Label>
                 <Input
                   id="searchDays"
                   inputMode="numeric"
@@ -726,7 +738,7 @@ export const TrackingInboxPage: React.FC = () => {
                     className="gap-2"
                   >
                     <Link2 className="h-4 w-4" />
-                    Connect
+                    {t("controls.connect")}
                   </Button>
                 ) : null}
                 <Button
@@ -740,7 +752,9 @@ export const TrackingInboxPage: React.FC = () => {
                   ) : (
                     <Upload className="h-4 w-4" />
                   )}
-                  {activeAction === "sync" ? "Syncing..." : "Sync"}
+                  {activeAction === "sync"
+                    ? t("controls.syncing")
+                    : t("controls.sync")}
                 </Button>
                 {isConnected ? (
                   <Button
@@ -750,7 +764,7 @@ export const TrackingInboxPage: React.FC = () => {
                     className="gap-2"
                   >
                     <Unplug className="h-4 w-4" />
-                    Disconnect
+                    {t("controls.disconnect")}
                   </Button>
                 ) : null}
               </div>
@@ -761,12 +775,14 @@ export const TrackingInboxPage: React.FC = () => {
                 {connectionLabel}
               </Badge>
               <span className="text-muted-foreground">
-                Pending review:{" "}
+                {t("controls.pendingReview")}{" "}
                 <span className="font-semibold">{pendingCount}</span>
               </span>
               {status?.integration?.lastSyncedAt ? (
                 <span className="text-muted-foreground">
-                  Last synced: {formatEpochMs(status.integration.lastSyncedAt)}
+                  {t("controls.lastSynced", {
+                    date: formatEpochMs(status.integration.lastSyncedAt),
+                  })}
                 </span>
               ) : null}
             </div>
@@ -775,7 +791,7 @@ export const TrackingInboxPage: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base">Pending Review Queue</CardTitle>
+            <CardTitle className="text-base">{t("queue.title")}</CardTitle>
             {inbox.length > 0 && (
               <div className="flex gap-2">
                 <Button
@@ -786,7 +802,7 @@ export const TrackingInboxPage: React.FC = () => {
                   onClick={() => openInboxActionDialog("approve")}
                 >
                   <CheckCircle className="h-4 w-4" />
-                  Approve All
+                  {t("queue.approveAll")}
                 </Button>
                 <Button
                   variant="outline"
@@ -796,7 +812,7 @@ export const TrackingInboxPage: React.FC = () => {
                   onClick={() => openInboxActionDialog("deny")}
                 >
                   <XCircle className="h-4 w-4" />
-                  Ignore All
+                  {t("queue.ignoreAll")}
                 </Button>
               </div>
             )}
@@ -805,12 +821,12 @@ export const TrackingInboxPage: React.FC = () => {
             {isLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Loading inbox...
+                {t("queue.loading")}
               </div>
             ) : inbox.length === 0 ? (
               <EmptyState
-                title="No pending messages"
-                description="Run sync to ingest new job-application emails."
+                title={t("queue.emptyTitle")}
+                description={t("queue.emptyDescription")}
               />
             ) : (
               <EmailViewerList
@@ -830,11 +846,11 @@ export const TrackingInboxPage: React.FC = () => {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Recent Sync Runs</CardTitle>
+            <CardTitle className="text-base">{t("runs.title")}</CardTitle>
           </CardHeader>
           <CardContent>
             {runs.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No sync runs yet.</p>
+              <p className="text-sm text-muted-foreground">{t("runs.empty")}</p>
             ) : (
               <div className="space-y-2">
                 {runs.map((run) => (
@@ -850,15 +866,19 @@ export const TrackingInboxPage: React.FC = () => {
                         <p>{formatEpochMs(run.startedAt)}</p>
                       </div>
                       <div className="flex items-center gap-2 text-xs">
-                        <Badge variant="outline">{run.status}</Badge>
+                        <Badge variant="outline">
+                          {t(`runs.status.${run.status}`)}
+                        </Badge>
                         <span className="text-muted-foreground">
-                          discovered {run.messagesDiscovered}
+                          {t("runs.discovered", {
+                            value: run.messagesDiscovered,
+                          })}
                         </span>
                         <span className="text-muted-foreground">
-                          relevant {run.messagesRelevant}
+                          {t("runs.relevant", { value: run.messagesRelevant })}
                         </span>
                         <span className="text-muted-foreground">
-                          matched {run.messagesMatched}
+                          {t("runs.matched", { value: run.messagesMatched })}
                         </span>
                       </div>
                     </div>
@@ -881,11 +901,16 @@ export const TrackingInboxPage: React.FC = () => {
       >
         <DialogContent className="max-h-[85vh] max-w-6xl overflow-hidden p-0">
           <DialogHeader className="border-b px-6 py-4">
-            <DialogTitle>Run Messages</DialogTitle>
+            <DialogTitle>{t("runModal.title")}</DialogTitle>
             <DialogDescription>
               {selectedRun
-                ? `Run ${selectedRun.id} • discovered ${selectedRun.messagesDiscovered} • relevant ${selectedRun.messagesRelevant} • matched ${selectedRun.messagesMatched}`
-                : "Review all messages captured in this sync run, including partial matches."}
+                ? t("runModal.summary", {
+                    id: selectedRun.id,
+                    discovered: selectedRun.messagesDiscovered,
+                    relevant: selectedRun.messagesRelevant,
+                    matched: selectedRun.messagesMatched,
+                  })
+                : t("runModal.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -893,11 +918,11 @@ export const TrackingInboxPage: React.FC = () => {
             {isRunMessagesLoading ? (
               <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Loading run messages...
+                {t("runModal.loading")}
               </div>
             ) : selectedRunItems.length === 0 ? (
               <p className="py-4 text-sm text-muted-foreground">
-                No messages found for this run.
+                {t("runModal.empty")}
               </p>
             ) : (
               <EmailViewerList
@@ -926,17 +951,21 @@ export const TrackingInboxPage: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {inboxActionDialog.action === "approve"
-                ? "Approve All Messages?"
-                : "Ignore All Messages?"}
+                ? t("bulkDialog.approveTitle")
+                : t("bulkDialog.ignoreTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {inboxActionDialog.action === "approve"
-                ? `This will approve ${inboxActionDialog.itemCount} message${inboxActionDialog.itemCount === 1 ? "" : "s"} with suggested job matches. Messages without matches will be skipped.`
-                : `This will ignore all ${inboxActionDialog.itemCount} pending message${inboxActionDialog.itemCount === 1 ? "" : "s"}.`}
+                ? t("bulkDialog.approveDescription", {
+                    count: inboxActionDialog.itemCount,
+                  })
+                : t("bulkDialog.ignoreDescription", {
+                    count: inboxActionDialog.itemCount,
+                  })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (inboxActionDialog.action) {
@@ -945,8 +974,8 @@ export const TrackingInboxPage: React.FC = () => {
               }}
             >
               {inboxActionDialog.action === "approve"
-                ? "Approve All"
-                : "Ignore All"}
+                ? t("queue.approveAll")
+                : t("queue.ignoreAll")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

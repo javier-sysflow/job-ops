@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import type { LocationIntent } from "@shared/location-intelligence.js";
 import type {
   WatchlistJobResult,
@@ -6,6 +7,7 @@ import type {
   WatchlistWorkspaceJobReference,
 } from "@shared/types.js";
 import { CircleAlert, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { formatUserFacingError } from "@/client/lib/error-format";
 import {
   AccordionContent,
@@ -58,7 +60,7 @@ function getStatusBadge(item: WatchlistFetchState) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs text-muted-foreground">
         <Loader2 className="h-3 w-3 animate-spin" />
-        Checking
+        {i18n.t("watchlist:results.checking")}
       </span>
     );
   }
@@ -67,7 +69,7 @@ function getStatusBadge(item: WatchlistFetchState) {
 
   return (
     <span className="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 text-xs text-destructive">
-      Error
+      {i18n.t("watchlist:results.error")}
     </span>
   );
 }
@@ -101,6 +103,7 @@ export function WatchlistSourceResultsCard({
   onOpenWorkspaceJob,
   onLoadJobDetails,
 }: WatchlistSourceResultsCardProps) {
+  const { t } = useTranslation("watchlist");
   const sourceDescriptor = sourceTypes.find(
     (sourceType) => sourceType.sourceType === item.source.sourceType,
   );
@@ -122,7 +125,7 @@ export function WatchlistSourceResultsCard({
                 "px-0",
               )}
             >
-              {item.source.label} Careers Page
+              {t("results.careersPage", { label: item.source.label })}
             </a>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -135,27 +138,23 @@ export function WatchlistSourceResultsCard({
         {item.status === "loading" ? (
           <div className="flex items-center gap-2 bg-muted/30 p-4 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            {sourceDescriptor?.fetchingLabel ?? "Fetching jobs..."}
+            {sourceDescriptor?.fetchingLabel ?? t("results.fetchingJobs")}
           </div>
         ) : item.status === "error" ? (
           <div className="p-4">
             <Alert variant="destructive">
               <CircleAlert className="h-4 w-4" />
-              <AlertTitle>Couldn&apos;t load jobs</AlertTitle>
+              <AlertTitle>{t("results.loadFailedTitle")}</AlertTitle>
               <AlertDescription className="space-y-3">
                 <p>
-                  {formatUserFacingError(
-                    item.error,
-                    "Couldn’t fetch jobs from this careers page.",
-                  )}
+                  {formatUserFacingError(item.error, t("results.fetchFailed"))}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  This source failed to load, but the rest of your watchlist can
-                  still be checked.
+                  {t("results.loadFailedHint")}
                 </p>
                 <details className="rounded-md border border-destructive/20 bg-background/60 p-3 text-xs text-muted-foreground">
                   <summary className="cursor-pointer font-medium text-foreground">
-                    Technical details
+                    {t("results.technicalDetails")}
                   </summary>
                   <pre className="mt-3 max-h-[220px] overflow-auto whitespace-pre-wrap break-words font-mono leading-relaxed">
                     {JSON.stringify(
@@ -221,6 +220,7 @@ function WatchlistSourceJobs({
   onOpenWorkspaceJob,
   onLoadJobDetails,
 }: WatchlistSourceJobsProps) {
+  const { t } = useTranslation("watchlist");
   const rankedJobs = rankWatchlistJobs(
     item.jobs,
     pipelineSearchTerms,
@@ -237,30 +237,40 @@ function WatchlistSourceJobs({
     <div className="space-y-0">
       <div className="flex items-center justify-between gap-3 bg-muted/20 px-4 py-2 text-xs text-muted-foreground">
         <span>
-          {visibleRankedJobs.length} jobs
           {hiddenIgnoredCount > 0 && !showIgnored
-            ? ` (${hiddenIgnoredCount} ignored hidden)`
-            : null}
+            ? t("results.jobsCountWithHidden", {
+                value: visibleRankedJobs.length,
+                hidden: hiddenIgnoredCount,
+              })
+            : t("results.jobsCount", { value: visibleRankedJobs.length })}
         </span>
         <div className="flex items-center gap-2">
           <Switch
             checked={showIgnored}
             onCheckedChange={setShowIgnored}
-            aria-label="Show ignored watchlist jobs"
+            aria-label={t("results.showIgnoredAria")}
           />
-          Show ignored
+          {t("results.showIgnored")}
         </div>
       </div>
 
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="h-9 px-3 text-xs">Job</TableHead>
-            <TableHead className="h-9 w-[180px] text-xs">Company</TableHead>
-            <TableHead className="h-9 w-[220px] text-xs">Location</TableHead>
-            <TableHead className="h-9 w-[140px] text-xs">Posted</TableHead>
+            <TableHead className="h-9 px-3 text-xs">
+              {t("results.columns.job")}
+            </TableHead>
+            <TableHead className="h-9 w-[180px] text-xs">
+              {t("results.columns.company")}
+            </TableHead>
+            <TableHead className="h-9 w-[220px] text-xs">
+              {t("results.columns.location")}
+            </TableHead>
+            <TableHead className="h-9 w-[140px] text-xs">
+              {t("results.columns.posted")}
+            </TableHead>
             <TableHead className="h-9 px-3 text-xs text-right">
-              <span className="sr-only">Actions</span>
+              <span className="sr-only">{t("results.columns.actions")}</span>
             </TableHead>
           </TableRow>
         </TableHeader>
