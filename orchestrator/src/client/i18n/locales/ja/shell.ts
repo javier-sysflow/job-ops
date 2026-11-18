@@ -159,6 +159,8 @@ const shell: typeof en = {
       "これは閲覧専用のデモです。Dockerなしで JobOps を使いたい方は",
     waitlistLink: "ウェイトリストに登録",
     dismiss: "デモのウェイトリスト案内を閉じる",
+    simulatedTitle: "デモモードのため模擬実行しました",
+    blockedTitle: "公開デモでは利用できません",
   },
 };
 

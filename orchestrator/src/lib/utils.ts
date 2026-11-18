@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import { getUiLocale } from "@client/i18n/language";
 import {
   EXTRACTOR_SOURCE_IDS,
@@ -35,7 +36,7 @@ export const formatDate = (dateStr?: string | null) => {
 };
 
 export const formatTimestamp = (value?: number | null) => {
-  if (!value) return "No due date";
+  if (!value) return i18n.t("common:dates.noDueDate");
   return new Date(value * 1000).toLocaleDateString(getUiLocale(), {
     day: "numeric",
     month: "short",
@@ -44,7 +45,7 @@ export const formatTimestamp = (value?: number | null) => {
 };
 
 export const formatTimestampWithTime = (value?: number | null) => {
-  if (!value) return "No date";
+  if (!value) return i18n.t("common:dates.noDate");
   const date = new Date(value * 1000);
   const dateLabel = formatTimestamp(value);
   const timeLabel = date.toLocaleTimeString(getUiLocale(), {
@@ -147,7 +148,7 @@ export const sourceLabel: Partial<Record<Job["source"], string>> =
   );
 
 export function formatJobSourceLabel(source?: string | null): string {
-  if (!source) return "Unknown Source";
+  if (!source) return i18n.t("common:dates.unknownSource");
   if (isExtractorSourceId(source)) return getExtractorSourceLabel(source);
 
   const [namespace, ...rest] = source.split(":");

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import * as api from "../api";
+import { useDemoInfo } from "../hooks/useDemoInfo";
 import { useSettings } from "../hooks/useSettings";
 
 function getBrowserTimeZone(): string | null {
@@ -17,11 +18,15 @@ function getBrowserTimeZone(): string | null {
  */
 export const TimeZoneSync: React.FC = () => {
   const { settings } = useSettings();
+  // Only sync once we know this is not the public demo (saves are blocked
+  // there and would show a "blocked" notice on every page).
+  const demoInfo = useDemoInfo();
+  const isRealInstance = demoInfo !== null && !demoInfo.demoMode;
   const storedTimeZone = settings?.timeZone ?? null;
   const hasSettings = settings !== null;
 
   useEffect(() => {
-    if (!hasSettings) return;
+    if (!hasSettings || !isRealInstance) return;
     const browserTimeZone = getBrowserTimeZone();
     if (!browserTimeZone || browserTimeZone === storedTimeZone) return;
     try {
@@ -31,7 +36,7 @@ export const TimeZoneSync: React.FC = () => {
     } catch {
       // updateSettings unavailable (e.g. mocked APIs); nothing to do.
     }
-  }, [hasSettings, storedTimeZone]);
+  }, [hasSettings, isRealInstance, storedTimeZone]);
 
   return null;
 };

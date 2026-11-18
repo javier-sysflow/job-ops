@@ -28,6 +28,11 @@ const common = {
     saved: "Saved",
     error: "Something went wrong",
   },
+  dates: {
+    noDueDate: "No due date",
+    noDate: "No date",
+    unknownSource: "Unknown Source",
+  },
   language: {
     english: "English",
     japanese: "日本語",

@@ -31,6 +31,11 @@ const common: typeof en = {
     saved: "保存しました",
     error: "問題が発生しました",
   },
+  dates: {
+    noDueDate: "期限なし",
+    noDate: "日付なし",
+    unknownSource: "不明な求人サイト",
+  },
   language: {
     english: "English",
     japanese: "日本語",

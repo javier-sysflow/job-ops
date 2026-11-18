@@ -156,6 +156,8 @@ const shell = {
       "This is a read-only demo. Want JobOps without the Docker setup?",
     waitlistLink: "Join the waitlist.",
     dismiss: "Dismiss demo waitlist banner",
+    simulatedTitle: "Simulated in Demo Mode",
+    blockedTitle: "Blocked in Public Demo",
   },
 };
 

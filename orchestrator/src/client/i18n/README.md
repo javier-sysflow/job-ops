@@ -29,8 +29,8 @@ export function JobListEmpty() {
 
 - **Keys** are camelCase and grouped by component or area: `list.empty`, `filters.salary.placeholder`, `detail.actions.markApplied`. Cross-namespace: `t("common:actions.save")` (needs `useTranslation(["yourNs", "common"])`).
 - **Interpolation:** `"Showing {{count}} jobs"` → `t("list.showing", { count })`. Never concatenate translated fragments into a sentence; Japanese word order differs.
-- **Plurals:** English uses `key_one` / `key_other`; Japanese only needs `key_other`. Call with `{ count }`.
-- **Rich text** (links, bold inside a sentence): `<Trans i18nKey="jobs:list.hint" components={{ strong: <strong />, link: <a href="..." /> }} />` with `"Press <strong>?</strong> for <link>shortcuts</link>"`.
+- **Plurals:** English uses `key_one` / `key_other`. Japanese only uses `key_other` at runtime, but because each Japanese file is typed as the English shape, also add `key_one` (same text as `key_other`). Call with `{ count }`.
+- **Rich text** (links, bold inside a sentence): `<Trans i18nKey="jobs:list.hint" components={{ strong: <strong />, anchor: <a href="..." /> }} />` with `"Press <strong>?</strong> for <anchor>shortcuts</anchor>"`. Never name a tag `<link>` (an HTML void element): react-i18next renders it empty with the text outside.
 - **Module-level constants** (arrays and maps of labels defined outside components): store a key (`labelKey: "jobs:sort.newest"`) and call `t(item.labelKey)` at render time, or turn the constant into a function of `t`. Don't call `t()` at module load; the language is not known yet.
 - **Non-React code** (hooks' toast messages, utilities): `import i18n from "@client/i18n";` then `i18n.t("ns:key")`. The app remounts on language change, so this is safe.
 - **Toasts, aria-labels, placeholders, titles, empty states, confirm dialogs, button text, tooltips** are all user-visible: translate them.

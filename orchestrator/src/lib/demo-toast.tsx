@@ -1,5 +1,6 @@
 import type React from "react";
 import { toast } from "sonner";
+import i18n from "@/client/i18n";
 import { FlaskConical, ShieldBan } from "@/components/icons";
 
 function DemoToastCard({
@@ -28,7 +29,7 @@ export function showDemoSimulatedToast(description: string): void {
   toast.custom(
     () => (
       <DemoToastCard
-        title="Simulated in Demo Mode"
+        title={i18n.t("shell:demo.simulatedTitle")}
         description={description}
         icon={<FlaskConical className="h-4 w-4" />}
       />
@@ -41,7 +42,7 @@ export function showDemoBlockedToast(description: string): void {
   toast.custom(
     () => (
       <DemoToastCard
-        title="Blocked in Public Demo"
+        title={i18n.t("shell:demo.blockedTitle")}
         description={description}
         icon={<ShieldBan className="h-4 w-4" />}
       />

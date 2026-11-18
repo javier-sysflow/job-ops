@@ -7,6 +7,7 @@ import { TimeZoneSync } from "./TimeZoneSync";
 
 vi.mock("../api", () => ({
   getSettings: vi.fn(),
+  getDemoInfo: vi.fn(),
   updateSettings: vi.fn(),
 }));
 
@@ -27,6 +28,9 @@ describe("TimeZoneSync", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(api.updateSettings).mockResolvedValue(createAppSettings());
+    vi.mocked(api.getDemoInfo).mockResolvedValue({
+      demoMode: false,
+    } as Awaited<ReturnType<typeof api.getDemoInfo>>);
   });
 
   it("saves the browser time zone when it differs from the stored one", async () => {
