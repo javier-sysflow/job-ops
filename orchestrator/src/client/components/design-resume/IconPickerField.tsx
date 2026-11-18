@@ -1,7 +1,8 @@
 import { Icon } from "@iconify/react";
 import tablerIcons from "@iconify-json/tabler/icons.json";
-import { Search } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Search } from "@/components/icons";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -23,6 +24,7 @@ interface IconPickerFieldProps {
 }
 
 export function IconPickerField({ id, value, onChange }: IconPickerFieldProps) {
+  const { t } = useTranslation("resumeStudio");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -66,7 +68,7 @@ export function IconPickerField({ id, value, onChange }: IconPickerFieldProps) {
         <button
           id={id}
           type="button"
-          title={value || "Pick an icon"}
+          title={value || t("iconPicker.pick")}
           className="flex h-10 w-10 shrink-0 items-center justify-center bg-transparent transition-colors hover:bg-accent focus:outline-none"
         >
           {value ? (
@@ -92,7 +94,7 @@ export function IconPickerField({ id, value, onChange }: IconPickerFieldProps) {
           <Input
             ref={searchRef}
             className="h-8 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
-            placeholder="Search for an icon"
+            placeholder={t("iconPicker.search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -106,7 +108,7 @@ export function IconPickerField({ id, value, onChange }: IconPickerFieldProps) {
         >
           {filtered.length === 0 ? (
             <p className="col-span-8 py-6 text-center text-sm text-muted-foreground">
-              No icons found.
+              {t("iconPicker.empty")}
             </p>
           ) : (
             filtered.map((key) => (
@@ -138,7 +140,7 @@ export function IconPickerField({ id, value, onChange }: IconPickerFieldProps) {
               onClick={handleClear}
               className="text-xs text-[#F1703E] hover:underline"
             >
-              clear
+              {t("iconPicker.clear")}
             </button>
           )}
         </div>

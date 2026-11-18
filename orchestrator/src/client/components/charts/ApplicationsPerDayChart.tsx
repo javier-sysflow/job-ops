@@ -3,9 +3,11 @@
  * Shows daily application volume over a selected time range.
  */
 
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { formatDate } from "@client/i18n/format";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { TrendingDown, TrendingUp } from "@/components/icons";
 
 import {
   Card,
@@ -23,13 +25,6 @@ import {
 type DailyApplications = {
   date: string;
   applications: number;
-};
-
-const chartConfig = {
-  applications: {
-    label: "Applications",
-    color: "var(--chart-1)",
-  },
 };
 
 const toDateKey = (value: Date) => {
@@ -108,6 +103,13 @@ export function ApplicationsPerDayChart({
   error,
   daysToShow,
 }: ApplicationsPerDayChartProps) {
+  const { t } = useTranslation("overview");
+  const chartConfig = {
+    applications: {
+      label: t("applicationsPerDay.series"),
+      color: "var(--chart-1)",
+    },
+  };
   const {
     data: chartData,
     total,
@@ -128,16 +130,21 @@ export function ApplicationsPerDayChart({
     <Card className="py-0">
       <CardHeader className="flex flex-col gap-2 border-b !p-0 sm:flex-row sm:items-stretch">
         <div className="flex flex-1 flex-col justify-center gap-1 px-6 pt-4 pb-3 sm:!py-0">
-          <CardTitle>Applications per day</CardTitle>
+          <CardTitle>{t("applicationsPerDay.title")}</CardTitle>
           <CardDescription>
             {isLoading
-              ? "Loading applied jobs..."
-              : `Last ${daysToShow} days · ${total.toLocaleString()} total`}
+              ? t("applicationsPerDay.loading")
+              : t("applicationsPerDay.summary", {
+                  days: daysToShow,
+                  total: total.toLocaleString(),
+                })}
           </CardDescription>
         </div>
         <div className="flex flex-col items-start justify-center gap-3 border-t px-6 py-4 text-left sm:border-t-0 sm:border-l sm:px-8 sm:py-6">
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">Avg / day</span>
+            <span className="text-xs text-muted-foreground">
+              {t("applicationsPerDay.avgPerDay")}
+            </span>
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold leading-none sm:text-3xl">
                 {average.toFixed(1)}
@@ -171,13 +178,12 @@ export function ApplicationsPerDayChart({
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tickFormatter={(value) => {
-                  const date = new Date(value);
-                  return date.toLocaleDateString("en-GB", {
+                tickFormatter={(value) =>
+                  formatDate(value, {
                     month: "short",
                     day: "numeric",
-                  });
-                }}
+                  })
+                }
               />
               <ChartTooltip
                 cursor={{ fill: "var(--chart-1)", opacity: 0.3 }}
@@ -186,7 +192,7 @@ export function ApplicationsPerDayChart({
                     className="w-[160px]"
                     nameKey="applications"
                     labelFormatter={(value) =>
-                      new Date(value as string).toLocaleDateString("en-GB", {
+                      formatDate(value as string, {
                         month: "short",
                         day: "numeric",
                         year: "numeric",

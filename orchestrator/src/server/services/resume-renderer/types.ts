@@ -19,6 +19,9 @@ export interface LatexResumeEntry {
   bullets: string[];
   url?: string | null;
   linkLabel?: string | null;
+  /** Experience only: the parts `subtitle` joins, for themes that lay them out separately. */
+  position?: string | null;
+  location?: string | null;
 }
 
 export interface LatexResumeSkillGroup {
@@ -117,6 +120,8 @@ export interface LatexResumeDocument {
   references: LatexResumeEntry[];
   sectionOrder?: LatexResumeOrderedSectionKey[];
   sectionTitles?: LatexResumeSectionTitles;
+  /** Date the document is generated, YYYY-MM-DD in the user's time zone. */
+  renderDate?: string;
   /** Output language the document was written for; drives Typst `lang`. */
   language?: ChatStyleManualLanguage;
 }

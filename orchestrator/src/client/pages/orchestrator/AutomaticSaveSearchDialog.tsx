@@ -1,4 +1,5 @@
-import { Check, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Check, Loader2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,17 +31,24 @@ export function AutomaticSaveSearchDialog({
   onNameChange,
   onSave,
 }: AutomaticSaveSearchDialogProps) {
+  const { t } = useTranslation(["pipeline", "common"]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {mode === "update" ? "Update saved search" : "Save search"}
+            {mode === "update"
+              ? t("savedSearches.dialog.updateTitle")
+              : t("savedSearches.dialog.createTitle")}
           </DialogTitle>
-          <DialogDescription>Save the current search setup.</DialogDescription>
+          <DialogDescription>
+            {t("savedSearches.dialog.description")}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="saved-search-name">Name</Label>
+          <Label htmlFor="saved-search-name">
+            {t("savedSearches.dialog.name")}
+          </Label>
           <Input
             id="saved-search-name"
             value={name}
@@ -51,7 +59,7 @@ export function AutomaticSaveSearchDialog({
                 onSave();
               }
             }}
-            placeholder="e.g. London platform roles"
+            placeholder={t("savedSearches.dialog.namePlaceholder")}
           />
         </div>
         <DialogFooter>
@@ -60,7 +68,7 @@ export function AutomaticSaveSearchDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t("common:actions.cancel")}
           </Button>
           <Button
             type="button"
@@ -73,7 +81,7 @@ export function AutomaticSaveSearchDialog({
             ) : (
               <Check className="h-4 w-4" />
             )}
-            Save
+            {t("common:actions.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

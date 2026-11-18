@@ -1,15 +1,21 @@
 import type { Job } from "@shared/types.js";
-import { Send, Sparkles } from "lucide-react";
+import type { TFunction } from "i18next";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { Send, Sparkles } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-const getGhostwriterSuggestions = (job: Job, hasNotes: boolean) => [
+const getGhostwriterSuggestions = (
+  job: Job,
+  hasNotes: boolean,
+  t: TFunction<"jobDetail">,
+) => [
   hasNotes
-    ? "Summarize the latest interview notes."
-    : "What should I remember if a recruiter calls?",
-  `What should I know before speaking with ${job.employer}?`,
+    ? t("overviewComposer.suggestions.summarizeNotes")
+    : t("overviewComposer.suggestions.recruiterCall"),
+  t("overviewComposer.suggestions.beforeSpeaking", { employer: job.employer }),
 ];
 
 type OverviewGhostwriterComposerProps = {
@@ -23,10 +29,11 @@ export const OverviewGhostwriterComposer: React.FC<
   OverviewGhostwriterComposerProps
 > = ({ job, baseJobPath, hasNotes, navigationState }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation("jobDetail");
   const [prompt, setPrompt] = React.useState("");
   const suggestions = React.useMemo(
-    () => getGhostwriterSuggestions(job, hasNotes),
-    [hasNotes, job],
+    () => getGhostwriterSuggestions(job, hasNotes, t),
+    [hasNotes, job, t],
   );
 
   const submitPrompt = React.useCallback(() => {
@@ -51,7 +58,7 @@ export const OverviewGhostwriterComposer: React.FC<
               submitPrompt();
             }
           }}
-          placeholder="Ask Ghostwriter anything about this application..."
+          placeholder={t("overviewComposer.placeholder")}
           className="min-h-[30px] resize-none border-0 bg-transparent px-0 py-1 text-xs shadow-none focus-visible:ring-0 md:text-sm"
         />
       </div>
@@ -78,7 +85,7 @@ export const OverviewGhostwriterComposer: React.FC<
           className="mt-3"
         >
           <Send className="mr-1.5 h-3.5 w-3.5" />
-          Go
+          {t("overviewComposer.go")}
         </Button>
       </div>
     </section>

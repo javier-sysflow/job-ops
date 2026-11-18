@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { SettingsInput } from "@/client/pages/settings/components/SettingsInput";
 import { SearchableDropdown } from "@/components/ui/searchable-dropdown";
 
@@ -27,6 +28,7 @@ function ModelField({
   current: string;
   disabled: boolean;
 }) {
+  const { t } = useTranslation("settings");
   if (supportsModelSuggestions) {
     return (
       <div className="space-y-2">
@@ -39,8 +41,8 @@ function ModelField({
           options={options}
           onValueChange={onChange}
           placeholder={placeholder}
-          searchPlaceholder="Search models..."
-          emptyText="No models found."
+          searchPlaceholder={t("llm.searchModels")}
+          emptyText={t("llm.noModelsFound")}
           ariaLabel={label}
           disabled={disabled}
           triggerClassName="h-9 w-full justify-between rounded-md border border-input bg-transparent px-3 text-sm font-normal shadow-sm"
@@ -52,7 +54,7 @@ function ModelField({
           <div className="text-xs text-muted-foreground">{helper}</div>
         ) : null}
         <div className="text-xs text-muted-foreground">
-          Current: <span className="font-mono">{current}</span>
+          {t("shared.current")} <span className="font-mono">{current}</span>
         </div>
       </div>
     );

@@ -9,11 +9,12 @@ import {
 import { PageHeader, PageMain } from "@client/components/layout";
 import type { JobSource, StageEvent } from "@shared/types.js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChartColumn } from "lucide-react";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { queryKeys } from "@/client/lib/queryKeys";
+import { ChartColumn } from "@/components/icons";
 import { OverviewPipelineRunsSection } from "./overview/OverviewPipelineRunsSection";
 
 type JobWithEvents = {
@@ -29,6 +30,7 @@ const DURATION_OPTIONS = [7, 14, 30, 90] as const;
 const DEFAULT_DURATION = 30;
 
 export const HomePage: React.FC = () => {
+  const { t } = useTranslation("overview");
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -107,7 +109,7 @@ export const HomePage: React.FC = () => {
   const error = overviewQuery.error
     ? overviewQuery.error instanceof Error
       ? overviewQuery.error.message
-      : "Failed to load applications"
+      : t("page.loadError")
     : null;
   const isLoading = overviewQuery.isLoading;
 
@@ -134,8 +136,8 @@ export const HomePage: React.FC = () => {
     <>
       <PageHeader
         icon={ChartColumn}
-        title="Overview"
-        subtitle="Analytics & Insights"
+        title={t("page.title")}
+        subtitle={t("page.subtitle")}
         actions={
           <DurationSelector value={duration} onChange={handleDurationChange} />
         }

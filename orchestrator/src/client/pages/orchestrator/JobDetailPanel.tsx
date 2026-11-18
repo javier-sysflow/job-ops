@@ -18,14 +18,15 @@ import {
 import { useProfile } from "@client/hooks/useProfile";
 import { useRescoreJob } from "@client/hooks/useRescoreJob";
 import { useSettings } from "@client/hooks/useSettings";
+import i18n from "@client/i18n";
 import { uploadJobPdfFromFile } from "@client/lib/job-pdf-upload";
 import { resolveFilenameLanguage } from "@client/lib/pdf-filename";
 import {
   getPdfActionLabels,
+  getPdfRegeneratingMessage,
+  getStalePdfMessage,
   isPdfRegenerating,
   isPdfStale,
-  PDF_REGENERATING_MESSAGE,
-  STALE_PDF_MESSAGE,
 } from "@client/lib/pdf-freshness";
 import { downloadJobPdf, openJobPdf } from "@client/lib/private-pdf";
 import { resolveResumeProjectSelection } from "@shared/resume-projects";
@@ -34,6 +35,13 @@ import type {
   JobListItem,
   ResumeProjectCatalogItem,
 } from "@shared/types.js";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { parseJobBrief } from "@/client/components/JobBriefPane";
+import { showErrorToast } from "@/client/lib/error-toast";
 import {
   AlertTriangle,
   ArrowRight,
@@ -53,13 +61,7 @@ import {
   Star,
   Upload,
   XCircle,
-} from "lucide-react";
-import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { parseJobBrief } from "@/client/components/JobBriefPane";
-import { showErrorToast } from "@/client/lib/error-toast";
+} from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -98,27 +100,19 @@ type InspectorTab = "brief" | "tailoring" | "apply";
 const tabCopy: Record<
   InspectorTab,
   {
-    label: string;
-    description: string;
     dotClassName: string;
     selectedClassName: string;
   }
 > = {
   brief: {
-    label: "Brief",
-    description: "Read the role, fit, and job description.",
     dotClassName: "bg-sky-500/70",
     selectedClassName: "!border-sky-400/65 !bg-sky-500/20 !text-sky-100",
   },
   tailoring: {
-    label: "Tailoring",
-    description: "Shape the resume material for this job.",
     dotClassName: "bg-amber-500/70",
     selectedClassName: "!border-amber-400/65 !bg-amber-500/20 !text-amber-100",
   },
   apply: {
-    label: "Apply",
-    description: "Use the generated kit, Ghostwriter, and final actions.",
     dotClassName: "bg-emerald-500/70",
     selectedClassName:
       "!border-emerald-400/65 !bg-emerald-500/20 !text-emerald-100",
@@ -132,6 +126,7 @@ const InspectorTabsList: React.FC<{
   <TabsList className="mb-4 grid h-auto grid-cols-3 gap-1 rounded-lg bg-muted/90 text-sm">
     {Object.entries(tabCopy).map(([value, copy]) => {
       const isSelected = inspectorTab === value;
+      const tab = value as InspectorTab;
       const trigger = (
         <TabsTrigger
           key={value}
@@ -143,7 +138,9 @@ const InspectorTabsList: React.FC<{
           )}
         >
           <span className={cn("size-1.5 rounded-full", copy.dotClassName)} />
-          <span className="text-sm">{copy.label}</span>
+          <span className="text-sm">
+            {i18n.t(`jobDetail:panel.tabs.${tab}.label`)}
+          </span>
         </TabsTrigger>
       );
 
@@ -151,7 +148,7 @@ const InspectorTabsList: React.FC<{
         <Tip
           key={value}
           asChild
-          content={<p>{copy.description}</p>}
+          content={<p>{i18n.t(`jobDetail:panel.tabs.${tab}.description`)}</p>}
           contentClassName="max-w-xs text-center"
         >
           {trigger}
@@ -210,14 +207,21 @@ const statusTone: Record<
 };
 
 const getPrimaryAction = (job: Job): string => {
-  if (job.status === "processing") return "Processing";
-  if (job.status === "ready") return "Mark Applied";
-  if (job.status === "discovered") return "Start Tailoring";
-  if (job.status === "applied") return "View in Progress Board";
-  if (job.status === "in_progress") return "In Progress";
-  if (job.status === "skipped") return "Skipped";
-  if (job.status === "expired") return "Expired";
-  return "Review Job";
+  if (job.status === "processing")
+    return i18n.t("jobDetail:panel.primary.processing");
+  if (job.status === "ready")
+    return i18n.t("jobDetail:panel.primary.markApplied");
+  if (job.status === "discovered")
+    return i18n.t("jobDetail:panel.primary.startTailoring");
+  if (job.status === "applied")
+    return i18n.t("jobDetail:panel.primary.viewInProgressBoard");
+  if (job.status === "in_progress")
+    return i18n.t("jobDetail:panel.primary.inProgress");
+  if (job.status === "skipped")
+    return i18n.t("jobDetail:panel.primary.skipped");
+  if (job.status === "expired")
+    return i18n.t("jobDetail:panel.primary.expired");
+  return i18n.t("jobDetail:panel.primary.reviewJob");
 };
 
 const getDefaultInspectorTab = (
@@ -259,7 +263,7 @@ const KitStatus: React.FC<{
   ready: boolean;
   readyLabel?: string;
   optional?: boolean;
-}> = ({ icon, label, ready, readyLabel = "Ready", optional = false }) => (
+}> = ({ icon, label, ready, readyLabel, optional = false }) => (
   <div className="flex min-h-11 items-center justify-between gap-3 border-b border-border/30 px-3 py-2.5 last:border-b-0">
     <span className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
       <span className="text-muted-foreground/85">{icon}</span>
@@ -275,7 +279,11 @@ const KitStatus: React.FC<{
             : "bg-amber-500/10 text-amber-300",
       )}
     >
-      {ready ? readyLabel : optional ? "Optional" : "Missing"}
+      {ready
+        ? (readyLabel ?? i18n.t("jobDetail:panel.kit.ready"))
+        : optional
+          ? i18n.t("jobDetail:panel.kit.optional")
+          : i18n.t("jobDetail:panel.kit.missing")}
     </span>
   </div>
 );
@@ -292,6 +300,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
   onRetrySelectedJob,
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation(["jobDetail", "common"]);
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>("brief");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
@@ -409,11 +418,11 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
 
     try {
       await copyTextToClipboard(formatJobForWebhook(selectedJob));
-      toast.success("Copied job info");
+      toast.success(t("toasts.copiedJobInfo"));
     } catch {
-      toast.error("Could not copy job info");
+      toast.error(t("toasts.copyJobInfoFailed"));
     }
-  }, [selectedJob]);
+  }, [selectedJob, t]);
 
   const handleProcess = useCallback(async () => {
     if (!selectedJob) return;
@@ -421,7 +430,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
       setIsProcessing(true);
       if (selectedJob.status === "ready") {
         await api.generateJobPdf(selectedJob.id);
-        toast.success("PDF regenerated");
+        toast.success(t("panel.toasts.pdfRegenerated"));
         trackProductEvent("jobs_job_action_completed", {
           action: "generate_pdf",
           result: "success",
@@ -429,8 +438,8 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
         });
       } else {
         await api.processJob(selectedJob.id);
-        toast.success("Job moved to Ready", {
-          description: "Your tailored PDF has been generated.",
+        toast.success(t("panel.toasts.movedToReady"), {
+          description: t("panel.toasts.movedToReadyDescription"),
         });
         trackProductEvent("jobs_job_action_completed", {
           action: "process_job",
@@ -442,11 +451,11 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
       }
       await onJobUpdated();
     } catch (error) {
-      showErrorToast(error, "Failed to process job");
+      showErrorToast(error, t("panel.toasts.processFailed"));
     } finally {
       setIsProcessing(false);
     }
-  }, [handleJobMoved, onJobUpdated, selectedJob]);
+  }, [handleJobMoved, onJobUpdated, selectedJob, t]);
 
   const handleMarkApplied = useCallback(async () => {
     if (!selectedJob || selectedJob.status !== "ready") return;
@@ -459,17 +468,20 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
         from_status: selectedJob.status,
         to_status: "applied",
       });
-      toast.success("Marked as applied", {
-        description: `${selectedJob.title} at ${selectedJob.employer}`,
+      toast.success(t("toasts.markedApplied"), {
+        description: t("panel.toasts.markedAppliedDescription", {
+          title: selectedJob.title,
+          employer: selectedJob.employer,
+        }),
       });
       handleJobMoved(selectedJob.id);
       await onJobUpdated();
     } catch (error) {
-      showErrorToast(error, "Failed to mark as applied");
+      showErrorToast(error, t("panel.toasts.markAppliedFailed"));
     } finally {
       setIsApplying(false);
     }
-  }, [handleJobMoved, markAsAppliedMutation, onJobUpdated, selectedJob]);
+  }, [handleJobMoved, markAsAppliedMutation, onJobUpdated, selectedJob, t]);
 
   const handlePrimaryAction = useCallback(async () => {
     if (!selectedJob) return;
@@ -513,29 +525,29 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
         from_status: selectedJob.status,
         to_status: "skipped",
       });
-      toast.message("Job skipped");
+      toast.message(t("toasts.jobSkipped"));
       handleJobMoved(selectedJob.id);
       await onJobUpdated();
     } catch (error) {
-      showErrorToast(error, "Failed to skip");
+      showErrorToast(error, t("panel.toasts.skipFailed"));
     }
-  }, [handleJobMoved, onJobUpdated, selectedJob, skipJobMutation]);
+  }, [handleJobMoved, onJobUpdated, selectedJob, skipJobMutation, t]);
 
   const handleOpenPdf = useCallback(() => {
     if (!selectedJob || !selectedJob.pdfPath || isPdfRegenerating(selectedJob))
       return;
     void openJobPdf(selectedJob.id).catch((error) => {
-      showErrorToast(error, "Could not open PDF");
+      showErrorToast(error, t("toasts.openPdfFailed"));
     });
-  }, [selectedJob]);
+  }, [selectedJob, t]);
 
   const handleDownloadPdf = useCallback(() => {
     if (!selectedJob || !selectedJob.pdfPath || isPdfRegenerating(selectedJob))
       return;
     void downloadJobPdf(selectedJob.id, selectedPdfFilename).catch((error) => {
-      showErrorToast(error, "Could not download PDF");
+      showErrorToast(error, t("toasts.downloadPdfFailed"));
     });
-  }, [selectedJob, selectedPdfFilename]);
+  }, [selectedJob, selectedPdfFilename, t]);
 
   const handleUploadPdf = useCallback(
     async (file: File) => {
@@ -543,10 +555,14 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
       try {
         setIsUploadingPdf(true);
         await uploadJobPdfFromFile(selectedJob.id, file);
-        toast.success(selectedJob.pdfPath ? "PDF replaced" : "PDF attached");
+        toast.success(
+          selectedJob.pdfPath
+            ? t("panel.toasts.pdfReplaced")
+            : t("panel.toasts.pdfAttached"),
+        );
         await onJobUpdated();
       } catch (error) {
-        showErrorToast(error, "Failed to upload PDF");
+        showErrorToast(error, t("panel.toasts.uploadPdfFailed"));
       } finally {
         setIsUploadingPdf(false);
         if (uploadPdfInputRef.current) {
@@ -554,7 +570,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
         }
       }
     },
-    [onJobUpdated, selectedJob],
+    [onJobUpdated, selectedJob, t],
   );
 
   if (!selectedJob) {
@@ -563,9 +579,9 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
       const listingUrl =
         selectedJobListItem.applicationLink || selectedJobListItem.jobUrl;
       const summaryPdfMessage = isPdfRegenerating(selectedJobListItem)
-        ? PDF_REGENERATING_MESSAGE
+        ? getPdfRegeneratingMessage()
         : isPdfStale(selectedJobListItem)
-          ? STALE_PDF_MESSAGE
+          ? getStalePdfMessage()
           : null;
 
       return (
@@ -587,17 +603,23 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
           <div className="flex min-w-0 flex-col gap-4 rounded-lg rounded-t-none border border-t-0 border-border/50 bg-card p-4">
             <div className="grid gap-2 sm:grid-cols-2">
               <Stat
-                label="Location"
+                label={t("fields.location")}
                 value={selectedJobListItem.location}
                 tone="blue"
               />
               <Stat
-                label="Salary"
+                label={t("fields.salary")}
                 value={selectedJobListItem.salary}
                 tone="green"
               />
-              <Stat label="Function" value={selectedJobListItem.jobFunction} />
-              <Stat label="Type" value={selectedJobListItem.jobType} />
+              <Stat
+                label={t("fields.function")}
+                value={selectedJobListItem.jobFunction}
+              />
+              <Stat
+                label={t("fields.type")}
+                value={selectedJobListItem.jobType}
+              />
             </div>
 
             {summaryPdfMessage ? (
@@ -609,19 +631,16 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
             {selectedJobLoadState === "error" ? (
               <Alert>
                 <CircleAlert />
-                <AlertTitle>Couldn&apos;t load job details</AlertTitle>
+                <AlertTitle>{t("panel.loadError.title")}</AlertTitle>
                 <AlertDescription className="flex flex-col items-start gap-3">
-                  <p>
-                    The summary is still available. Try loading the details
-                    again.
-                  </p>
+                  <p>{t("panel.loadError.description")}</p>
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
                     onClick={onRetrySelectedJob}
                   >
-                    Retry
+                    {t("common:actions.retry")}
                   </Button>
                 </AlertDescription>
               </Alert>
@@ -632,7 +651,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                   aria-live="polite"
                 >
                   <Loader2 className="size-3.5 animate-spin motion-reduce:animate-none" />
-                  Loading full job details…
+                  {t("panel.loadingDetails")}
                 </output>
                 <div
                   className="flex flex-col gap-4"
@@ -664,10 +683,10 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
             <FileText className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="text-sm font-medium text-muted-foreground">
-            No job selected
+            {t("panel.empty.title")}
           </div>
           <p className="max-w-[220px] text-xs text-muted-foreground/70">
-            Select a job to see the brief, tailoring, and application kit.
+            {t("panel.empty.description")}
           </p>
         </div>
       </div>
@@ -682,7 +701,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
   const isStalePdf = isPdfStale(selectedJob);
   const pdfLabels = getPdfActionLabels(selectedJob);
   const pdfRegeneratingReason = isRegeneratingPdf
-    ? PDF_REGENERATING_MESSAGE
+    ? getPdfRegeneratingMessage()
     : null;
   const pdfActionDisabled = !selectedJob.pdfPath || isRegeneratingPdf;
   const tone = statusTone[selectedJob.status];
@@ -709,7 +728,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:shrink-0">
             <GhostwriterDrawer
               job={selectedJob}
-              triggerLabel="Ask Ghostwriter"
+              triggerLabel={t("panel.askGhostwriter")}
               triggerVariant="ghost"
               triggerClassName="w-full min-w-0 justify-start overflow-hidden sm:w-auto"
             />
@@ -740,7 +759,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label="More actions"
+                  aria-label={t("panel.moreActions")}
                   className="col-start-2 row-span-2 row-start-1 self-center"
                 >
                   <MoreHorizontal className="h-4 w-4" />
@@ -749,7 +768,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem onSelect={openEditDetails}>
                   <Edit2 className="mr-2 h-4 w-4" />
-                  Edit details
+                  {t("panel.menu.editDetails")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => {
@@ -757,11 +776,11 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                   }}
                 >
                   <Edit2 className="mr-2 h-4 w-4" />
-                  View job description
+                  {t("panel.menu.viewJobDescription")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => void handleCopyInfo()}>
                   <Copy className="mr-2 h-4 w-4" />
-                  Copy job info
+                  {t("panel.menu.copyJobInfo")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => rescoreJob(selectedJob.id)}
@@ -773,7 +792,9 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                       isRescoring && "animate-spin",
                     )}
                   />
-                  {isRescoring ? "Recalculating..." : "Recalculate match"}
+                  {isRescoring
+                    ? t("panel.menu.recalculating")
+                    : t("panel.menu.recalculateMatch")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {canGenerate && (
@@ -788,8 +809,8 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                       )}
                     />
                     {selectedJob.status === "ready"
-                      ? "Regenerate PDF"
-                      : "Generate PDF"}
+                      ? t("panel.menu.regeneratePdf")
+                      : t("panel.menu.generatePdf")}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
@@ -798,10 +819,10 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                 >
                   <Upload className="mr-2 h-4 w-4" />
                   {isUploadingPdf
-                    ? "Uploading PDF..."
+                    ? t("panel.menu.uploadingPdf")
                     : selectedJob.pdfPath
-                      ? "Replace PDF"
-                      : "Upload PDF"}
+                      ? t("panel.menu.replacePdf")
+                      : t("panel.menu.uploadPdf")}
                 </DropdownMenuItem>
                 {selectedJob.pdfPath && (
                   <>
@@ -829,7 +850,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                       className="text-destructive focus:text-destructive"
                     >
                       <XCircle className="mr-2 h-4 w-4" />
-                      Skip job
+                      {t("panel.menu.skipJob")}
                     </DropdownMenuItem>
                   </>
                 )}
@@ -843,12 +864,26 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
         <TabsContent value="brief" className="space-y-4">
           {!brief && (
             <div className="grid gap-2 sm:grid-cols-2">
-              <Stat label="Location" value={selectedJob.location} tone="blue" />
-              <Stat label="Salary" value={selectedJob.salary} tone="green" />
-              <Stat label="Level" value={selectedJob.jobLevel} />
-              <Stat label="Function" value={selectedJob.jobFunction} />
-              <Stat label="Type" value={selectedJob.jobType} />
-              <Stat label="Discipline" value={selectedJob.disciplines} />
+              <Stat
+                label={t("fields.location")}
+                value={selectedJob.location}
+                tone="blue"
+              />
+              <Stat
+                label={t("fields.salary")}
+                value={selectedJob.salary}
+                tone="green"
+              />
+              <Stat label={t("fields.level")} value={selectedJob.jobLevel} />
+              <Stat
+                label={t("fields.function")}
+                value={selectedJob.jobFunction}
+              />
+              <Stat label={t("fields.type")} value={selectedJob.jobType} />
+              <Stat
+                label={t("fields.discipline")}
+                value={selectedJob.disciplines}
+              />
             </div>
           )}
 
@@ -874,7 +909,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
             {isStalePdf && (
               <div className="flex items-start gap-2 rounded-md border border-amber-200/70 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-100">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                <span>{STALE_PDF_MESSAGE}</span>
+                <span>{getStalePdfMessage()}</span>
               </div>
             )}
 
@@ -906,13 +941,13 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground/90">
                         {applicationKitReady
-                          ? "Application materials ready"
-                          : "Application materials need review"}
+                          ? t("panel.apply.materialsReady")
+                          : t("panel.apply.materialsNeedReview")}
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground/75">
                         {applicationKitReady
-                          ? "Tailored summary, skills, and PDF are ready for this role."
-                          : "Check the application kit before submitting this role."}
+                          ? t("panel.apply.materialsReadyDescription")
+                          : t("panel.apply.materialsNeedReviewDescription")}
                       </p>
                     </div>
                   </div>
@@ -923,7 +958,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                     className="w-full justify-center sm:w-auto sm:shrink-0"
                   >
                     <a href={`/job/${selectedJob.id}`}>
-                      Open Job Page
+                      {t("panel.apply.openJobPage")}
                       <ArrowRight />
                     </a>
                   </Button>
@@ -966,40 +1001,42 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                 ) : (
                   <CheckCircle2 className="size-3.5" />
                 )}
-                Mark Applied
+                {t("panel.apply.markApplied")}
                 <KbdHint shortcut="a" className="ml-auto" />
               </Button>
             </div>
 
             <div>
               <div className="mb-2 text-lg font-semibold tracking-normal text-foreground/90">
-                Application kit
+                {t("panel.kit.title")}
               </div>
               <div className="overflow-hidden rounded-md border border-border/45 bg-muted/5">
                 <KitStatus
                   icon={<FileText className="h-4 w-4" />}
-                  label="Tailored summary"
+                  label={t("panel.kit.tailoredSummary")}
                   ready={hasTailoredSummary}
                 />
                 <KitStatus
                   icon={<Star className="h-4 w-4" />}
-                  label="Tailored skills"
+                  label={t("panel.kit.tailoredSkills")}
                   ready={hasTailoredSkills}
                 />
                 <KitStatus
                   icon={<FileText className="h-4 w-4" />}
-                  label="Resume PDF"
+                  label={t("panel.kit.resumePdf")}
                   ready={hasResumePdf}
                 />
                 <KitStatus
                   icon={<FolderKanban className="h-4 w-4" />}
-                  label="Selected projects"
+                  label={t("panel.kit.selectedProjects")}
                   ready={effectiveSelectedProjectIds.length > 0}
-                  readyLabel={`${effectiveSelectedProjectIds.length} included`}
+                  readyLabel={t("panel.kit.included", {
+                    number: effectiveSelectedProjectIds.length,
+                  })}
                 />
                 <KitStatus
                   icon={<Link2 className="h-4 w-4" />}
-                  label="Supporting links"
+                  label={t("panel.kit.supportingLinks")}
                   ready={false}
                   optional
                 />
@@ -1008,7 +1045,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
 
             <div>
               <div className="mb-2 text-lg font-semibold tracking-normal text-foreground/90">
-                Selected projects
+                {t("panel.kit.selectedProjects")}
               </div>
               {selectedProjects.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -1023,8 +1060,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground/70">
-                  No projects selected yet. Use Tailoring to choose the evidence
-                  for this role.
+                  {t("panel.apply.noProjects")}
                 </p>
               )}
             </div>

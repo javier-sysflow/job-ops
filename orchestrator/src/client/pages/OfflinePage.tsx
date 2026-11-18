@@ -1,9 +1,11 @@
-import { WifiOff } from "lucide-react";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { WifiOff } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 export function OfflinePage() {
+  const { t } = useTranslation("shell");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,21 +28,20 @@ export function OfflinePage() {
           </div>
           <div className="min-w-0 space-y-2">
             <h1 className="text-3xl font-semibold tracking-normal sm:text-4xl">
-              You seem offline
+              {t("offline.title")}
             </h1>
             <p className="max-w-prose text-sm leading-6 text-muted-foreground">
-              Check your internet connection and try again.
+              {t("offline.checkConnection")}
             </p>
             <p className="max-w-prose text-sm leading-6 text-muted-foreground">
-              This page will automatically redirect when your connection is
-              restored.
+              {t("offline.autoRedirect")}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <Button type="button" onClick={() => window.location.reload()}>
-            Try again
+            {t("offline.tryAgain")}
           </Button>
         </div>
       </section>

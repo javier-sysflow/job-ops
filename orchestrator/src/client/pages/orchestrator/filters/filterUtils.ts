@@ -1,3 +1,5 @@
+import i18n from "@client/i18n";
+import { formatNumber } from "@client/i18n/format";
 import type {
   DateFilterDimension,
   DateFilterPreset,
@@ -35,19 +37,31 @@ export const getDirectionOptions = (
 ): Array<{ value: JobSort["direction"]; label: string }> => {
   if (key === "datePosted" || key === "discoveredAt") {
     return [
-      { value: "desc", label: "Most recent" },
-      { value: "asc", label: "Least recent" },
+      {
+        value: "desc",
+        label: i18n.t("jobs:filters.sort.directions.mostRecent"),
+      },
+      {
+        value: "asc",
+        label: i18n.t("jobs:filters.sort.directions.leastRecent"),
+      },
     ];
   }
   if (key === "score" || key === "salary") {
     return [
-      { value: "desc", label: "Largest first" },
-      { value: "asc", label: "Smallest first" },
+      {
+        value: "desc",
+        label: i18n.t("jobs:filters.sort.directions.largestFirst"),
+      },
+      {
+        value: "asc",
+        label: i18n.t("jobs:filters.sort.directions.smallestFirst"),
+      },
     ];
   }
   return [
-    { value: "asc", label: "A to Z" },
-    { value: "desc", label: "Z to A" },
+    { value: "asc", label: i18n.t("jobs:filters.sort.directions.aToZ") },
+    { value: "desc", label: i18n.t("jobs:filters.sort.directions.zToA") },
   ];
 };
 
@@ -69,7 +83,7 @@ export const toggleDimension = (
   };
 };
 
-export const formatMoney = (value: number) => value.toLocaleString();
+export const formatMoney = (value: number) => formatNumber(value);
 
 export const isSalaryFilterActive = (salaryFilter: SalaryFilter) =>
   (typeof salaryFilter.min === "number" && salaryFilter.min > 0) ||
@@ -100,7 +114,9 @@ export const isScoreFilterActive = (scoreFilter: ScoreFilter) =>
   scoreFilter.mode !== "any";
 
 export const formatScoreSummary = (scoreFilter: ScoreFilter): string | null => {
-  if (scoreFilter.mode === "missing") return "No score";
+  if (scoreFilter.mode === "missing") {
+    return i18n.t("jobs:filters.score.modes.missing");
+  }
   if (scoreFilter.mode !== "has") return null;
 
   if (scoreFilter.min != null && scoreFilter.max != null) {
@@ -108,5 +124,5 @@ export const formatScoreSummary = (scoreFilter: ScoreFilter): string | null => {
   }
   if (scoreFilter.min != null) return `≥ ${scoreFilter.min}`;
   if (scoreFilter.max != null) return `≤ ${scoreFilter.max}`;
-  return "Has a score";
+  return i18n.t("jobs:filters.score.modes.has");
 };

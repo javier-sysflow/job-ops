@@ -1,3 +1,6 @@
+import i18n from "@client/i18n";
+import { isJapaneseUi } from "@client/i18n/format";
+import { countryLabel as localizedCountryLabel } from "@client/i18n/labels";
 import {
   EXTRACTOR_SOURCE_METADATA,
   type ExtractorSourceId,
@@ -5,11 +8,6 @@ import {
 import type { LocationSourcePlan } from "@shared/location-intelligence.js";
 import { formatCountryLabel } from "@shared/location-support.js";
 import { sourceLabel } from "@/lib/utils";
-
-const GLASSDOOR_COUNTRY_REASON =
-  "Glassdoor is not available for the selected country.";
-const GLASSDOOR_LOCATION_REASON =
-  "Add at least one city in Location preferences to enable Glassdoor.";
 
 export interface AutomaticSourceStatus {
   badgeLabel: string;
@@ -32,8 +30,14 @@ export function getSourceStatus(args: {
   const { countrySelected, plan } = args;
   const { source, requestedCountry, requestedCities } = plan;
   const knownSource = getKnownJobSource(source);
+  // English keeps the shared label; other languages use Intl country names.
   const countryLabel = requestedCountry
-    ? formatCountryLabel(requestedCountry)
+    ? isJapaneseUi()
+      ? localizedCountryLabel(
+          requestedCountry,
+          formatCountryLabel(requestedCountry),
+        )
+      : formatCountryLabel(requestedCountry)
     : "";
   const sourceName = knownSource ? sourceLabel[knownSource] : source;
   const isUkOnlySource = knownSource
@@ -43,16 +47,15 @@ export function getSourceStatus(args: {
   if (!countrySelected) {
     if (source === "glassdoor" || isUkOnlySource) {
       return {
-        badgeLabel: "Select country",
-        detail:
-          "Pick a country first to check whether this source is available.",
+        badgeLabel: i18n.t("jobs:automaticRun.sourceStatus.selectCountry"),
+        detail: i18n.t("jobs:automaticRun.sourceStatus.selectCountryDetail"),
         available: false,
       };
     }
 
     return {
-      badgeLabel: "Available",
-      detail: "This source is available without a country selection.",
+      badgeLabel: i18n.t("jobs:automaticRun.sourceStatus.available"),
+      detail: i18n.t("jobs:automaticRun.sourceStatus.availableWithoutCountry"),
       available: true,
     };
   }
@@ -64,8 +67,8 @@ export function getSourceStatus(args: {
       !plan.capabilities.supportedCountryKeys.includes(requestedCountry)
     ) {
       return {
-        badgeLabel: "Blocked",
-        detail: GLASSDOOR_COUNTRY_REASON,
+        badgeLabel: i18n.t("jobs:automaticRun.sourceStatus.blocked"),
+        detail: i18n.t("jobs:automaticRun.sourceStatus.glassdoorCountry"),
         available: false,
       };
     }
@@ -75,38 +78,45 @@ export function getSourceStatus(args: {
       requestedCities.length === 0
     ) {
       return {
-        badgeLabel: "Needs city",
-        detail: GLASSDOOR_LOCATION_REASON,
+        badgeLabel: i18n.t("jobs:automaticRun.sourceStatus.needsCity"),
+        detail: i18n.t("jobs:automaticRun.sourceStatus.glassdoorNeedsCity"),
         available: false,
       };
     }
 
     return {
-      badgeLabel: "Available",
-      detail: "Glassdoor is available for this location intent.",
+      badgeLabel: i18n.t("jobs:automaticRun.sourceStatus.available"),
+      detail: i18n.t("jobs:automaticRun.sourceStatus.glassdoorAvailable"),
       available: true,
     };
   }
 
   if (isUkOnlySource && !plan.canRun) {
     return {
-      badgeLabel: "UK only",
-      detail: `${sourceName} is available only when country is United Kingdom.`,
+      badgeLabel: i18n.t("jobs:automaticRun.sourceStatus.ukOnly"),
+      detail: i18n.t("jobs:automaticRun.sourceStatus.ukOnlyDetail", {
+        source: sourceName,
+      }),
       available: false,
     };
   }
 
   if (!plan.canRun) {
     return {
-      badgeLabel: "Blocked",
-      detail: `${sourceName} is not available for ${countryLabel || "the selected country"}.`,
+      badgeLabel: i18n.t("jobs:automaticRun.sourceStatus.blocked"),
+      detail: i18n.t("jobs:automaticRun.sourceStatus.notAvailableIn", {
+        source: sourceName,
+        country:
+          countryLabel ||
+          i18n.t("jobs:automaticRun.sourceStatus.theSelectedCountry"),
+      }),
       available: false,
     };
   }
 
   return {
-    badgeLabel: "Available",
-    detail: "Available for this location intent.",
+    badgeLabel: i18n.t("jobs:automaticRun.sourceStatus.available"),
+    detail: i18n.t("jobs:automaticRun.sourceStatus.availableForIntent"),
     available: true,
   };
 }

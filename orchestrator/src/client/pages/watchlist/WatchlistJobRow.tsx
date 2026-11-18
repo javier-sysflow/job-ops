@@ -1,9 +1,13 @@
 import { JobDescriptionPanel } from "@client/components/JobDescriptionPanel";
+import { formatDate, isJapaneseUi } from "@client/i18n/format";
 import type {
   WatchlistJobResult,
   WatchlistSelectedSource,
   WatchlistWorkspaceJobReference,
 } from "@shared/types.js";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Tip } from "@/client/components/Tip";
 import {
   ExternalLinkIcon,
   Eye,
@@ -13,9 +17,7 @@ import {
   Loader2,
   MoreHorizontal,
   RotateCcw,
-} from "lucide-react";
-import { useState } from "react";
-import { Tip } from "@/client/components/Tip";
+} from "@/components/icons";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -59,6 +61,10 @@ function formatPostedDate(value: string | null): string {
   if (!value) return "—";
 
   try {
+    // English keeps the browser-locale format; Japanese uses the UI locale.
+    if (isJapaneseUi()) {
+      return formatDate(value, { dateStyle: "medium" }) || value;
+    }
     return new Intl.DateTimeFormat(undefined, {
       dateStyle: "medium",
     }).format(new Date(value));
@@ -82,6 +88,7 @@ export default function WatchlistJobRow({
   onOpenWorkspaceJob,
   onLoadJobDetails,
 }: WatchlistJobRowProps) {
+  const { t } = useTranslation("watchlist");
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
   const watchlistJob = rankedJob.watchlistJob;
   const stateInput = {
@@ -100,35 +107,41 @@ export default function WatchlistJobRow({
 
   if (watchlistJob.workspaceJob) {
     signals.push({
-      label: "Already in workspace",
+      label: t("job.signals.inWorkspace"),
       dotClassName: "bg-emerald-400",
     });
   }
 
   if (rankedJob.rowState === "ignored" && !watchlistJob.workspaceJob) {
     signals.push({
-      label: "Ignored",
+      label: t("job.signals.ignored"),
       dotClassName: "bg-muted-foreground/70",
     });
   }
 
   if (rankedJob.matchedSearchTerm) {
     signals.push({
-      label: `${rankedJob.matchedSearchTerm} search match (${rankedJob.matchScore})`,
+      label: t("job.signals.searchMatch", {
+        term: rankedJob.matchedSearchTerm,
+        score: rankedJob.matchScore,
+      }),
       dotClassName: "bg-primary",
     });
   }
 
   if (rankedJob.locationMatched) {
     signals.push({
-      label: rankedJob.locationPriority > 0 ? "Location match" : "Remote match",
+      label:
+        rankedJob.locationPriority > 0
+          ? t("job.signals.locationMatch")
+          : t("job.signals.remoteMatch"),
       dotClassName: "bg-emerald-400",
     });
   }
 
   if (watchlistJob.isNewSinceLastCheck) {
     signals.push({
-      label: "New since last check",
+      label: t("job.signals.newSinceLastCheck"),
       dotClassName: "bg-sky-400",
     });
   }
@@ -160,7 +173,9 @@ export default function WatchlistJobRow({
                 >
                   <button
                     type="button"
-                    aria-label={`View signals for ${rankedJob.job.title}`}
+                    aria-label={t("job.viewSignals", {
+                      title: rankedJob.job.title,
+                    })}
                     className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     {signals.map((signal) => (
@@ -190,7 +205,7 @@ export default function WatchlistJobRow({
         </TableCell>
         <TableCell className="py-2.5">
           <div className="text-sm text-muted-foreground">
-            {watchlistJob.location || "Unknown"}
+            {watchlistJob.location || t("job.unknownLocation")}
           </div>
         </TableCell>
         <TableCell className="py-2.5">
@@ -206,7 +221,7 @@ export default function WatchlistJobRow({
                 <Tip
                   asChild
                   clickBehavior="none"
-                  content="View in JobOps workspace"
+                  content={t("job.viewInWorkspace")}
                 >
                   <Button
                     type="button"
@@ -230,7 +245,7 @@ export default function WatchlistJobRow({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 shrink-0 text-muted-foreground"
-                      aria-label="More actions"
+                      aria-label={t("job.moreActions")}
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
@@ -240,7 +255,7 @@ export default function WatchlistJobRow({
                       onClick={() => handleDescriptionOpenChange(true)}
                     >
                       <FileText className="mr-2 h-4 w-4" />
-                      Job description
+                      {t("job.jobDescription")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -253,7 +268,7 @@ export default function WatchlistJobRow({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 shrink-0 text-muted-foreground"
-                    aria-label="More actions"
+                    aria-label={t("job.moreActions")}
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
@@ -263,7 +278,7 @@ export default function WatchlistJobRow({
                     onClick={() => handleDescriptionOpenChange(true)}
                   >
                     <FileText className="mr-2 h-4 w-4" />
-                    Job description
+                    {t("job.jobDescription")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     disabled={isUnignoring}
@@ -274,7 +289,7 @@ export default function WatchlistJobRow({
                     ) : (
                       <RotateCcw className="mr-2 h-4 w-4" />
                     )}
-                    Unignore
+                    {t("job.unignore")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -283,7 +298,7 @@ export default function WatchlistJobRow({
                 <Tip
                   asChild
                   clickBehavior="none"
-                  content="Move to JobOps workspace"
+                  content={t("job.moveToWorkspace")}
                 >
                   <Button
                     type="button"
@@ -307,7 +322,7 @@ export default function WatchlistJobRow({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 shrink-0 text-muted-foreground"
-                      aria-label="More actions"
+                      aria-label={t("job.moreActions")}
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
@@ -317,7 +332,7 @@ export default function WatchlistJobRow({
                       onClick={() => handleDescriptionOpenChange(true)}
                     >
                       <FileText className="mr-2 h-4 w-4" />
-                      Job description
+                      {t("job.jobDescription")}
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <a
@@ -327,7 +342,7 @@ export default function WatchlistJobRow({
                         className="flex items-center w-full"
                       >
                         <ExternalLinkIcon className="mr-2 h-4 w-4" />
-                        View on careers page
+                        {t("job.viewOnCareersPage")}
                       </a>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -339,7 +354,7 @@ export default function WatchlistJobRow({
                       ) : (
                         <EyeOff className="mr-2 h-4 w-4" />
                       )}
-                      Ignore
+                      {t("job.ignore")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -354,7 +369,7 @@ export default function WatchlistJobRow({
       >
         <DialogContent className="max-h-[85vh] max-w-5xl overflow-hidden p-0">
           <DialogTitle className="sr-only">
-            {rankedJob.job.title} job description
+            {t("job.descriptionTitle", { title: rankedJob.job.title })}
           </DialogTitle>
           <JobDescriptionPanel
             description={

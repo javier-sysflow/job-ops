@@ -4,20 +4,21 @@ import { useSettings } from "@client/hooks/useSettings";
 import { useTracerReadiness } from "@client/hooks/useTracerReadiness";
 import { resolveResumeProjectSelection } from "@shared/resume-projects";
 import type { Job } from "@shared/types.js";
+import type React from "react";
+import type { ComponentProps } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { Tip } from "@/client/components/Tip";
+import { formatUserFacingError } from "@/client/lib/error-format";
+import { showErrorToast } from "@/client/lib/error-toast";
 import {
   Check,
   CircleAlert,
   FileText,
   Loader2,
   RefreshCcw,
-} from "lucide-react";
-import type React from "react";
-import type { ComponentProps } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
-import { Tip } from "@/client/components/Tip";
-import { formatUserFacingError } from "@/client/lib/error-format";
-import { showErrorToast } from "@/client/lib/error-toast";
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   fromEditableSkillGroups,
@@ -67,14 +68,15 @@ type TailoringGenerateTarget =
 const AutosaveStatusIcon: React.FC<{ status: AutosaveStatus }> = ({
   status,
 }) => {
+  const { t } = useTranslation("jobDetail");
   const copy =
     status === "saving"
-      ? "Saving..."
+      ? t("tailoring.autosave.saving")
       : status === "unsaved"
-        ? "Unsaved changes"
+        ? t("tailoring.autosave.unsaved")
         : status === "error"
-          ? "Save failed"
-          : "Saved";
+          ? t("tailoring.autosave.error")
+          : t("tailoring.autosave.saved");
   const iconClassName =
     status === "error"
       ? "text-rose-300"
@@ -157,6 +159,7 @@ export const TailoringWorkspace: React.FC<TailoringWorkspaceProps> = (
     onDirtyChange: props.onDirtyChange,
   });
 
+  const { t } = useTranslation("jobDetail");
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("saved");
   const [generateTarget, setGenerateTarget] =
     useState<TailoringGenerateTarget | null>(null);
@@ -202,8 +205,7 @@ export const TailoringWorkspace: React.FC<TailoringWorkspaceProps> = (
     !tracerLinksEnabled && !tracerReadiness?.canEnable;
   const tracerEnableBlockedReason =
     tracerReadiness?.canEnable === false
-      ? (tracerReadiness.reason ??
-        "Verify tracer links in Settings before enabling this job.")
+      ? (tracerReadiness.reason ?? t("tailoring.verifyTracer"))
       : null;
 
   const savePayload = useMemo<TailoringSavePayload>(
@@ -397,19 +399,15 @@ export const TailoringWorkspace: React.FC<TailoringWorkspaceProps> = (
         });
         applyIncomingDraft(updatedJob);
         setAiBaseline(toBaselineFromJob(updatedJob));
-        toast.success(
-          target === "all"
-            ? "Draft content generated"
-            : `${target[0].toUpperCase()}${target.slice(1)} generated`,
-        );
+        toast.success(t(`tailoring.generated.${target}`));
         await props.onUpdate();
       } catch (error) {
-        showErrorToast(error, "AI generation failed");
+        showErrorToast(error, t("tailoring.aiGenerationFailed"));
       } finally {
         setGenerateTarget(null);
       }
     },
-    [props.onUpdate, flushAutosave, props.job.id, applyIncomingDraft],
+    [props.onUpdate, flushAutosave, props.job.id, applyIncomingDraft, t],
   );
 
   const handleSummarizeEditor = useCallback(async () => {
@@ -471,21 +469,24 @@ export const TailoringWorkspace: React.FC<TailoringWorkspaceProps> = (
       setIsGeneratingPdf(true);
       await flushAutosave();
       await api.generateJobPdf(props.job.id);
-      toast.success("Resume PDF generated");
+      toast.success(t("toasts.resumePdfGenerated"));
       await props.onUpdate();
     } catch (error) {
-      const message = formatUserFacingError(error, "PDF generation failed");
+      const message = formatUserFacingError(
+        error,
+        t("tailoring.pdfGenerationFailed"),
+      );
       if (/tracer/i.test(message)) {
-        toast.error("Tracer links are unavailable right now", {
+        toast.error(t("tailoring.tracerUnavailableNow"), {
           description: message,
         });
       } else {
-        showErrorToast(error, "PDF generation failed");
+        showErrorToast(error, t("tailoring.pdfGenerationFailed"));
       }
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [props.onBeforeGenerate, props.onUpdate, flushAutosave, props.job.id]);
+  }, [props.onBeforeGenerate, props.onUpdate, flushAutosave, props.job.id, t]);
 
   const handleUndoSummary = useCallback(() => {
     setSummary(originalValues.summary);
@@ -563,7 +564,7 @@ export const TailoringWorkspace: React.FC<TailoringWorkspaceProps> = (
       canRedoSkills: skillsJson !== aiBaseline.skillsJson,
       undoDisabledReason: canUseOriginalValues
         ? null
-        : "Original base CV unavailable.",
+        : t("tailoring.baseCvUnavailable"),
       onDescriptionChange: setJobDescription,
       onSkillGroupOpenChange: setOpenSkillGroupId,
       onAddSkillGroup: handleAddSkillGroup,
@@ -612,6 +613,7 @@ export const TailoringWorkspace: React.FC<TailoringWorkspaceProps> = (
       handleRemoveSkillGroup,
       handleToggleProject,
       setTracerLinksEnabled,
+      t,
     ],
   );
 
@@ -641,12 +643,14 @@ export const TailoringWorkspace: React.FC<TailoringWorkspaceProps> = (
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground/90">
-                {isDraftReady ? "Draft ready" : "Draft incomplete"}
+                {isDraftReady
+                  ? t("tailoring.draftReady")
+                  : t("tailoring.draftIncomplete")}
               </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground/75">
                 {isDraftReady
-                  ? "Review optional sections before generating the PDF."
-                  : "Add a summary and headline to generate the PDF."}
+                  ? t("tailoring.draftReadyDescription")
+                  : t("tailoring.draftIncompleteDescription")}
               </p>
             </div>
           </div>
@@ -665,7 +669,7 @@ export const TailoringWorkspace: React.FC<TailoringWorkspaceProps> = (
             ) : (
               <RefreshCcw className="h-4 w-4" />
             )}
-            Generate all
+            {t("tailoring.generateAll")}
           </Button>
           <Button
             onClick={handleGeneratePdf}
@@ -679,7 +683,7 @@ export const TailoringWorkspace: React.FC<TailoringWorkspaceProps> = (
             ) : (
               <FileText className="h-4 w-4" />
             )}
-            Generate PDF
+            {t("tailoring.generatePdf")}
           </Button>
         </div>
       </div>

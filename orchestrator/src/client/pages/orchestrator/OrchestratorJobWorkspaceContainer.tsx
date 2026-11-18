@@ -1,5 +1,6 @@
 import { KeyboardShortcutBar } from "@client/components/KeyboardShortcutBar";
 import { KeyboardShortcutDialog } from "@client/components/KeyboardShortcutDialog";
+import i18n from "@client/i18n";
 import type { Job, JobListItem, JobStatus } from "@shared/types.js";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
@@ -178,7 +179,7 @@ export const OrchestratorJobWorkspaceContainer: React.FC<
   const primaryEmptyStateAction = useMemo(() => {
     if (navigation.activeTab === "ready" && counts.discovered > 0) {
       return {
-        label: "Tailor discovered jobs",
+        label: i18n.t("jobs:list.tailorDiscovered"),
         onClick: () => handleTabChange("discovered"),
       };
     }
@@ -188,7 +189,7 @@ export const OrchestratorJobWorkspaceContainer: React.FC<
       navigation.activeTab === "all"
     ) {
       return {
-        label: "Find jobs",
+        label: i18n.t("jobs:list.findJobs"),
         onClick: onFindJobs,
       };
     }
@@ -199,7 +200,7 @@ export const OrchestratorJobWorkspaceContainer: React.FC<
   const secondaryEmptyStateAction = useMemo(() => {
     if (navigation.activeTab === "ready") {
       return {
-        label: "Find jobs",
+        label: i18n.t("jobs:list.findJobs"),
         onClick: onFindJobs,
       };
     }
@@ -212,7 +213,7 @@ export const OrchestratorJobWorkspaceContainer: React.FC<
       return undefined;
     }
 
-    return "No jobs match the selected date filters.";
+    return i18n.t("jobs:list.noDateMatches");
   }, [filters.dateFilter.dimensions.length]);
 
   return (

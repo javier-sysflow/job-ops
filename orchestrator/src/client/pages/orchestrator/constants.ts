@@ -1,9 +1,14 @@
+import i18n from "@client/i18n";
+import { jobStatusLabel } from "@client/i18n/labels";
 import {
   EXTRACTOR_SOURCE_IDS,
   EXTRACTOR_SOURCE_METADATA,
   PIPELINE_EXTRACTOR_SOURCE_IDS,
 } from "@shared/extractors";
 import type { JobSource, JobStatus } from "@shared/types";
+
+// Labels below are getters so they are translated when read (at render
+// time), not when this module loads.
 
 export const DEFAULT_PIPELINE_SOURCES: JobSource[] = [
   "gradcracker",
@@ -33,50 +38,68 @@ export const statusTokens: Record<
   { label: string; badge: string; dot: string }
 > = {
   discovered: {
-    label: "Discovered",
+    get label() {
+      return jobStatusLabel("discovered");
+    },
     badge: "border-sky-500/30 bg-sky-500/10 text-sky-200",
     dot: "bg-sky-400",
   },
   processing: {
-    label: "Processing",
+    get label() {
+      return jobStatusLabel("processing");
+    },
     badge: "border-amber-500/30 bg-amber-500/10 text-amber-200",
     dot: "bg-amber-400",
   },
   ready: {
-    label: "Ready",
+    get label() {
+      return jobStatusLabel("ready");
+    },
     badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
     dot: "bg-emerald-400",
   },
   applied: {
-    label: "Applied",
+    get label() {
+      return jobStatusLabel("applied");
+    },
     badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
     dot: "bg-emerald-400",
   },
   in_progress: {
-    label: "In Progress",
+    get label() {
+      return jobStatusLabel("in_progress");
+    },
     badge: "border-cyan-500/30 bg-cyan-500/10 text-cyan-200",
     dot: "bg-cyan-400",
   },
   skipped: {
-    label: "Skipped",
+    get label() {
+      return jobStatusLabel("skipped");
+    },
     badge: "border-rose-500/30 bg-rose-500/10 text-rose-200",
     dot: "bg-rose-400",
   },
   expired: {
-    label: "Expired",
+    get label() {
+      return jobStatusLabel("expired");
+    },
     badge: "border-muted-foreground/20 bg-muted/30 text-muted-foreground",
     dot: "bg-muted-foreground",
   },
 };
 
 export const defaultStatusToken = {
-  label: "Unknown",
+  get label() {
+    return i18n.t("jobs:status.unknown");
+  },
   badge: "border-muted-foreground/20 bg-muted/30 text-muted-foreground",
   dot: "bg-muted-foreground",
 };
 
 export const appliedDuplicateIndicator = {
-  label: "Previously Applied",
+  get label() {
+    return i18n.t("jobs:status.previouslyApplied");
+  },
   dot: "bg-yellow-400",
 };
 
@@ -125,11 +148,36 @@ export const employmentTypeOptions: Array<{
   value: EmploymentType;
   label: string;
 }> = [
-  { value: "full_time", label: "Full-time" },
-  { value: "part_time", label: "Part-time" },
-  { value: "contract", label: "Contract" },
-  { value: "internship", label: "Internship" },
-  { value: "temporary", label: "Temporary" },
+  {
+    value: "full_time",
+    get label() {
+      return i18n.t("jobs:filters.employment.types.full_time");
+    },
+  },
+  {
+    value: "part_time",
+    get label() {
+      return i18n.t("jobs:filters.employment.types.part_time");
+    },
+  },
+  {
+    value: "contract",
+    get label() {
+      return i18n.t("jobs:filters.employment.types.contract");
+    },
+  },
+  {
+    value: "internship",
+    get label() {
+      return i18n.t("jobs:filters.employment.types.internship");
+    },
+  },
+  {
+    value: "temporary",
+    get label() {
+      return i18n.t("jobs:filters.employment.types.temporary");
+    },
+  },
 ];
 
 export const employmentTypeValues: EmploymentType[] = employmentTypeOptions.map(
@@ -138,11 +186,36 @@ export const employmentTypeValues: EmploymentType[] = employmentTypeOptions.map(
 
 /** Presets for the "posted within the last N days" filter. */
 export const postedWithinOptions: Array<{ value: number; label: string }> = [
-  { value: 1, label: "24 hours" },
-  { value: 3, label: "3 days" },
-  { value: 7, label: "7 days" },
-  { value: 14, label: "14 days" },
-  { value: 30, label: "30 days" },
+  {
+    value: 1,
+    get label() {
+      return i18n.t("jobs:filters.posted.options.hours24");
+    },
+  },
+  {
+    value: 3,
+    get label() {
+      return i18n.t("jobs:filters.posted.options.days3");
+    },
+  },
+  {
+    value: 7,
+    get label() {
+      return i18n.t("jobs:filters.posted.options.days7");
+    },
+  },
+  {
+    value: 14,
+    get label() {
+      return i18n.t("jobs:filters.posted.options.days14");
+    },
+  },
+  {
+    value: 30,
+    get label() {
+      return i18n.t("jobs:filters.posted.options.days30");
+    },
+  },
 ];
 
 export const postedWithinValues: number[] = postedWithinOptions.map(
@@ -188,12 +261,24 @@ export const DEFAULT_DATE_FILTER: JobDateFilter = {
 };
 
 export const sortLabels: Record<JobSort["key"], string> = {
-  datePosted: "Posted",
-  discoveredAt: "Discovered",
-  score: "Score",
-  salary: "Salary",
-  title: "Title",
-  employer: "Company",
+  get datePosted() {
+    return i18n.t("jobs:filters.sort.fields.datePosted");
+  },
+  get discoveredAt() {
+    return i18n.t("jobs:filters.sort.fields.discoveredAt");
+  },
+  get score() {
+    return i18n.t("jobs:filters.sort.fields.score");
+  },
+  get salary() {
+    return i18n.t("jobs:filters.sort.fields.salary");
+  },
+  get title() {
+    return i18n.t("jobs:filters.sort.fields.title");
+  },
+  get employer() {
+    return i18n.t("jobs:filters.sort.fields.employer");
+  },
 };
 
 export const defaultSortDirection: Record<JobSort["key"], SortDirection> = {
@@ -210,26 +295,54 @@ export const tabs: Array<{
   label: string;
   statuses: JobStatus[];
 }> = [
-  { id: "ready", label: "Ready", statuses: ["ready", "processing"] },
+  {
+    id: "ready",
+    get label() {
+      return i18n.t("jobs:tabs.ready");
+    },
+    statuses: ["ready", "processing"],
+  },
   {
     id: "discovered",
-    label: "Discovered",
+    get label() {
+      return i18n.t("jobs:tabs.discovered");
+    },
     statuses: ["discovered", "processing"],
   },
-  { id: "all", label: "All Jobs", statuses: [] },
+  {
+    id: "all",
+    get label() {
+      return i18n.t("jobs:tabs.all");
+    },
+    statuses: [],
+  },
 ];
 
 export const emptyStateCopy: Record<FilterTab, string> = {
-  ready: "Run a search to discover and process new jobs.",
-  discovered: "All discovered jobs have been processed.",
-  all: "No jobs in the system yet. Run a search to get started.",
+  get ready() {
+    return i18n.t("jobs:list.emptyState.ready");
+  },
+  get discovered() {
+    return i18n.t("jobs:list.emptyState.discovered");
+  },
+  get all() {
+    return i18n.t("jobs:list.emptyState.all");
+  },
 };
 
 export const dateFilterDimensionLabels: Record<DateFilterDimension, string> = {
-  ready: "Ready",
-  applied: "Applied",
-  closed: "Closed",
-  discovered: "Discovered",
+  get ready() {
+    return i18n.t("jobs:filters.dates.dimensions.ready");
+  },
+  get applied() {
+    return i18n.t("jobs:filters.dates.dimensions.applied");
+  },
+  get closed() {
+    return i18n.t("jobs:filters.dates.dimensions.closed");
+  },
+  get discovered() {
+    return i18n.t("jobs:filters.dates.dimensions.discovered");
+  },
 };
 
 export const dateFilterDimensionOrder: DateFilterDimension[] = [

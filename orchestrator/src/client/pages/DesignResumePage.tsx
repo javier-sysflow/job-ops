@@ -7,6 +7,10 @@ import {
 import { DesignResumeDock } from "@client/components/design-resume/DesignResumeDock";
 import { DesignResumePreviewPanel } from "@client/components/design-resume/DesignResumePreviewPanel";
 import { DesignResumeRail } from "@client/components/design-resume/DesignResumeRail";
+import {
+  getItemDefinitionDescription,
+  getItemDefinitionSingularTitle,
+} from "@client/components/design-resume/definitions";
 import { ItemDialog } from "@client/components/design-resume/ItemDialog";
 import {
   asArray,
@@ -19,6 +23,9 @@ import { PageHeader, PageMain } from "@client/components/layout";
 import { SectionWorkspacePanel } from "@client/components/section-workspace/SectionWorkspace";
 import { useDesignResumeStudio } from "@client/hooks/useDesignResumeStudio";
 import type { DesignResumeJson } from "@shared/types";
+import type React from "react";
+import { useTranslation } from "react-i18next";
+import { Navigate, useNavigate } from "react-router-dom";
 import {
   Download,
   FileDown,
@@ -26,9 +33,7 @@ import {
   ListPlus,
   MoreHorizontal,
   PenSquare,
-} from "lucide-react";
-import type React from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+} from "@/components/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +63,7 @@ import { cn } from "@/lib/utils";
 import { formatUserFacingError } from "../lib/error-format";
 
 export const DesignResumePage: React.FC = () => {
+  const { t } = useTranslation(["resumeStudio", "common"]);
   const navigate = useNavigate();
   const {
     draft,
@@ -114,12 +120,12 @@ export const DesignResumePage: React.FC = () => {
       <div className="flex h-dvh flex-col overflow-hidden">
         <PageHeader
           icon={PenSquare}
-          title="Resume Studio"
-          subtitle="Loading your resume"
+          title={t("page.title")}
+          subtitle={t("page.loadingSubtitle")}
         />
         <PageMain className={DESIGN_RESUME_PAGE_MAIN_CLASS_NAME}>
           <div className="rounded-2xl border border-border/70 bg-card px-6 py-20 text-center text-sm text-muted-foreground">
-            Loading Resume Studio...
+            {t("page.loading")}
           </div>
         </PageMain>
       </div>
@@ -178,8 +184,8 @@ export const DesignResumePage: React.FC = () => {
 
       <PageHeader
         icon={PenSquare}
-        title="Resume Studio"
-        subtitle="Edit your resume details"
+        title={t("page.title")}
+        subtitle={t("page.subtitle")}
         actions={
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
             <div className="hidden items-center gap-2 sm:flex">
@@ -190,7 +196,9 @@ export const DesignResumePage: React.FC = () => {
                 disabled={resumeImporting}
               >
                 <Import className="mr-2 h-4 w-4" />
-                {resumeImporting ? "Importing File" : "Import File"}
+                {resumeImporting
+                  ? t("page.actions.importingFile")
+                  : t("page.actions.importFile")}
               </Button>
 
               <Button
@@ -201,10 +209,10 @@ export const DesignResumePage: React.FC = () => {
               >
                 <Import className="mr-2 h-4 w-4" />
                 {resumeImporting
-                  ? "Importing RxResume"
+                  ? t("page.actions.importingRxResume")
                   : status?.exists
-                    ? "Re-import RxResume"
-                    : "Import RxResume"}
+                    ? t("page.actions.reimportRxResume")
+                    : t("page.actions.importRxResume")}
               </Button>
 
               <Button
@@ -214,7 +222,9 @@ export const DesignResumePage: React.FC = () => {
                 disabled={!canDownloadPdf}
               >
                 <FileDown className="mr-2 h-4 w-4" />
-                {pdfDownloading ? "Preparing PDF" : "Download PDF"}
+                {pdfDownloading
+                  ? t("page.actions.preparingPdf")
+                  : t("page.actions.downloadPdf")}
               </Button>
 
               <Button
@@ -224,7 +234,7 @@ export const DesignResumePage: React.FC = () => {
                 disabled={!status?.exists}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Export
+                {t("page.actions.export")}
               </Button>
             </div>
 
@@ -235,7 +245,7 @@ export const DesignResumePage: React.FC = () => {
                   variant="outline"
                   size="icon"
                   className="ml-auto sm:hidden"
-                  aria-label="Open resume actions"
+                  aria-label={t("page.actions.openMenu")}
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -246,7 +256,9 @@ export const DesignResumePage: React.FC = () => {
                   disabled={resumeImporting}
                 >
                   <Import className="mr-2 h-4 w-4" />
-                  {resumeImporting ? "Importing File" : "Import File"}
+                  {resumeImporting
+                    ? t("page.actions.importingFile")
+                    : t("page.actions.importFile")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => handleImportWithConfirm()}
@@ -254,24 +266,26 @@ export const DesignResumePage: React.FC = () => {
                 >
                   <Import className="mr-2 h-4 w-4" />
                   {resumeImporting
-                    ? "Importing RxResume"
+                    ? t("page.actions.importingRxResume")
                     : status?.exists
-                      ? "Re-import RxResume"
-                      : "Import RxResume"}
+                      ? t("page.actions.reimportRxResume")
+                      : t("page.actions.importRxResume")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => handleDownloadPdf()}
                   disabled={!canDownloadPdf}
                 >
                   <FileDown className="mr-2 h-4 w-4" />
-                  {pdfDownloading ? "Preparing PDF" : "Download PDF"}
+                  {pdfDownloading
+                    ? t("page.actions.preparingPdf")
+                    : t("page.actions.downloadPdf")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => handleExport()}
                   disabled={!status?.exists}
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Export JSON
+                  {t("page.actions.exportJson")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -284,14 +298,13 @@ export const DesignResumePage: React.FC = () => {
           <div className="flex h-full items-center justify-center rounded-2xl border border-border/70 bg-card px-6 py-20 text-center">
             <div className="mx-auto max-w-xl space-y-4">
               <div className="inline-flex rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                Resume Studio
+                {t("page.title")}
               </div>
               <h2 className="text-3xl font-semibold tracking-tight text-foreground">
-                Import your resume to start editing it here.
+                {t("page.empty.title")}
               </h2>
               <p className="text-sm leading-7 text-muted-foreground">
-                Once imported, you can update your resume here without jumping
-                between tools.
+                {t("page.empty.description")}
               </p>
               <div className="flex justify-center gap-3">
                 <Button
@@ -300,14 +313,13 @@ export const DesignResumePage: React.FC = () => {
                   disabled={resumeImporting}
                 >
                   <Import className="mr-2 h-4 w-4" />
-                  {resumeImporting ? "Importing resume" : "Import resume"}
+                  {resumeImporting
+                    ? t("page.empty.importingResume")
+                    : t("page.empty.importResume")}
                 </Button>
                 {error ? (
                   <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-300">
-                    {formatUserFacingError(
-                      error,
-                      "Unable to load Resume Studio.",
-                    )}
+                    {formatUserFacingError(error, t("page.empty.loadError"))}
                   </div>
                 ) : null}
               </div>
@@ -318,7 +330,7 @@ export const DesignResumePage: React.FC = () => {
             <div
               className="mb-3 grid h-11 shrink-0 grid-cols-2 rounded-lg bg-muted p-1 text-sm text-muted-foreground sm:hidden"
               role="tablist"
-              aria-label="Resume Studio mobile workspace"
+              aria-label={t("page.mobile.tabsLabel")}
             >
               <button
                 type="button"
@@ -332,7 +344,7 @@ export const DesignResumePage: React.FC = () => {
                 )}
                 onClick={() => setMobileWorkspaceView("edit")}
               >
-                Edit
+                {t("page.mobile.edit")}
               </button>
               <button
                 type="button"
@@ -346,7 +358,7 @@ export const DesignResumePage: React.FC = () => {
                 )}
                 onClick={() => setMobileWorkspaceView("preview")}
               >
-                Preview
+                {t("page.mobile.preview")}
               </button>
             </div>
             <div
@@ -387,9 +399,9 @@ export const DesignResumePage: React.FC = () => {
                     badge={getDesignResumeSectionBadge(activeSection)}
                     secondaryBadge={
                       dirty
-                        ? { label: "Autosaving", variant: "secondary" }
+                        ? { label: t("page.autosaving"), variant: "secondary" }
                         : saveState === "saved"
-                          ? { label: "Autosaved", variant: "outline" }
+                          ? { label: t("page.autosaved"), variant: "outline" }
                           : null
                     }
                     actions={
@@ -400,7 +412,7 @@ export const DesignResumePage: React.FC = () => {
                         onClick={() => setMobileSectionPickerOpen(true)}
                       >
                         <ListPlus className="h-4 w-4" />
-                        Sections
+                        {t("page.mobile.sections")}
                       </Button>
                     }
                     scrollable
@@ -423,11 +435,10 @@ export const DesignResumePage: React.FC = () => {
                       </div>
                       <div className="space-y-2">
                         <h2 className="text-xl font-semibold tracking-tight">
-                          Choose a section to edit
+                          {t("page.mobile.chooseTitle")}
                         </h2>
                         <p className="text-sm leading-6 text-muted-foreground">
-                          Pick a resume section, then edit it full-screen while
-                          the preview stays one tap away.
+                          {t("page.mobile.chooseDescription")}
                         </p>
                       </div>
                       <Button
@@ -435,7 +446,7 @@ export const DesignResumePage: React.FC = () => {
                         onClick={() => setMobileSectionPickerOpen(true)}
                       >
                         <ListPlus className="mr-2 h-4 w-4" />
-                        Choose section
+                        {t("page.mobile.chooseSection")}
                       </Button>
                     </div>
                   </div>
@@ -484,9 +495,9 @@ export const DesignResumePage: React.FC = () => {
             className="flex max-h-[86dvh] flex-col overflow-hidden p-0 sm:hidden"
           >
             <SheetHeader className="shrink-0 border-b border-border/70 px-5 py-4 text-left">
-              <SheetTitle>Choose section</SheetTitle>
+              <SheetTitle>{t("page.mobile.chooseSection")}</SheetTitle>
               <SheetDescription>
-                Switch the mobile editor to a resume section.
+                {t("page.mobile.pickerDescription")}
               </SheetDescription>
             </SheetHeader>
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
@@ -546,8 +557,11 @@ export const DesignResumePage: React.FC = () => {
       {dialogState && draft ? (
         <ItemDialog
           open={Boolean(dialogState)}
-          title={`${dialogState.index == null ? "Add" : "Edit"} ${dialogState.definition.singularTitle}`}
-          description={dialogState.definition.description}
+          title={t(
+            dialogState.index == null ? "page.dialogAdd" : "page.dialogEdit",
+            { item: getItemDefinitionSingularTitle(dialogState.definition) },
+          )}
+          description={getItemDefinitionDescription(dialogState.definition)}
           item={activeDialogItem}
           fields={dialogState.definition.fields}
           resumeJson={draft.resumeJson}
@@ -663,15 +677,13 @@ export const DesignResumePage: React.FC = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Re-import from RxResume?</AlertDialogTitle>
+            <AlertDialogTitle>{t("page.reimport.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will replace your current Resume Studio with the latest data
-              from RxResume. Any edits you've made here will be permanently
-              overwritten and cannot be undone.
+              {t("page.reimport.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-[#F1703E] text-white hover:bg-[#d9612f]"
               onClick={() => {
@@ -680,7 +692,7 @@ export const DesignResumePage: React.FC = () => {
               }}
             >
               <Import className="mr-2 h-4 w-4" />
-              Re-import
+              {t("page.reimport.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

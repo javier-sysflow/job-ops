@@ -1,6 +1,7 @@
 import * as api from "@client/api";
 import type { ManualImportResult } from "@client/components/ManualImportFlow";
 import { useSettings } from "@client/hooks/useSettings";
+import i18n from "@client/i18n";
 import {
   createLocationIntent,
   planLocationSources,
@@ -75,7 +76,7 @@ export function usePipelineControls(
         status: "cancelled",
         had_error_message: false,
       });
-      toast.message("Search cancelled");
+      toast.message(i18n.t("jobs:pipeline.cancelled"));
       return;
     }
 
@@ -84,7 +85,9 @@ export function usePipelineControls(
         status: "failed",
         had_error_message: Boolean(pipelineTerminalEvent.errorMessage),
       });
-      toast.error(pipelineTerminalEvent.errorMessage || "Search failed");
+      toast.error(
+        pipelineTerminalEvent.errorMessage || i18n.t("jobs:pipeline.failed"),
+      );
       return;
     }
 
@@ -92,7 +95,7 @@ export function usePipelineControls(
       status: "completed",
       had_error_message: false,
     });
-    toast.success("Search completed");
+    toast.success(i18n.t("jobs:pipeline.completed"));
   }, [pipelineTerminalEvent, setIsPipelineRunning]);
 
   const openSearch = useCallback(() => setIsRunModeModalOpen(true), []);
@@ -132,13 +135,15 @@ export function usePipelineControls(
           matchStrictness: config.matchStrictness,
           watchlistSelectedSourceIds: config.watchlistSelectedSourceIds,
         });
-        toast.message("Search started", {
-          description: `Sources: ${config.sources.join(", ")}. This may take a few minutes.`,
+        toast.message(i18n.t("jobs:pipeline.started"), {
+          description: i18n.t("jobs:pipeline.startedDescription", {
+            sources: config.sources.join(", "),
+          }),
         });
       } catch (error) {
         setIsPipelineRunning(false);
         setIsCancelling(false);
-        showErrorToast(error, "Failed to start search");
+        showErrorToast(error, i18n.t("jobs:pipeline.startFailed"));
       }
     },
     [setIsPipelineRunning],
@@ -156,7 +161,7 @@ export function usePipelineControls(
       toast.message(result.message);
     } catch (error) {
       setIsCancelling(false);
-      showErrorToast(error, "Failed to cancel search");
+      showErrorToast(error, i18n.t("jobs:pipeline.cancelFailed"));
     }
   }, [isCancelling, isPipelineRunning]);
 
@@ -187,15 +192,13 @@ export function usePipelineControls(
       if (incompatiblePlans.length > 0) {
         toast.error(
           incompatiblePlans[0]?.reasons[0] ??
-            "Some selected sources do not support this location setup.",
+            i18n.t("jobs:pipeline.unsupportedLocation"),
         );
         return;
       }
 
       if (compatibleSources.length === 0) {
-        toast.error(
-          "No compatible sources for the selected location setup. Choose another country, city, or source.",
-        );
+        toast.error(i18n.t("jobs:pipeline.noCompatibleSources"));
         return;
       }
 
@@ -239,7 +242,7 @@ export function usePipelineControls(
         });
         setIsRunModeModalOpen(false);
       } catch (error) {
-        showErrorToast(error, "Failed to start search");
+        showErrorToast(error, i18n.t("jobs:pipeline.startFailed"));
       }
     },
     [

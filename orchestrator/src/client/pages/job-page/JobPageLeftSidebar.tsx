@@ -1,5 +1,9 @@
 import { isAwaitingAiScore, ScoreRing } from "@client/components";
 import type { Job } from "@shared/types.js";
+import type React from "react";
+import { Link } from "react-router-dom";
+import i18n from "@/client/i18n";
+import { formatPostingAgeLabel } from "@/client/lib/job-posting-age";
 import {
   ClipboardList,
   FileText,
@@ -7,10 +11,7 @@ import {
   Mail,
   MessageSquareText,
   Sparkles,
-} from "lucide-react";
-import type React from "react";
-import { Link } from "react-router-dom";
-import { formatPostingAgeLabel } from "@/client/lib/job-posting-age";
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { cn, formatDateTime } from "@/lib/utils";
 
@@ -36,32 +37,26 @@ type JobPageLeftSidebarProps = {
 const memoryLinks = [
   {
     id: "overview" as const,
-    label: "Overview",
     icon: FolderKanban,
   },
   {
     id: "note" as const,
-    label: "Notes",
     icon: MessageSquareText,
   },
   {
     id: "documents" as const,
-    label: "Documents",
     icon: FileText,
   },
   {
     id: "timeline" as const,
-    label: "Timeline",
     icon: ClipboardList,
   },
   {
     id: "emails" as const,
-    label: "Emails",
     icon: Mail,
   },
   {
     id: "ghostwriter" as const,
-    label: "Ghostwriter",
     icon: Sparkles,
   },
 ];
@@ -74,7 +69,9 @@ const PostingAgeRow: React.FC<{ datePosted: Job["datePosted"] }> = ({
 
   return (
     <div className="flex items-start justify-between gap-4 border-t border-border/50 pt-3">
-      <span className="text-muted-foreground">Posted</span>
+      <span className="text-muted-foreground">
+        {i18n.t("jobDetail:leftSidebar.posted")}
+      </span>
       <span className="text-right font-medium" title={postingAge.tooltip}>
         {postingAge.label}
       </span>
@@ -95,7 +92,7 @@ export const JobPageLeftSidebar: React.FC<JobPageLeftSidebarProps> = ({
       <div className="flex gap-4 flex-row items-start justify-between">
         <div className="min-w-0 space-y-1">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-            Application dossier
+            {i18n.t("jobDetail:leftSidebar.dossier")}
           </div>
           <h1 className="text-2xl font-semibold leading-tight">
             {job.employer}
@@ -114,42 +111,56 @@ export const JobPageLeftSidebar: React.FC<JobPageLeftSidebarProps> = ({
 
       <div className="mt-5 space-y-3 text-sm">
         <div className="flex items-start justify-between gap-4 border-t border-border/50 pt-3">
-          <span className="text-muted-foreground">Source</span>
+          <span className="text-muted-foreground">
+            {i18n.t("jobDetail:leftSidebar.source")}
+          </span>
           <span className="text-right font-medium">{sourceLabel}</span>
         </div>
         <div className="flex items-start justify-between gap-4 border-t border-border/50 pt-3">
-          <span className="text-muted-foreground">Location</span>
+          <span className="text-muted-foreground">
+            {i18n.t("jobDetail:leftSidebar.location")}
+          </span>
           <span className="text-right font-medium">
-            {job.location || "Unknown"}
+            {job.location || i18n.t("jobDetail:leftSidebar.unknown")}
           </span>
         </div>
         <PostingAgeRow datePosted={job.datePosted} />
         <div className="flex items-start justify-between gap-4 border-t border-border/50 pt-3">
-          <span className="text-muted-foreground">Found</span>
+          <span className="text-muted-foreground">
+            {i18n.t("jobDetail:leftSidebar.found")}
+          </span>
           <span className="text-right font-medium">
             {formatDateTime(job.discoveredAt) ?? job.discoveredAt}
           </span>
         </div>
         {job.appliedAt && (
           <div className="flex items-start justify-between gap-4 border-t border-border/50 pt-3">
-            <span className="text-muted-foreground">Applied</span>
+            <span className="text-muted-foreground">
+              {i18n.t("jobDetail:leftSidebar.applied")}
+            </span>
             <span className="text-right font-medium">
               {formatDateTime(job.appliedAt) ?? job.appliedAt}
             </span>
           </div>
         )}
         <div className="flex items-start justify-between gap-4 border-t border-border/50 pt-3">
-          <span className="text-muted-foreground">Outcome</span>
+          <span className="text-muted-foreground">
+            {i18n.t("jobDetail:leftSidebar.outcome")}
+          </span>
           <span className="text-right font-medium">
-            {job.outcome ? job.outcome.replace(/_/g, " ") : "Open"}
+            {job.outcome
+              ? i18n.t(`jobDetail:leftSidebar.outcomes.${job.outcome}`)
+              : i18n.t("jobDetail:leftSidebar.open")}
           </span>
         </div>
         <div className="flex items-start justify-between gap-4 border-t border-border/50 pt-3">
-          <span className="text-muted-foreground">Projects Chosen</span>
+          <span className="text-muted-foreground">
+            {i18n.t("jobDetail:leftSidebar.projectsChosen")}
+          </span>
           <span className="text-right font-medium">
             {selectedProjects.length > 0
               ? selectedProjects.length
-              : "No projects"}
+              : i18n.t("jobDetail:leftSidebar.noProjects")}
           </span>
         </div>
       </div>
@@ -157,10 +168,10 @@ export const JobPageLeftSidebar: React.FC<JobPageLeftSidebarProps> = ({
 
     <section className="rounded-xl border border-border/50 bg-card/70 p-3">
       <div className="mb-2 px-1 text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-        Links
+        {i18n.t("jobDetail:leftSidebar.linksTitle")}
       </div>
       <div className="space-y-1">
-        {memoryLinks.map(({ id: linkView, label, icon: Icon }) => {
+        {memoryLinks.map(({ id: linkView, icon: Icon }) => {
           const path =
             linkView === "overview"
               ? baseJobPath
@@ -177,7 +188,9 @@ export const JobPageLeftSidebar: React.FC<JobPageLeftSidebarProps> = ({
               <Link to={path} state={navigationState}>
                 <span className="flex min-w-0 items-center gap-2">
                   <Icon className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{label}</span>
+                  <span className="truncate">
+                    {i18n.t(`jobDetail:leftSidebar.links.${linkView}`)}
+                  </span>
                 </span>
               </Link>
             </Button>

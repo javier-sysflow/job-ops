@@ -1,5 +1,6 @@
 import type { PipelineSearchPreset } from "@shared/types";
-import { BookmarkPlus, Save, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { BookmarkPlus, Save, Trash2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,9 +37,10 @@ export function AutomaticSavedSearchControls({
   onOpenSaveDialog,
   onDeleteSelectedSearch,
 }: AutomaticSavedSearchControlsProps) {
+  const { t } = useTranslation("pipeline");
   return (
     <div className="flex flex-col gap-2">
-      <Label className="sr-only">Saved searches</Label>
+      <Label className="sr-only">{t("savedSearches.label")}</Label>
       <div className="min-w-48 flex-1">
         <Select
           value={selectedSavedSearchId ?? ""}
@@ -49,11 +51,15 @@ export function AutomaticSavedSearchControls({
           disabled={savedSearches.length === 0}
         >
           <SelectTrigger
-            aria-label="Saved searches"
+            aria-label={t("savedSearches.label")}
             className="h-9 min-w-0 flex-1"
           >
             <SelectValue
-              placeholder={isLoading ? "Loading..." : "Select saved search"}
+              placeholder={
+                isLoading
+                  ? t("savedSearches.loading")
+                  : t("savedSearches.placeholder")
+              }
             />
           </SelectTrigger>
           <SelectContent>
@@ -77,7 +83,7 @@ export function AutomaticSavedSearchControls({
             onClick={() => onOpenSaveDialog("create")}
           >
             <BookmarkPlus data-icon="inline-start" />
-            Save as
+            {t("savedSearches.saveAs")}
           </Button>
         ) : null}
         {canUpdate && selectedSavedSearch ? (
@@ -88,7 +94,7 @@ export function AutomaticSavedSearchControls({
             onClick={() => onOpenSaveDialog("update")}
           >
             <Save data-icon="inline-start" />
-            Update
+            {t("savedSearches.update")}
           </Button>
         ) : null}
         {canDelete && selectedSavedSearch ? (
@@ -96,8 +102,8 @@ export function AutomaticSavedSearchControls({
             type="button"
             size="icon"
             variant="ghost"
-            aria-label="Delete saved search"
-            title="Delete saved search"
+            aria-label={t("savedSearches.delete")}
+            title={t("savedSearches.delete")}
             onClick={onDeleteSelectedSearch}
           >
             <Trash2 />

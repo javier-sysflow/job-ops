@@ -1,6 +1,7 @@
 import { completeSsoLink, completeSsoLogin } from "@client/api";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,13 +13,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { trackProductEvent } from "@/lib/analytics";
+import i18n from "../i18n";
 import { resolveNextPath } from "../lib/auth-navigation";
+import { getErrorMessage } from "../lib/error-format";
 import { rememberAuthUser } from "../lib/remembered-auth-users";
 import { consumePendingSsoFlow } from "../lib/sso-flow";
-
-const INVALID_FLOW_MESSAGE = "This sign-in link is no longer valid.";
-const PROVIDER_REFUSED_MESSAGE =
-  "Your identity provider refused the sign-in. Try again, or ask your administrator to check the provider configuration.";
 
 let capturedCallbackSearch = "";
 
@@ -40,6 +39,7 @@ function takeCallbackSearch(): string {
 }
 
 export const SsoCallbackPage: React.FC = () => {
+  const { t } = useTranslation("shell");
   const [callbackSearch] = useState(takeCallbackSearch);
   const { provider } = useParams<{ provider: string }>();
   const navigate = useNavigate();
@@ -55,7 +55,7 @@ export const SsoCallbackPage: React.FC = () => {
     // text never reaches the DOM and the pending flow survives an unsolicited
     // visit.
     if (params.has("error") || params.has("error_description")) {
-      setErrorMessage(PROVIDER_REFUSED_MESSAGE);
+      setErrorMessage(i18n.t("shell:sso.providerRefused"));
       return;
     }
 
@@ -65,7 +65,7 @@ export const SsoCallbackPage: React.FC = () => {
       flow.provider !== provider ||
       flow.state !== params.get("state")
     ) {
-      setErrorMessage(INVALID_FLOW_MESSAGE);
+      setErrorMessage(i18n.t("shell:sso.invalidFlow"));
       return;
     }
 
@@ -80,7 +80,7 @@ export const SsoCallbackPage: React.FC = () => {
         if (flow.mode === "link") {
           await completeSsoLink(flow.provider, body);
           trackProductEvent("sso_link_completed", { provider: flow.provider });
-          toast.success("Connected account added.");
+          toast.success(i18n.t("shell:sso.linkAdded"));
           navigate("/settings#environment", { replace: true });
           return;
         }
@@ -97,9 +97,7 @@ export const SsoCallbackPage: React.FC = () => {
         navigate(resolveNextPath(flow.next), { replace: true });
       } catch (error) {
         setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Unable to finish single sign-on.",
+          getErrorMessage(error, i18n.t("shell:sso.finishFailed")),
         );
       }
     })();
@@ -111,12 +109,12 @@ export const SsoCallbackPage: React.FC = () => {
         <Card className="w-full border-border/60 bg-background/95 shadow-xl">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl tracking-tight">
-              {errorMessage ? "Sign-in failed" : "Finishing sign-in…"}
+              {errorMessage ? t("sso.failedTitle") : t("sso.finishingTitle")}
             </CardTitle>
             <CardDescription>
               {errorMessage
-                ? "JobOps could not finish the handover from your identity provider."
-                : "Completing the handover from your identity provider."}
+                ? t("sso.failedDescription")
+                : t("sso.finishingDescription")}
             </CardDescription>
           </CardHeader>
           {errorMessage ? (
@@ -125,7 +123,7 @@ export const SsoCallbackPage: React.FC = () => {
                 {errorMessage}
               </p>
               <Button asChild className="mt-4 w-full" variant="outline">
-                <Link to="/sign-in">Back to sign in</Link>
+                <Link to="/sign-in">{t("sso.backToSignIn")}</Link>
               </Button>
             </CardContent>
           ) : null}

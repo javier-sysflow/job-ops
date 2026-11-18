@@ -3,6 +3,7 @@
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
 import "@testing-library/jest-dom";
+import i18n from "@/client/i18n";
 import { installDomMeasurementMocks } from "@/client/test/dom-measurement";
 
 installDomMeasurementMocks();
@@ -49,3 +50,6 @@ if (!hasStorageShape(globalThis.localStorage)) {
     value: storage,
   });
 }
+
+// Tests assert on English text; always start in English.
+void i18n.changeLanguage("en");

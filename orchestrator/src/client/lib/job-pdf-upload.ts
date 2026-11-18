@@ -1,4 +1,5 @@
 import * as api from "@client/api";
+import i18n from "@client/i18n";
 import type { Job } from "@shared/types";
 import { fileToUploadPayload } from "./file-upload-payload";
 
@@ -8,7 +9,7 @@ export async function uploadJobPdfFromFile(
 ): Promise<Job> {
   const payload = await fileToUploadPayload(
     file,
-    "PDF file could not be encoded for upload.",
+    i18n.t("jobDetail:pdf.encodeFailed"),
   );
 
   return api.uploadJobPdf(jobId, {

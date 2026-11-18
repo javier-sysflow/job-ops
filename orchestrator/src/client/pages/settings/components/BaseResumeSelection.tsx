@@ -1,7 +1,8 @@
 import * as api from "@client/api";
-import { RefreshCw } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import { RefreshCw } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -26,6 +27,7 @@ export const BaseResumeSelection: React.FC<BaseResumeSelectionProps> = ({
   disabled = false,
   isLoading = false,
 }) => {
+  const { t } = useTranslation(["settings", "common"]);
   const [resumes, setResumes] = useState<{ id: string; name: string }[]>([]);
   const [isFetchingResumes, setIsFetchingResumes] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -50,12 +52,12 @@ export const BaseResumeSelection: React.FC<BaseResumeSelectionProps> = ({
     } catch (error) {
       setResumes([]);
       setFetchError(
-        error instanceof Error ? error.message : "Failed to fetch resumes",
+        error instanceof Error ? error.message : t("baseResume.fetchFailed"),
       );
     } finally {
       setIsFetchingResumes(false);
     }
-  }, [hasRxResumeAccess, onValueChange, value]);
+  }, [hasRxResumeAccess, onValueChange, value, t]);
 
   useEffect(() => {
     if (hasRxResumeAccess) {
@@ -73,7 +75,7 @@ export const BaseResumeSelection: React.FC<BaseResumeSelectionProps> = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <div className="text-sm font-medium">Template Resume</div>
+        <div className="text-sm font-medium">{t("baseResume.title")}</div>
         <Button
           variant="ghost"
           size="sm"
@@ -84,7 +86,7 @@ export const BaseResumeSelection: React.FC<BaseResumeSelectionProps> = ({
           <RefreshCw
             className={`h-3 w-3 mr-1 ${isFetchingResumes ? "animate-spin" : ""}`}
           />
-          Refresh
+          {t("common:actions.refresh")}
         </Button>
       </div>
 
@@ -97,8 +99,8 @@ export const BaseResumeSelection: React.FC<BaseResumeSelectionProps> = ({
           <SelectValue
             placeholder={
               resumes.length > 0
-                ? "Select a template resume..."
-                : "No resumes found"
+                ? t("baseResume.selectPlaceholder")
+                : t("baseResume.noneFoundPlaceholder")
             }
           />
         </SelectTrigger>
@@ -113,16 +115,21 @@ export const BaseResumeSelection: React.FC<BaseResumeSelectionProps> = ({
 
       {resumes.length === 0 && !isFetchingResumes && !fetchError && (
         <div className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-          No resumes found in your account. Please create a resume on the{" "}
-          <a
-            href="https://rxresu.me"
-            target="_blank"
-            rel="noreferrer"
-            className="font-semibold underline underline-offset-2"
-          >
-            Reactive Resume website
-          </a>{" "}
-          first.
+          <Trans
+            t={t}
+            i18nKey="baseResume.noneFoundHint"
+            components={{
+              anchor: (
+                // biome-ignore lint/a11y/useAnchorContent: Trans injects the link text.
+                <a
+                  href="https://rxresu.me"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold underline underline-offset-2"
+                />
+              ),
+            }}
+          />
         </div>
       )}
 

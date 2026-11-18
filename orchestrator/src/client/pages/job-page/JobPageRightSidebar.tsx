@@ -1,4 +1,7 @@
 import type { ApplicationTask, Job } from "@shared/types.js";
+import type React from "react";
+import { TooltipWhenDisabled } from "@/client/components/TooltipWhenDisabled";
+import i18n from "@/client/i18n";
 import {
   CalendarClock,
   CheckCircle2,
@@ -13,9 +16,7 @@ import {
   Sparkles,
   Upload,
   XCircle,
-} from "lucide-react";
-import type React from "react";
-import { TooltipWhenDisabled } from "@/client/components/TooltipWhenDisabled";
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,7 +92,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
   <aside className="space-y-4 xl:sticky xl:top-5">
     <section className="rounded-xl border border-border/50 bg-card/85 p-3">
       <div className="mb-3 flex items-center gap-2 px-1 text-sm font-semibold">
-        Actions
+        {i18n.t("jobDetail:rightSidebar.actions")}
       </div>
       <div className="space-y-2">
         {jobLink && (
@@ -103,7 +104,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
           >
             <a href={jobLink} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-              Open Job Listing
+              {i18n.t("jobDetail:rightSidebar.openJobListing")}
             </a>
           </Button>
         )}
@@ -117,7 +118,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
             disabled={isBusy}
           >
             <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-            Start Tailoring
+            {i18n.t("jobDetail:rightSidebar.startTailoring")}
           </Button>
         )}
 
@@ -130,7 +131,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
             disabled={isBusy}
           >
             <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
-            Mark Applied
+            {i18n.t("jobDetail:rightSidebar.markApplied")}
           </Button>
         )}
 
@@ -143,7 +144,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
             disabled={!canLogEvents || isBusy}
           >
             <PlusCircle className="mr-1.5 h-3.5 w-3.5" />
-            Log event
+            {i18n.t("jobDetail:rightSidebar.logEvent")}
           </Button>
         )}
 
@@ -156,7 +157,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
             disabled={isBusy}
           >
             <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-            Edit Tailoring
+            {i18n.t("jobDetail:rightSidebar.editTailoring")}
           </Button>
         )}
 
@@ -187,10 +188,10 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
         >
           <Upload className="mr-1.5 h-3.5 w-3.5" />
           {isUploadingPdf
-            ? "Uploading PDF"
+            ? i18n.t("jobDetail:rightSidebar.uploadingPdf")
             : job.pdfPath
-              ? "Replace PDF"
-              : "Upload PDF"}
+              ? i18n.t("jobDetail:rightSidebar.replacePdf")
+              : i18n.t("jobDetail:rightSidebar.uploadPdf")}
         </Button>
 
         {isReady && (
@@ -202,7 +203,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
             disabled={isBusy || Boolean(pdfRegeneratingReason)}
           >
             <RefreshCcw className="mr-1.5 h-3.5 w-3.5" />
-            Regenerate PDF
+            {i18n.t("jobDetail:rightSidebar.regeneratePdf")}
           </Button>
         )}
 
@@ -215,7 +216,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
             disabled={isBusy}
           >
             <XCircle className="mr-1.5 h-3.5 w-3.5" />
-            Skip Job
+            {i18n.t("jobDetail:rightSidebar.skipJob")}
           </Button>
         )}
 
@@ -227,36 +228,36 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
               className="h-9 w-full justify-start text-muted-foreground"
             >
               <MoreHorizontal className="mr-1.5 h-3.5 w-3.5" />
-              More actions
+              {i18n.t("jobDetail:rightSidebar.moreActions")}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={onOpenEditDetails}>
               <Edit2 className="mr-2 h-4 w-4" />
-              Edit details
+              {i18n.t("jobDetail:rightSidebar.editDetails")}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onViewJobDescription}>
               <Edit2 className="mr-2 h-4 w-4" />
-              View job description
+              {i18n.t("jobDetail:rightSidebar.viewJobDescription")}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onCopyJobInfo}>
               <Copy className="mr-2 h-4 w-4" />
-              Copy job info
+              {i18n.t("jobDetail:rightSidebar.copyJobInfo")}
             </DropdownMenuItem>
             {(isReady || isDiscovered) && (
               <DropdownMenuItem onSelect={onRescore}>
                 <RefreshCcw className="mr-2 h-4 w-4" />
-                Recalculate match
+                {i18n.t("jobDetail:rightSidebar.recalculateMatch")}
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={onUploadPdf} disabled={isUploadingPdf}>
               <Upload className="mr-2 h-4 w-4" />
               {isUploadingPdf
-                ? "Uploading PDF..."
+                ? i18n.t("jobDetail:rightSidebar.uploadingPdfEllipsis")
                 : job.pdfPath
-                  ? "Replace PDF"
-                  : "Upload PDF"}
+                  ? i18n.t("jobDetail:rightSidebar.replacePdf")
+                  : i18n.t("jobDetail:rightSidebar.uploadPdf")}
             </DropdownMenuItem>
             {job.pdfPath && (
               <>
@@ -278,7 +279,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
               </>
             )}
             <DropdownMenuItem onSelect={onCheckSponsor}>
-              Check sponsorship status
+              {i18n.t("jobDetail:rightSidebar.checkSponsorship")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -289,7 +290,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
       <section className="rounded-xl border border-border/50 bg-card/70 p-4">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
           <CalendarClock className="h-4 w-4" />
-          Upcoming tasks
+          {i18n.t("jobDetail:rightSidebar.upcomingTasks")}
         </div>
         <div className="space-y-3">
           {tasks.map((task) => (

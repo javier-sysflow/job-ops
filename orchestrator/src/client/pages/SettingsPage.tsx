@@ -49,7 +49,7 @@ import type {
   ValidationResult,
 } from "@shared/types.js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Settings } from "lucide-react";
+import type { TFunction } from "i18next";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -58,12 +58,14 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useQueryErrorToast } from "@/client/hooks/useQueryErrorToast";
 import { formatUserFacingError } from "@/client/lib/error-format";
 import { showErrorToast } from "@/client/lib/error-toast";
 import { queryKeys } from "@/client/lib/queryKeys";
+import { Settings } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 const DEFAULT_FORM_VALUES: UpdateSettingsInput = {
@@ -165,27 +167,27 @@ type SettingsNavGroup = {
   label: string;
 };
 
-const SETTINGS_NAV_GROUPS: SettingsNavGroup[] = [
+// Labels and descriptions come from settings:nav.* (see buildSettingsNavGroups).
+type SettingsNavGroupDefinition = {
+  id: SettingsGroupId;
+  items: Array<Pick<SettingsSectionDescriptor, "id" | "searchTerms">>;
+};
+
+const SETTINGS_NAV_GROUP_DEFINITIONS: SettingsNavGroupDefinition[] = [
   {
     id: "account",
-    label: "Account",
     items: [
       {
         id: "billing",
-        label: "Plan & Billing",
-        description: "Your hosted plan, included AI, and Stripe subscription.",
         searchTerms: ["plan", "billing", "subscription", "stripe", "pro"],
       },
     ],
   },
   {
     id: "ai",
-    label: "AI",
     items: [
       {
         id: "model",
-        label: "Models",
-        description: "Provider, API credentials, and task-specific overrides.",
         searchTerms: [
           "llm",
           "provider",
@@ -202,64 +204,45 @@ const SETTINGS_NAV_GROUPS: SettingsNavGroup[] = [
       },
       {
         id: "chat",
-        label: "Writing Style",
-        description: "Tone, language, presets, and writing constraints.",
         searchTerms: ["ghostwriter", "language", "tone", "formality"],
       },
       {
         id: "prompt-templates",
-        label: "Prompt Templates",
-        description:
-          "Base AI instructions for Ghostwriter, tailoring, and scoring.",
         searchTerms: ["prompt", "templates", "system prompt", "instructions"],
       },
     ],
   },
   {
     id: "scoring",
-    label: "Scoring",
     items: [
       {
         id: "scoring",
-        label: "Rules & Filters",
-        description:
-          "Salary penalties, thresholds, keywords, and scorer hints.",
         searchTerms: ["threshold", "salary", "keywords", "instructions"],
       },
     ],
   },
   {
     id: "integrations",
-    label: "Integrations",
     items: [
       {
         id: "reactive-resume",
-        label: "Reactive Resume",
-        description: "Resume sync, templates, and project selection.",
         searchTerms: ["rxresume", "resume", "projects", "template"],
       },
       {
         id: "webhooks",
-        label: "Webhooks",
-        description: "Pipeline and job completion event destinations.",
         searchTerms: ["hooks", "notifications", "pipeline", "applied"],
       },
       {
         id: "tracer-links",
-        label: "Tracer Links",
-        description: "Public URL readiness and verification state.",
         searchTerms: ["public url", "verify", "readiness", "health"],
       },
     ],
   },
   {
     id: "workspaces",
-    label: "Workspaces & Security",
     items: [
       {
         id: "environment",
-        label: "Workspace Access",
-        description: "Service credentials and authentication protection.",
         searchTerms: [
           "security",
           "auth",
@@ -278,41 +261,44 @@ const SETTINGS_NAV_GROUPS: SettingsNavGroup[] = [
   },
   {
     id: "display",
-    label: "Display",
     items: [
       {
         id: "display",
-        label: "Display Preferences",
-        description: "Sponsor badges and markdown rendering behavior.",
         searchTerms: ["markdown", "sponsor", "rendering", "appearance"],
       },
     ],
   },
   {
     id: "backups",
-    label: "Backups",
     items: [
       {
         id: "backup",
-        label: "Backups",
-        description: "Automatic schedules, retention, and manual snapshots.",
         searchTerms: ["recovery", "database", "restore", "schedule"],
       },
     ],
   },
   {
     id: "danger",
-    label: "Danger Zone",
     items: [
       {
         id: "danger-zone",
-        label: "Danger Zone",
-        description: "Delete jobs, runs, or the full local database.",
         searchTerms: ["delete", "clear", "cleanup", "destructive"],
       },
     ],
   },
 ];
+
+function buildSettingsNavGroups(t: TFunction<"settings">): SettingsNavGroup[] {
+  return SETTINGS_NAV_GROUP_DEFINITIONS.map((group) => ({
+    ...group,
+    label: t(`nav.groups.${group.id}`),
+    items: group.items.map((item) => ({
+      ...item,
+      label: t(`nav.sections.${item.id}.label`),
+      description: t(`nav.sections.${item.id}.description`),
+    })),
+  }));
+}
 
 const SECTION_FIELD_MAP: Record<
   SettingsSectionId,
@@ -798,6 +784,8 @@ const getDerivedSettings = (settings: AppSettings | null) => {
 };
 
 export const SettingsPage: React.FC = () => {
+  const { t } = useTranslation("settings");
+  const settingsNavGroups = useMemo(() => buildSettingsNavGroups(t), [t]);
   const queryClient = useQueryClient();
   const location = useLocation();
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -890,9 +878,9 @@ export const SettingsPage: React.FC = () => {
     ? (billingQuery.data?.userEditableLlmSettings ?? false)
     : (appStatusQuery.data?.capabilities.userEditableLlmSettings ?? true) &&
       currentUserQuery.data?.isSystemAdmin !== false;
-  useQueryErrorToast(appStatusQuery.error, "Failed to load app status");
-  useQueryErrorToast(backupsQuery.error, "Failed to load backups");
-  useQueryErrorToast(billingQuery.error, "Failed to load billing status");
+  useQueryErrorToast(appStatusQuery.error, t("toasts.loadAppStatusFailed"));
+  useQueryErrorToast(backupsQuery.error, t("toasts.loadBackupsFailed"));
+  useQueryErrorToast(billingQuery.error, t("toasts.loadBillingFailed"));
 
   const openStripe = async (createSession: () => Promise<{ url: string }>) => {
     setIsBillingBusy(true);
@@ -900,7 +888,7 @@ export const SettingsPage: React.FC = () => {
       const { url } = await createSession();
       window.location.assign(url);
     } catch (error) {
-      showErrorToast(error, "Failed to open Stripe");
+      showErrorToast(error, t("toasts.openStripeFailed"));
       setIsBillingBusy(false);
     }
   };
@@ -919,7 +907,7 @@ export const SettingsPage: React.FC = () => {
     reset(mapSettingsToForm(settingsQuery.data));
   }, [settingsQuery.data, reset]);
 
-  useQueryErrorToast(settingsQuery.error, "Failed to load settings");
+  useQueryErrorToast(settingsQuery.error, t("toasts.loadSettingsFailed"));
 
   useEffect(() => {
     if (!settings) return;
@@ -963,7 +951,7 @@ export const SettingsPage: React.FC = () => {
       })
       .catch((error) => {
         if (!isMounted || error.name === "AbortError") return;
-        showErrorToast(error, "Failed to load RxResume projects");
+        showErrorToast(error, t("toasts.loadRxResumeProjectsFailed"));
         setRxResumeProjectsOverride(null);
       })
       .finally(() => {
@@ -975,7 +963,7 @@ export const SettingsPage: React.FC = () => {
       isMounted = false;
       controller.abort();
     };
-  }, [rxResumeBaseResumeIdDraft, hasRxResumeAccess, getValues, setValue]);
+  }, [rxResumeBaseResumeIdDraft, hasRxResumeAccess, getValues, setValue, t]);
 
   const derived = getDerivedSettings(settings);
   const {
@@ -997,10 +985,10 @@ export const SettingsPage: React.FC = () => {
     setIsCreatingBackup(true);
     try {
       await api.createManualBackup();
-      toast.success("Backup created successfully");
+      toast.success(t("toasts.backupCreated"));
       await queryClient.invalidateQueries({ queryKey: queryKeys.backups.all });
     } catch (error) {
-      showErrorToast(error, "Failed to create backup");
+      showErrorToast(error, t("toasts.backupCreateFailed"));
     } finally {
       setIsCreatingBackup(false);
     }
@@ -1008,7 +996,7 @@ export const SettingsPage: React.FC = () => {
 
   const handleDeleteBackup = async (filename: string) => {
     const confirmed = window.confirm(
-      `Delete backup "${filename}"? This action cannot be undone.`,
+      t("toasts.confirmDeleteBackup", { filename }),
     );
     if (!confirmed) {
       return;
@@ -1016,10 +1004,10 @@ export const SettingsPage: React.FC = () => {
     setIsDeletingBackup(true);
     try {
       await api.deleteBackup(filename);
-      toast.success("Backup deleted successfully");
+      toast.success(t("toasts.backupDeleted"));
       await queryClient.invalidateQueries({ queryKey: queryKeys.backups.all });
     } catch (error) {
-      showErrorToast(error, "Failed to delete backup");
+      showErrorToast(error, t("toasts.backupDeleteFailed"));
     } finally {
       setIsDeletingBackup(false);
     }
@@ -1029,19 +1017,16 @@ export const SettingsPage: React.FC = () => {
     try {
       const readiness = await refreshReadiness(true);
       if (!readiness) {
-        toast.error("Tracer links are unavailable. Verify your public URL.");
+        toast.error(t("toasts.tracerUnavailable"));
       } else if (readiness.canEnable) {
-        toast.success("Tracer links are ready");
+        toast.success(t("toasts.tracerReady"));
       } else {
-        toast.error(
-          readiness.reason ??
-            "Tracer links are unavailable. Verify your public URL.",
-        );
+        toast.error(readiness.reason ?? t("toasts.tracerUnavailable"));
       }
     } catch (error) {
-      showErrorToast(error, "Failed to verify tracer-link readiness");
+      showErrorToast(error, t("toasts.tracerVerifyFailed"));
     }
-  }, [refreshReadiness]);
+  }, [refreshReadiness, t]);
 
   const setRxResumeValidationStatus = useCallback(
     (validation: ValidationResult) => {
@@ -1074,9 +1059,9 @@ export const SettingsPage: React.FC = () => {
         skipPrecheck: silent,
         getPrecheckMessage: (failure) => RXRESUME_PRECHECK_MESSAGES[failure],
         getValidationErrorMessage: (error) =>
-          formatUserFacingError(error, "RxResume validation failed"),
+          formatUserFacingError(error, t("rxresume.validationFailed")),
         getPersistErrorMessage: (error) =>
-          formatUserFacingError(error, "RxResume validation failed"),
+          formatUserFacingError(error, t("rxresume.validationFailed")),
       });
 
       if (
@@ -1095,7 +1080,7 @@ export const SettingsPage: React.FC = () => {
           result.updatedSettings,
         );
         if (notify) {
-          toast.success(`Reactive Resume validation passed`);
+          toast.success(t("toasts.rxresumeValidationPassed"));
         }
         return;
       }
@@ -1113,10 +1098,10 @@ export const SettingsPage: React.FC = () => {
       }
 
       toast.error(
-        result.validation.message || `Reactive Resume validation failed`,
+        result.validation.message || t("toasts.rxresumeValidationFailed"),
       );
     },
-    [getValues, queryClient, setRxResumeValidationStatus, storedRxResume],
+    [getValues, queryClient, setRxResumeValidationStatus, storedRxResume, t],
   );
 
   useEffect(() => {
@@ -1362,16 +1347,14 @@ export const SettingsPage: React.FC = () => {
             clearErrors(getRxResumeValidationFields());
             setError("rxresumeApiKey", {
               type: "manual",
-              message:
-                validation.message ?? "Reactive Resume API key is invalid.",
+              message: validation.message ?? t("toasts.rxresumeKeyInvalid"),
             });
             return;
           }
 
           clearErrors(getRxResumeValidationFields());
           if (isRxResumeAvailabilityValidationFailure(validation)) {
-            rxResumeSaveWarningMessage =
-              "Settings saved, but JobOps could not verify Reactive Resume because the instance is unavailable.";
+            rxResumeSaveWarningMessage = t("toasts.rxresumeSaveWarning");
           }
         }
       }
@@ -1379,12 +1362,12 @@ export const SettingsPage: React.FC = () => {
       const updated = await updateSettingsMutation.mutateAsync(payload);
       setSettings(updated);
       reset(mapSettingsToForm(updated));
-      toast.success("Settings saved");
+      toast.success(t("toasts.settingsSaved"));
       if (rxResumeSaveWarningMessage) {
         toast.info(rxResumeSaveWarningMessage);
       }
     } catch (error) {
-      showErrorToast(error, "Failed to save settings");
+      showErrorToast(error, t("toasts.saveFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -1394,11 +1377,13 @@ export const SettingsPage: React.FC = () => {
     try {
       setIsSaving(true);
       const result = await api.clearDatabase();
-      toast.success("Database cleared", {
-        description: `Deleted ${result.jobsDeleted} jobs.`,
+      toast.success(t("toasts.databaseCleared"), {
+        description: t("toasts.databaseClearedDescription", {
+          number: result.jobsDeleted,
+        }),
       });
     } catch (error) {
-      showErrorToast(error, "Failed to clear database");
+      showErrorToast(error, t("toasts.clearDatabaseFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -1406,7 +1391,7 @@ export const SettingsPage: React.FC = () => {
 
   const handleClearByStatuses = async () => {
     if (statusesToClear.length === 0) {
-      toast.error("No statuses selected");
+      toast.error(t("toasts.noStatusesSelected"));
       return;
     }
     try {
@@ -1418,21 +1403,29 @@ export const SettingsPage: React.FC = () => {
         const result = await api.deleteJobsByStatus(status);
         totalDeleted += result.count;
         if (result.count > 0) {
-          results.push(`${result.count} ${status}`);
+          results.push(
+            t("toasts.statusCount", {
+              number: result.count,
+              status: t(`danger.statusNames.${status}`),
+            }),
+          );
         }
       }
 
       if (totalDeleted > 0) {
-        toast.success("Jobs cleared", {
-          description: `Deleted ${totalDeleted} jobs: ${results.join(", ")}`,
+        toast.success(t("toasts.jobsCleared"), {
+          description: t("toasts.jobsClearedByStatus", {
+            number: totalDeleted,
+            details: results.join(t("shared.listSeparator")),
+          }),
         });
       } else {
-        toast.info("No jobs found", {
-          description: `No jobs with selected statuses found`,
+        toast.info(t("toasts.noJobsFound"), {
+          description: t("toasts.noJobsWithStatuses"),
         });
       }
     } catch (error) {
-      showErrorToast(error, "Failed to clear jobs");
+      showErrorToast(error, t("toasts.clearJobsFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -1444,16 +1437,19 @@ export const SettingsPage: React.FC = () => {
       const result = await api.deleteJobsBelowScore(threshold);
 
       if (result.count > 0) {
-        toast.success("Jobs cleared", {
-          description: `Deleted ${result.count} jobs with score below ${threshold}. Applied jobs were preserved.`,
+        toast.success(t("toasts.jobsCleared"), {
+          description: t("toasts.jobsClearedByScore", {
+            number: result.count,
+            threshold,
+          }),
         });
       } else {
-        toast.info("No jobs found", {
-          description: `No jobs with score below ${threshold} found`,
+        toast.info(t("toasts.noJobsFound"), {
+          description: t("toasts.noJobsBelowScore", { threshold }),
         });
       }
     } catch (error) {
-      showErrorToast(error, "Failed to clear jobs by score");
+      showErrorToast(error, t("toasts.clearJobsByScoreFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -1474,9 +1470,9 @@ export const SettingsPage: React.FC = () => {
       );
       setSettings(updated);
       reset(mapSettingsToForm(updated));
-      toast.success("Reset to default");
+      toast.success(t("toasts.resetDone"));
     } catch (error) {
-      showErrorToast(error, "Failed to reset settings");
+      showErrorToast(error, t("toasts.resetFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -1485,20 +1481,22 @@ export const SettingsPage: React.FC = () => {
   const handleDiscardChanges = () => {
     if (!settings) return;
     reset(mapSettingsToForm(settings));
-    toast.success("Discarded unsaved changes");
+    toast.success(t("toasts.discarded"));
   };
 
   const visibleNavGroups = useMemo(
     () =>
-      SETTINGS_NAV_GROUPS.map((group) => ({
-        ...group,
-        items: group.items.filter(
-          (item) =>
-            (item.id !== "billing" || isHostedMode) &&
-            (canEditLlmSettings || item.id !== "model"),
-        ),
-      })).filter((group) => group.items.length > 0),
-    [canEditLlmSettings, isHostedMode],
+      settingsNavGroups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter(
+            (item) =>
+              (item.id !== "billing" || isHostedMode) &&
+              (canEditLlmSettings || item.id !== "model"),
+          ),
+        }))
+        .filter((group) => group.items.length > 0),
+    [canEditLlmSettings, isHostedMode, settingsNavGroups],
   );
 
   const filteredNavGroups = useMemo(
@@ -1545,7 +1543,7 @@ export const SettingsPage: React.FC = () => {
     }
   }, [activeSection, visibleSectionIds]);
 
-  const firstVisibleGroup = visibleNavGroups[0] ?? SETTINGS_NAV_GROUPS[0];
+  const firstVisibleGroup = visibleNavGroups[0] ?? settingsNavGroups[0];
   const firstVisibleSection = firstVisibleGroup.items[0];
   const activeSectionMeta =
     visibleNavGroups
@@ -1565,20 +1563,26 @@ export const SettingsPage: React.FC = () => {
     sectionId: SettingsSectionId,
   ): SectionWorkspaceBadge | null => {
     if (sectionId === "danger-zone") {
-      return { label: "Sensitive", variant: "destructive" as const };
+      return { label: t("badges.sensitive"), variant: "destructive" as const };
     }
     if (sectionHasErrors(sectionId)) {
-      return { label: "Needs attention", variant: "destructive" as const };
+      return {
+        label: t("badges.needsAttention"),
+        variant: "destructive" as const,
+      };
     }
     if (sectionHasDirtyState(sectionId)) {
-      return { label: "Unsaved", variant: "secondary" as const };
+      return { label: t("badges.unsaved"), variant: "secondary" as const };
     }
 
     switch (sectionId) {
       case "billing":
         return billingQuery.data
           ? {
-              label: billingQuery.data.plan === "pro" ? "Pro" : "Free",
+              label:
+                billingQuery.data.plan === "pro"
+                  ? t("billing.planPro")
+                  : t("billing.planFree"),
               variant:
                 billingQuery.data.plan === "pro"
                   ? ("outline" as const)
@@ -1587,12 +1591,12 @@ export const SettingsPage: React.FC = () => {
           : null;
       case "model":
         return model.llmProvider
-          ? { label: "Configured", variant: "outline" as const }
-          : { label: "Using defaults", variant: "secondary" as const };
+          ? { label: t("badges.configured"), variant: "outline" as const }
+          : { label: t("badges.usingDefaults"), variant: "secondary" as const };
       case "chat":
         return chat.tone.effective || chat.constraints.effective
-          ? { label: "Ready", variant: "outline" as const }
-          : { label: "Using defaults", variant: "secondary" as const };
+          ? { label: t("badges.ready"), variant: "outline" as const }
+          : { label: t("badges.usingDefaults"), variant: "secondary" as const };
       case "prompt-templates":
         return promptTemplates.ghostwriterSystemPromptTemplate.effective !==
           promptTemplates.ghostwriterSystemPromptTemplate.default ||
@@ -1600,40 +1604,46 @@ export const SettingsPage: React.FC = () => {
             promptTemplates.tailoringPromptTemplate.default ||
           promptTemplates.scoringPromptTemplate.effective !==
             promptTemplates.scoringPromptTemplate.default
-          ? { label: "Customized", variant: "outline" as const }
-          : { label: "Using defaults", variant: "secondary" as const };
+          ? { label: t("badges.customized"), variant: "outline" as const }
+          : { label: t("badges.usingDefaults"), variant: "secondary" as const };
       case "scoring":
         return scoring.autoSkipScoreThreshold.effective != null ||
           scoring.blockedCompanyKeywords.effective.length > 0
-          ? { label: "Customized", variant: "outline" as const }
-          : { label: "Default rules", variant: "secondary" as const };
+          ? { label: t("badges.customized"), variant: "outline" as const }
+          : { label: t("badges.defaultRules"), variant: "secondary" as const };
       case "reactive-resume":
         return hasRxResumeAccess
-          ? { label: "Connected", variant: "outline" as const }
+          ? { label: t("badges.connected"), variant: "outline" as const }
           : null;
       case "webhooks":
         return pipelineWebhook.effective || jobCompleteWebhook.effective
-          ? { label: "Configured", variant: "outline" as const }
-          : { label: "Optional", variant: "secondary" as const };
+          ? { label: t("badges.configured"), variant: "outline" as const }
+          : { label: t("badges.optional"), variant: "secondary" as const };
       case "tracer-links":
         return tracerReadiness?.status === "ready"
-          ? { label: "Ready", variant: "outline" as const }
+          ? { label: t("badges.ready"), variant: "outline" as const }
           : tracerReadiness
-            ? { label: "Check required", variant: "secondary" as const }
-            : { label: "Not configured", variant: "secondary" as const };
+            ? {
+                label: t("badges.checkRequired"),
+                variant: "secondary" as const,
+              }
+            : {
+                label: t("badges.notConfigured"),
+                variant: "secondary" as const,
+              };
       case "environment":
         return envSettings.readable.ukvisajobsEmail ||
           envSettings.readable.adzunaAppId
-          ? { label: "Configured", variant: "outline" as const }
+          ? { label: t("badges.configured"), variant: "outline" as const }
           : null;
       case "display":
-        return { label: "Active", variant: "secondary" as const };
+        return { label: t("badges.active"), variant: "secondary" as const };
       case "backup":
         return backup.backupEnabled.effective
-          ? { label: "Scheduled", variant: "outline" as const }
-          : { label: "Manual only", variant: "secondary" as const };
+          ? { label: t("badges.scheduled"), variant: "outline" as const }
+          : { label: t("badges.manualOnly"), variant: "secondary" as const };
       default:
-        return { label: "Ready", variant: "outline" as const };
+        return { label: t("badges.ready"), variant: "outline" as const };
     }
   };
 
@@ -1803,8 +1813,8 @@ export const SettingsPage: React.FC = () => {
     <FormProvider {...methods}>
       <PageHeader
         icon={Settings}
-        title="Settings"
-        subtitle="Configure AI, scoring, integrations, and recovery from one focused workspace."
+        title={t("page.title")}
+        subtitle={t("page.subtitle")}
       />
 
       <main className="container mx-auto px-4 py-6 pb-12">
@@ -1817,8 +1827,8 @@ export const SettingsPage: React.FC = () => {
             onSectionSelect={setActiveSection}
             searchValue={settingsSearch}
             onSearchValueChange={setSettingsSearch}
-            searchPlaceholder="Search settings"
-            searchEmptyLabel="No settings matched"
+            searchPlaceholder={t("page.searchPlaceholder")}
+            searchEmptyLabel={t("page.searchEmpty")}
           />
 
           <SectionWorkspacePanel
@@ -1829,7 +1839,9 @@ export const SettingsPage: React.FC = () => {
             secondaryBadge={
               dirtySectionCount > 0
                 ? {
-                    label: `${dirtySectionCount} unsaved section${dirtySectionCount !== 1 ? "s" : ""}`,
+                    label: t("page.unsavedSections", {
+                      count: dirtySectionCount,
+                    }),
                     variant: "secondary",
                   }
                 : null
@@ -1845,7 +1857,7 @@ export const SettingsPage: React.FC = () => {
                       onClick={handleDiscardChanges}
                       disabled={isLoading || isSaving || !isDirty}
                     >
-                      Discard changes
+                      {t("page.discardChanges")}
                     </Button>
                   ) : null}
                   <Button
@@ -1855,7 +1867,7 @@ export const SettingsPage: React.FC = () => {
                     onClick={handleReset}
                     disabled={isLoading || isSaving || !settings}
                   >
-                    Reset to defaults
+                    {t("page.resetToDefaults")}
                   </Button>
                   <Button
                     type="button"
@@ -1863,7 +1875,7 @@ export const SettingsPage: React.FC = () => {
                     onClick={handleSubmit(onSave)}
                     disabled={isLoading || isSaving || !canSave}
                   >
-                    {isSaving ? "Saving..." : "Save changes"}
+                    {isSaving ? t("page.saving") : t("page.saveChanges")}
                   </Button>
                 </>
               )
@@ -1871,7 +1883,7 @@ export const SettingsPage: React.FC = () => {
             footer={
               Object.keys(errors).length > 0 ? (
                 <div className="rounded-xl border border-destructive/30 bg-destructive/[0.03] px-4 py-3 text-sm text-destructive">
-                  Please fix the highlighted errors before saving.
+                  {t("page.fixErrors")}
                 </div>
               ) : null
             }

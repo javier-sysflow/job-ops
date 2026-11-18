@@ -1,0 +1,317 @@
+{
+  "picture": {
+    "hidden": true,
+    "url": "",
+    "size": 80,
+    "rotation": 0,
+    "aspectRatio": 1,
+    "borderRadius": 0,
+    "borderColor": "",
+    "borderWidth": 0,
+    "shadowColor": "",
+    "shadowWidth": 0
+  },
+  "basics": {
+    "name": "ミラー 健太",
+    "headline": "シニアソフトウェアエンジニア（バックエンド／決済）",
+    "email": "kenta.miller@example.com",
+    "phone": "090-1234-5678",
+    "location": "東京都世田谷区",
+    "website": {
+      "url": "https://kenta.example.com",
+      "label": "kenta.example.com"
+    },
+    "customFields": [
+      {
+        "id": "cf-self-pr",
+        "title": "自己PR",
+        "icon": "user",
+        "text": "日英バイリンガルのエンジニアとして、技術と言語の両面から国内外のチームをつなぐ役割を担ってきました。前職ではベトナムの開発拠点との仕様調整を一手に引き受け、認識齟齬による手戻りを大幅に減らしました。\n現職では決済基盤のテックリードとして、可用性と開発スピードの両立にこだわり、障害件数を前年比 60% 削減しました。今後もプロダクトの成長に直結する基盤づくりに貢献したいと考えています。",
+        "link": ""
+      },
+      {
+        "id": "cf-github",
+        "title": "GitHub",
+        "icon": "github-logo",
+        "text": "github.com/kenta-miller",
+        "link": "https://github.com/kenta-miller"
+      }
+    ]
+  },
+  "summary": {
+    "title": "職務要約",
+    "columns": 1,
+    "hidden": false,
+    "content": "<p>Web 系企業 2 社にて約 8 年間、バックエンドを中心としたソフトウェア開発に従事してまいりました。決済・EC 領域における大規模分散システムの設計・開発・運用を得意とし、直近 4 年間はテックリードとして 8 名のチームを牽引しています。日英バイリンガルとして、海外拠点や外国籍メンバーとの橋渡し役も担ってきました。</p>"
+  },
+  "sections": {
+    "profiles": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": [
+        {
+          "id": "profile-linkedin",
+          "hidden": false,
+          "icon": "linkedin-logo",
+          "network": "LinkedIn",
+          "username": "kenta-miller",
+          "website": {
+            "url": "https://www.linkedin.com/in/kenta-miller",
+            "label": ""
+          }
+        }
+      ]
+    },
+    "experience": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": [
+        {
+          "id": "exp-sakura",
+          "hidden": false,
+          "company": "株式会社サクラペイメンツ",
+          "position": "シニアソフトウェアエンジニア／テックリード",
+          "location": "東京都渋谷区",
+          "period": "2021年4月～現在",
+          "website": { "url": "", "label": "" },
+          "description": "<ul><li><p>Go と gRPC による決済マイクロサービスを設計・実装し、ピーク時 3,000 TPS のトラフィックを安定して処理</p></li><li><p>オンプレミス環境から Kubernetes（GKE）への移行を主導し、インフラコストを年間約 30% 削減</p></li><li><p>SLO の策定とオンコール体制の見直しにより、重大障害の件数を前年比 60% 削減</p></li><li><p><strong>新卒・中途エンジニア 4 名</strong>のメンタリングを担当し、コードレビューのガイドラインを整備</p></li></ul>",
+          "roles": []
+        },
+        {
+          "id": "exp-global",
+          "hidden": false,
+          "company": "グローバルコマース株式会社",
+          "position": "ソフトウェアエンジニア",
+          "location": "大阪府大阪市",
+          "period": "2017年4月～2021年3月",
+          "website": { "url": "", "label": "" },
+          "description": "<p>越境 EC サイトの商品検索・在庫管理 API の開発を担当（Java / Spring Boot、MySQL、Elasticsearch）。</p><p>英語圏向けサイトの立ち上げプロジェクトに参画し、多言語・多通貨対応の設計とレビューを主導。</p><p>ベトナムのオフショア開発チーム（12 名）とのブリッジエンジニアとして、英語での仕様調整と受け入れテストを担当。</p>",
+          "roles": []
+        },
+        {
+          "id": "exp-hidden",
+          "hidden": true,
+          "company": "非表示テスト株式会社",
+          "position": "インターン",
+          "location": "東京都",
+          "period": "2016年8月～2016年9月",
+          "website": { "url": "", "label": "" },
+          "description": "<p>この経歴は非表示のため出力されません。</p>",
+          "roles": []
+        }
+      ]
+    },
+    "education": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": [
+        {
+          "id": "edu-waseda",
+          "hidden": false,
+          "school": "早稲田大学",
+          "degree": "国際教養学部",
+          "area": "国際教養学科 卒業",
+          "grade": "",
+          "location": "東京都新宿区",
+          "period": "2013年4月～2017年3月",
+          "website": { "url": "", "label": "" },
+          "description": ""
+        }
+      ]
+    },
+    "projects": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": []
+    },
+    "skills": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": [
+        {
+          "id": "skill-lang",
+          "hidden": false,
+          "icon": "",
+          "name": "プログラミング言語",
+          "proficiency": "",
+          "level": 0,
+          "keywords": [
+            "Go（5年）",
+            "Java（4年）",
+            "TypeScript（3年）",
+            "Python（2年）"
+          ]
+        },
+        {
+          "id": "skill-fw",
+          "hidden": false,
+          "icon": "",
+          "name": "フレームワーク",
+          "proficiency": "",
+          "level": 0,
+          "keywords": ["gRPC", "Spring Boot", "React", "Next.js"]
+        },
+        {
+          "id": "skill-infra",
+          "hidden": false,
+          "icon": "",
+          "name": "インフラ・クラウド",
+          "proficiency": "",
+          "level": 0,
+          "keywords": [
+            "Google Cloud（GKE, Cloud Run）",
+            "AWS",
+            "Kubernetes",
+            "Terraform",
+            "Docker"
+          ]
+        },
+        {
+          "id": "skill-db",
+          "hidden": false,
+          "icon": "",
+          "name": "データベース",
+          "proficiency": "",
+          "level": 0,
+          "keywords": [
+            "PostgreSQL",
+            "MySQL",
+            "Redis",
+            "BigQuery",
+            "Elasticsearch"
+          ]
+        },
+        {
+          "id": "skill-mgmt",
+          "hidden": false,
+          "icon": "",
+          "name": "マネジメント",
+          "proficiency": "",
+          "level": 0,
+          "keywords": [
+            "テックリード（8名）",
+            "メンタリング",
+            "スクラム開発",
+            "オフショア開発のブリッジ"
+          ]
+        },
+        {
+          "id": "skill-hidden",
+          "hidden": true,
+          "icon": "",
+          "name": "非表示スキル",
+          "proficiency": "",
+          "level": 0,
+          "keywords": ["COBOL"]
+        }
+      ]
+    },
+    "languages": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": [
+        {
+          "id": "lang-en",
+          "hidden": false,
+          "language": "英語",
+          "fluency": "ネイティブ",
+          "level": 5
+        },
+        {
+          "id": "lang-ja",
+          "hidden": false,
+          "language": "日本語",
+          "fluency": "ビジネスレベル（JLPT N1）",
+          "level": 4
+        }
+      ]
+    },
+    "interests": {
+      "title": "",
+      "columns": 1,
+      "hidden": true,
+      "items": [
+        {
+          "id": "interest-hidden",
+          "hidden": false,
+          "icon": "",
+          "name": "登山",
+          "keywords": []
+        }
+      ]
+    },
+    "awards": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": []
+    },
+    "certifications": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": [
+        {
+          "id": "cert-jlpt",
+          "hidden": false,
+          "title": "日本語能力試験（JLPT）N1 合格",
+          "issuer": "国際交流基金・日本国際教育支援協会",
+          "date": "2016年12月",
+          "website": { "url": "", "label": "" },
+          "description": ""
+        },
+        {
+          "id": "cert-fe",
+          "hidden": false,
+          "title": "基本情報技術者試験 合格",
+          "issuer": "IPA",
+          "date": "2018年4月",
+          "website": { "url": "", "label": "" },
+          "description": ""
+        },
+        {
+          "id": "cert-toeic",
+          "hidden": false,
+          "title": "TOEIC Listening & Reading Test 985点 取得",
+          "issuer": "IIBC",
+          "date": "2019年6月",
+          "website": { "url": "", "label": "" },
+          "description": ""
+        },
+        {
+          "id": "cert-aws",
+          "hidden": false,
+          "title": "AWS Certified Solutions Architect – Professional",
+          "issuer": "Amazon Web Services",
+          "date": "2022年9月",
+          "website": { "url": "", "label": "" },
+          "description": ""
+        }
+      ]
+    },
+    "publications": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": []
+    },
+    "volunteer": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": []
+    },
+    "references": {
+      "title": "",
+      "columns": 1,
+      "hidden": false,
+      "items": []
+    }
+  }
+}

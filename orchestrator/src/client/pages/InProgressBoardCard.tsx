@@ -1,7 +1,9 @@
+import { outcomeLabel, stageLabel } from "@client/i18n/labels";
 import type { ApplicationStage, JobListItem } from "@shared/types.js";
-import { ExternalLink, MoreVertical, PlusCircle } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { ExternalLink, MoreVertical, PlusCircle } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +37,7 @@ export const InProgressBoardCard: React.FC<InProgressBoardCardProps> = ({
   onDragEnd,
   onLogEvent,
 }) => {
+  const { t } = useTranslation("inProgress");
   const canLogEvents = stage !== "closed";
 
   return (
@@ -77,7 +80,7 @@ export const InProgressBoardCard: React.FC<InProgressBoardCardProps> = ({
                   "group-focus-within:pointer-events-auto group-focus-within:opacity-100",
                   "data-[state=open]:pointer-events-auto data-[state=open]:opacity-100",
                 )}
-                aria-label={`Actions for ${job.title}`}
+                aria-label={t("card.actionsFor", { title: job.title })}
                 draggable={false}
                 data-board-card-menu=""
                 onDragStart={(event) => {
@@ -97,7 +100,7 @@ export const InProgressBoardCard: React.FC<InProgressBoardCardProps> = ({
                 }}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Log event
+                {t("card.logEvent")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -115,19 +118,19 @@ export const InProgressBoardCard: React.FC<InProgressBoardCardProps> = ({
               variant="outline"
               className="border-border/60 bg-muted/30 text-foreground/80"
             >
-              Closed
+              {stageLabel("closed")}
             </Badge>
             {job.outcome ? (
               <Badge variant="outline" className="capitalize">
-                {job.outcome.replaceAll("_", " ")}
+                {outcomeLabel(job.outcome)}
               </Badge>
             ) : null}
           </div>
         )}
         <div className="mt-2 text-[11px] text-muted-foreground/70">
           {latestEventAt != null
-            ? `Updated ${formatTimestamp(latestEventAt)}`
-            : "No stage events yet"}
+            ? t("card.updated", { date: formatTimestamp(latestEventAt) })
+            : t("card.noEvents")}
         </div>
       </Link>
     </div>

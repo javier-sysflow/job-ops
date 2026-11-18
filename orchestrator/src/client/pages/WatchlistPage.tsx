@@ -11,10 +11,11 @@ import type {
   WatchlistSourceTypeDescriptor,
 } from "@shared/types.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { Eye } from "@/components/icons";
 import { Accordion } from "@/components/ui/accordion";
 import { bucketQueryLength, trackProductEvent } from "@/lib/analytics";
 import {
@@ -83,6 +84,7 @@ function getSourceHost(value: string): string | null {
 }
 
 export const WatchlistPage: React.FC = () => {
+  const { t } = useTranslation("watchlist");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { settings } = useSettings();
@@ -127,7 +129,7 @@ export const WatchlistPage: React.FC = () => {
       ]);
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to save watchlist sources");
+      showErrorToast(error, t("toasts.saveSourcesFailed"));
     },
   });
   const ignoreMutation = useMutation({
@@ -138,7 +140,7 @@ export const WatchlistPage: React.FC = () => {
       });
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to ignore watchlist job");
+      showErrorToast(error, t("toasts.ignoreFailed"));
     },
   });
   const unignoreMutation = useMutation({
@@ -149,7 +151,7 @@ export const WatchlistPage: React.FC = () => {
       });
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to restore watchlist job");
+      showErrorToast(error, t("toasts.restoreFailed"));
     },
   });
 
@@ -312,9 +314,12 @@ export const WatchlistPage: React.FC = () => {
           return {
             selections: null,
             error: new Error(
-              `Source ${index + 1} is missing a ${
-                descriptor?.customSourceInputLabel ?? "custom source URL"
-              }.`,
+              t("errors.sourceMissingUrl", {
+                index: index + 1,
+                label:
+                  descriptor?.customSourceInputLabel ??
+                  t("errors.customSourceUrl"),
+              }),
             ),
           };
         }
@@ -331,7 +336,7 @@ export const WatchlistPage: React.FC = () => {
       if (!draft.catalogSourceId) {
         return {
           selections: null,
-          error: new Error(`Source ${index + 1} is not selected.`),
+          error: new Error(t("errors.sourceNotSelected", { index: index + 1 })),
         };
       }
 
@@ -341,7 +346,7 @@ export const WatchlistPage: React.FC = () => {
       if (!catalogSource) {
         return {
           selections: null,
-          error: new Error(`Source ${index + 1} is no longer available.`),
+          error: new Error(t("errors.sourceUnavailable", { index: index + 1 })),
         };
       }
 
@@ -359,7 +364,7 @@ export const WatchlistPage: React.FC = () => {
     if (uniqueUrls.size !== selections.length) {
       return {
         selections: null,
-        error: new Error("Choose unique watchlist URLs."),
+        error: new Error(t("errors.duplicateUrls")),
       };
     }
 
@@ -367,7 +372,7 @@ export const WatchlistPage: React.FC = () => {
       selections,
       error: null,
     };
-  }, [catalogSources, sourceDrafts, sourceTypes]);
+  }, [catalogSources, sourceDrafts, sourceTypes, t]);
   const persistedSelectionsKey = useMemo(
     () =>
       getWatchlistSelectionsKey(
@@ -530,7 +535,7 @@ export const WatchlistPage: React.FC = () => {
         careersUrl: response.careersUrl,
       });
     } catch (error) {
-      showErrorToast(error, "Failed to prepare watchlist job");
+      showErrorToast(error, t("toasts.prepareFailed"));
     } finally {
       setMovingJobRef(null);
     }
@@ -588,8 +593,8 @@ export const WatchlistPage: React.FC = () => {
     <>
       <PageHeader
         icon={Eye}
-        title="Watchlist"
-        subtitle="Career pages you're watching"
+        title={t("page.title")}
+        subtitle={t("page.subtitle")}
       />
 
       <PageMain>
@@ -611,7 +616,7 @@ export const WatchlistPage: React.FC = () => {
             onSourceSearchNoResults={handleWatchlistSourceSearchNoResults}
             onSave={() => {
               void handleSaveSources().catch((error) => {
-                showErrorToast(error, "Failed to save watchlist sources");
+                showErrorToast(error, t("toasts.saveSourcesFailed"));
               });
             }}
           />

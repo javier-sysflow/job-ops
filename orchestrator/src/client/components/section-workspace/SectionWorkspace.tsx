@@ -1,5 +1,6 @@
-import { Search } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
+import { Search } from "@/components/icons";
 import {
   Accordion,
   AccordionContent,
@@ -77,6 +78,7 @@ export function SectionWorkspaceNav<
   searchEmptyLabel,
   getItemBadge,
 }: SectionWorkspaceNavProps<TGroupId, TSectionId>) {
+  const { t } = useTranslation("resumeStudio");
   const trimmedSearch = searchValue.trim();
   return (
     <aside className="lg:sticky lg:top-6 lg:self-start">
@@ -153,7 +155,10 @@ export function SectionWorkspaceNav<
             </Accordion>
           ) : (
             <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-              {searchEmptyLabel} “{trimmedSearch}”.
+              {t("sectionWorkspace.searchEmpty", {
+                label: searchEmptyLabel,
+                search: trimmedSearch,
+              })}
             </div>
           )}
         </div>

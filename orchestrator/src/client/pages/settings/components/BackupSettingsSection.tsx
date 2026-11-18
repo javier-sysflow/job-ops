@@ -1,12 +1,14 @@
 import { EmptyState, ListItem, ListPanel } from "@client/components/layout";
+import { formatDateTime, isJapaneseUi } from "@client/i18n/format";
 import { SettingsInput } from "@client/pages/settings/components/SettingsInput";
 import { SettingsSectionFrame } from "@client/pages/settings/components/SettingsSectionFrame";
 import type { BackupValues } from "@client/pages/settings/types";
 import type { UpdateSettingsInput } from "@shared/settings-schema.js";
 import type { BackupInfo } from "@shared/types.js";
-import { Archive, Clock, Trash2 } from "lucide-react";
 import type React from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { Archive, Clock, Trash2 } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,18 +33,28 @@ const formatFileSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const BACKUP_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
+  timeZone: "UTC",
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+  timeZoneName: "short",
+};
+
 const formatBackupDate = (dateString: string): string => {
+  // English keeps its original US-style backup timestamps; Japanese uses
+  // the locale-aware formatter with a 24-hour clock.
+  if (isJapaneseUi()) {
+    return formatDateTime(dateString, {
+      ...BACKUP_DATE_OPTIONS,
+      hour12: false,
+    });
+  }
   const date = new Date(dateString);
-  return date.toLocaleString("en-US", {
-    timeZone: "UTC",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZoneName: "short",
-  });
+  return date.toLocaleString("en-US", BACKUP_DATE_OPTIONS); // i18n-ignore
 };
 
 export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
@@ -57,14 +69,20 @@ export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
   isDeletingBackup,
   layoutMode,
 }) => {
+  const { t } = useTranslation("settings");
   const { backupEnabled, backupHour, backupMaxCount } = values;
   const { control, watch } = useFormContext<UpdateSettingsInput>();
+  const yesNo = (value: boolean) => (value ? t("shared.yes") : t("shared.no"));
 
   // Watch the current form value to conditionally show/hide fields
   const currentBackupEnabled = watch("backupEnabled") ?? backupEnabled.default;
 
   return (
-    <SettingsSectionFrame mode={layoutMode} title="Backup" value="backup">
+    <SettingsSectionFrame
+      mode={layoutMode}
+      title={t("backup.title")}
+      value="backup"
+    >
       <div className="space-y-6">
         <div className="flex items-start space-x-3">
           <Controller
@@ -88,11 +106,10 @@ export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
               htmlFor="backupEnabled"
               className="cursor-pointer text-sm font-medium leading-none"
             >
-              Enable automatic backups
+              {t("backup.enableLabel")}
             </label>
             <p className="text-xs text-muted-foreground">
-              Automatically create database backups on a daily schedule. Manual
-              backups can always be created regardless of this setting.
+              {t("backup.enableHelp")}
             </p>
           </div>
         </div>
@@ -104,7 +121,7 @@ export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
               control={control}
               render={({ field }) => (
                 <SettingsInput
-                  label="Backup Hour"
+                  label={t("backup.hourLabel")}
                   type="number"
                   inputProps={{
                     ...field,
@@ -122,8 +139,11 @@ export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
                     },
                   }}
                   disabled={isLoading || isSaving}
-                  helper={`Hour of the day (0-23) in UTC when automatic backups should run. Default: ${backupHour.default}:00 UTC.`}
-                  current={`Effective: ${backupHour.effective}:00 UTC | Default: ${backupHour.default}:00 UTC`}
+                  helper={t("backup.hourHelper", { hour: backupHour.default })}
+                  current={t("backup.hourCurrent", {
+                    effective: backupHour.effective,
+                    default: backupHour.default,
+                  })}
                 />
               )}
             />
@@ -133,7 +153,7 @@ export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
               control={control}
               render={({ field }) => (
                 <SettingsInput
-                  label="Max Backups to Keep"
+                  label={t("backup.maxCountLabel")}
                   type="number"
                   inputProps={{
                     ...field,
@@ -151,8 +171,13 @@ export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
                     },
                   }}
                   disabled={isLoading || isSaving}
-                  helper={`Maximum number of automatic backups to retain (1-5). Older backups are deleted automatically. Default: ${backupMaxCount.default}.`}
-                  current={`Effective: ${backupMaxCount.effective} | Default: ${backupMaxCount.default}`}
+                  helper={t("backup.maxCountHelper", {
+                    value: backupMaxCount.default,
+                  })}
+                  current={t("shared.effectiveDefault", {
+                    effective: backupMaxCount.effective,
+                    default: backupMaxCount.default,
+                  })}
                 />
               )}
             />
@@ -163,7 +188,9 @@ export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
           <div className="flex items-center gap-2 pl-7 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
             <span>
-              Next scheduled backup: {formatBackupDate(nextScheduled)}
+              {t("backup.nextScheduled", {
+                date: formatBackupDate(nextScheduled),
+              })}
             </span>
           </div>
         )}
@@ -172,30 +199,28 @@ export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium">Backup History</div>
+            <div className="text-sm font-medium">{t("backup.history")}</div>
             <Button
               size="sm"
               onClick={onCreateBackup}
               disabled={isLoading || isCreatingBackup || isDeletingBackup}
             >
-              {isCreatingBackup ? "Creating..." : "Create Backup Now"}
+              {isCreatingBackup ? t("backup.creating") : t("backup.createNow")}
             </Button>
           </div>
 
           <ListPanel
             header={
               <div className="flex items-center justify-between text-sm">
-                <span>
-                  {backups.length} backup{backups.length !== 1 ? "s" : ""}
-                </span>
+                <span>{t("backup.count", { count: backups.length })}</span>
               </div>
             }
           >
             {backups.length === 0 ? (
               <EmptyState
                 icon={Archive}
-                title="No backups yet"
-                description="Create your first backup to protect your data."
+                title={t("backup.emptyTitle")}
+                description={t("backup.emptyDescription")}
               />
             ) : (
               backups.map((backup) => (
@@ -220,7 +245,9 @@ export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
                       variant={backup.type === "auto" ? "secondary" : "default"}
                       className="text-xs"
                     >
-                      {backup.type === "auto" ? "Auto" : "Manual"}
+                      {backup.type === "auto"
+                        ? t("backup.typeAuto")
+                        : t("backup.typeManual")}
                     </Badge>
                     <Button
                       variant="ghost"
@@ -242,24 +269,36 @@ export const BackupSettingsSection: React.FC<BackupSettingsSectionProps> = ({
 
         <div className="grid gap-2 text-sm sm:grid-cols-3">
           <div>
-            <div className="text-xs text-muted-foreground">Enabled</div>
+            <div className="text-xs text-muted-foreground">
+              {t("backup.enabled")}
+            </div>
             <div className="break-words font-mono text-xs">
-              Effective: {backupEnabled.effective ? "Yes" : "No"} | Default:{" "}
-              {backupEnabled.default ? "Yes" : "No"}
+              {t("shared.effectiveDefault", {
+                effective: yesNo(backupEnabled.effective),
+                default: yesNo(backupEnabled.default),
+              })}
             </div>
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">Hour</div>
+            <div className="text-xs text-muted-foreground">
+              {t("backup.hour")}
+            </div>
             <div className="break-words font-mono text-xs">
-              Effective: {backupHour.effective}:00 UTC | Default:{" "}
-              {backupHour.default}:00 UTC
+              {t("backup.hourCurrent", {
+                effective: backupHour.effective,
+                default: backupHour.default,
+              })}
             </div>
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">Max Count</div>
+            <div className="text-xs text-muted-foreground">
+              {t("backup.maxCount")}
+            </div>
             <div className="break-words font-mono text-xs">
-              Effective: {backupMaxCount.effective} | Default:{" "}
-              {backupMaxCount.default}
+              {t("shared.effectiveDefault", {
+                effective: backupMaxCount.effective,
+                default: backupMaxCount.default,
+              })}
             </div>
           </div>
         </div>

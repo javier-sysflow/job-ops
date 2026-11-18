@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { CommandDialog, CommandInput } from "@/components/ui/command";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { bucketQueryLength, trackProductEvent } from "@/lib/analytics";
@@ -124,6 +125,7 @@ export const JobCommandBar: React.FC<JobCommandBarProps> = ({
   onOpenChange,
   enabled = true,
 }) => {
+  const { t } = useTranslation("jobs");
   const [internalOpen, setInternalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeLock, setActiveLock] = useState<StatusLock | null>(null);
@@ -436,12 +438,12 @@ export const JobCommandBar: React.FC<JobCommandBarProps> = ({
       }}
       contentClassName={`max-w-4xl transition-[border-color,box-shadow] duration-200 ${activeLock ? lockDialogAccentClass[activeLock] : ""}`}
     >
-      <DialogTitle className="sr-only">Job Search</DialogTitle>
+      <DialogTitle className="sr-only">{t("commandBar.title")}</DialogTitle>
       <DialogDescription className="sr-only">
-        Search jobs across all states by job title or company name.
+        {t("commandBar.description")}
       </DialogDescription>
       <CommandInput
-        placeholder="Search jobs by job title or company name..."
+        placeholder={t("commandBar.placeholder")}
         value={query}
         onValueChange={setQuery}
         onKeyDown={handleInputKeyDown}
@@ -457,13 +459,16 @@ export const JobCommandBar: React.FC<JobCommandBarProps> = ({
         aria-expanded={isOpen}
       />
       <div className="px-3 py-1 text-[11px] text-muted-foreground border-b">
-        Use <span className="font-mono">@</span> + status + Tab/Enter to lock a
-        status. Backspace on empty search clears the lock.
+        <Trans
+          t={t}
+          i18nKey="commandBar.lockHint"
+          components={{ mono: <span className="font-mono" /> }}
+        />
       </div>
 
       {rows.length === 0 ? (
         <output className="block py-6 text-center text-sm" aria-live="polite">
-          No jobs found.
+          {t("commandBar.noResults")}
         </output>
       ) : (
         <div
@@ -476,7 +481,7 @@ export const JobCommandBar: React.FC<JobCommandBarProps> = ({
           )}
           className="max-h-[65vh] overflow-y-auto overflow-x-hidden"
           role="listbox"
-          aria-label="Job search results"
+          aria-label={t("commandBar.resultsAria")}
           onScroll={(event) => {
             setScrollTop(event.currentTarget.scrollTop);
           }}
@@ -548,7 +553,9 @@ export const JobCommandBar: React.FC<JobCommandBarProps> = ({
                           )}
                         />
                         <span className="truncate text-sm font-medium">
-                          Lock to @{lockLabel[row.lock]}
+                          {t("commandBar.lockTo", {
+                            lock: lockLabel[row.lock],
+                          })}
                         </span>
                       </div>
                     </div>

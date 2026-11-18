@@ -1,16 +1,18 @@
 import * as api from "@client/api";
+import i18n from "@client/i18n";
 import type {
   DesignResumeDocument,
   PdfRenderer,
   TypstTheme,
 } from "@shared/types";
-import { FileText, Loader2, Minus, Plus } from "lucide-react";
 import {
   GlobalWorkerOptions,
   getDocument,
   type PDFDocumentProxy,
 } from "pdfjs-dist";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { FileText, Loader2, Minus, Plus } from "@/components/icons";
 import { trackProductEvent } from "@/lib/analytics";
 
 type DesignResumePdfPreviewProps = {
@@ -80,6 +82,7 @@ export function DesignResumePdfPreview({
   isDirty,
   saveState,
 }: DesignResumePdfPreviewProps) {
+  const { t } = useTranslation("resumeStudio");
   const [previewState, setPreviewState] = useState<PreviewState>("idle");
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
@@ -151,7 +154,7 @@ export function DesignResumePdfPreview({
       setPreviewState((current) =>
         current === "waiting-for-save" ? "error" : current,
       );
-      setPreviewError("Changes could not be saved. Please try again.");
+      setPreviewError(i18n.t("resumeStudio:preview.saveError"));
       return;
     }
 
@@ -213,7 +216,7 @@ export function DesignResumePdfPreview({
         setPreviewError(
           error instanceof Error
             ? error.message
-            : "Could not render the PDF preview.",
+            : i18n.t("resumeStudio:preview.renderError"),
         );
         setPreviewState("error");
         setIsRenderingPages(false);
@@ -288,7 +291,7 @@ export function DesignResumePdfPreview({
       setPreviewError(
         error instanceof Error
           ? error.message
-          : "Could not render the PDF preview.",
+          : i18n.t("resumeStudio:preview.renderError"),
       );
       setPreviewState("error");
       setIsRenderingPages(false);
@@ -327,7 +330,7 @@ export function DesignResumePdfPreview({
                         canvasRefs.current.delete(pageNumber);
                       }
                     }}
-                    aria-label={`Resume Studio PDF page ${pageNumber}`}
+                    aria-label={t("preview.page", { page: pageNumber })}
                     className="block"
                   />
                 </div>
@@ -339,7 +342,7 @@ export function DesignResumePdfPreview({
         <div className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full border border-border/70 bg-card/90 px-2 py-2 shadow-lg backdrop-blur">
           <button
             type="button"
-            aria-label="Zoom out PDF preview"
+            aria-label={t("preview.zoomOut")}
             className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
             onClick={handleZoomOut}
             disabled={zoomLevel <= PDF_ZOOM_MIN || showLoader}
@@ -356,7 +359,7 @@ export function DesignResumePdfPreview({
           </button>
           <button
             type="button"
-            aria-label="Zoom in PDF preview"
+            aria-label={t("preview.zoomIn")}
             className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
             onClick={handleZoomIn}
             disabled={zoomLevel >= PDF_ZOOM_MAX || showLoader}
@@ -371,10 +374,10 @@ export function DesignResumePdfPreview({
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               <div className="text-sm font-medium text-foreground">
                 {isUpdatingRenderer
-                  ? "Updating template before refreshing the preview"
+                  ? t("preview.updatingTemplate")
                   : previewState === "waiting-for-save"
-                    ? "Saving changes before updating the preview"
-                    : "Rendering PDF preview"}
+                    ? t("preview.savingChanges")
+                    : t("preview.rendering")}
               </div>
             </div>
           </div>
@@ -385,10 +388,10 @@ export function DesignResumePdfPreview({
             <div className="flex max-w-sm flex-col items-center gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-6 py-5 text-center">
               <FileText className="h-6 w-6 text-rose-300" />
               <div className="text-sm font-medium text-rose-200">
-                Preview unavailable
+                {t("preview.unavailable")}
               </div>
               <div className="text-xs leading-6 text-rose-200/80">
-                {previewError ?? "Could not render the PDF preview."}
+                {previewError ?? t("preview.renderError")}
               </div>
             </div>
           </div>

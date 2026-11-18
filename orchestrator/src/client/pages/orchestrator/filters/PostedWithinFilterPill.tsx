@@ -1,5 +1,6 @@
-import { Clock } from "lucide-react";
+import i18n from "@client/i18n";
 import type React from "react";
+import { Clock } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { postedWithinOptions } from "../constants";
 import { FilterPill } from "./FilterPill";
@@ -12,7 +13,7 @@ export const PostedWithinFilterPill: React.FC<PostedWithinFilterPillProps> = ({
 }) => (
   <FilterPill
     icon={<Clock />}
-    label="Posted"
+    label={i18n.t("jobs:filters.posted.label")}
     active={postedWithinDays != null}
     summary={postedWithinLabel}
   >

@@ -11,7 +11,7 @@ import { getJobOpsAppConfig } from "@server/config/app-mode";
 import { getSetting } from "@server/repositories/settings";
 import { getJobOpsPublicAvailability } from "@server/services/tracer-links";
 import { safePdfFileName } from "@shared/filename-sanitizer";
-import { settingsRegistry } from "@shared/settings-registry";
+import { isValidTimeZone, settingsRegistry } from "@shared/settings-registry";
 import type {
   DesignResumePdfResponse,
   PdfPaperSize,
@@ -83,6 +83,12 @@ async function resolvePdfPaperSize(): Promise<PdfPaperSize> {
     settingsRegistry.pdfPaperSize.parse(storedValue ?? undefined) ??
     settingsRegistry.pdfPaperSize.default()
   );
+}
+
+/** The user's browser time zone (saved by the client), for document dates. */
+async function resolveUserTimeZone(): Promise<string | null> {
+  const storedValue = (await getSetting("timeZone"))?.trim();
+  return storedValue && isValidTimeZone(storedValue) ? storedValue : null;
 }
 
 async function resolveTypstTheme() {
@@ -409,6 +415,7 @@ export async function generatePdf(
         renderer,
         typstTheme,
         paperSize,
+        timeZone: await resolveUserTimeZone(),
       });
     } else {
       await renderRxResumePdf({
@@ -485,6 +492,7 @@ async function generateDesignResumePdfImpl(options?: {
       renderer,
       typstTheme,
       paperSize,
+      timeZone: await resolveUserTimeZone(),
     });
   } else {
     await renderRxResumePdf({

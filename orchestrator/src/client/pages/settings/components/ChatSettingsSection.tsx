@@ -8,7 +8,6 @@ import {
 import type { ChatValues } from "@client/pages/settings/types";
 import type { UpdateSettingsInput } from "@shared/settings-schema.js";
 import {
-  CHAT_STYLE_MANUAL_LANGUAGE_LABELS,
   CHAT_STYLE_MANUAL_LANGUAGE_VALUES,
   type ChatStyleLanguageMode,
   type ChatStyleManualLanguage,
@@ -16,6 +15,7 @@ import {
 import type React from "react";
 import { useState } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,12 +33,6 @@ type ChatSettingsSectionProps = {
   isLoading: boolean;
   isSaving: boolean;
   layoutMode?: "accordion" | "panel";
-};
-
-const LANGUAGE_MODE_LABELS: Record<ChatStyleLanguageMode, string> = {
-  manual: "Choose specific language",
-  "match-resume": "Match current resume language",
-  "match-job-description": "Match job description",
 };
 
 function parseTokenizedTerms(input: string): string[] {
@@ -62,6 +56,13 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
   isSaving,
   layoutMode,
 }) => {
+  const { t } = useTranslation("settings");
+  const languageModeLabel = (mode: ChatStyleLanguageMode) =>
+    t(`chat.languageModes.${mode}`);
+  const manualLanguageLabel = (language: ChatStyleManualLanguage) =>
+    t(`chat.languages.${language}`);
+  const enabledLabel = (value: boolean) =>
+    value ? t("shared.enabled") : t("shared.disabled");
   const {
     tone,
     formality,
@@ -122,18 +123,15 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
   return (
     <SettingsSectionFrame
       mode={layoutMode}
-      title="Writing Style & Language"
+      title={t("chat.title")}
       value="chat"
     >
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          These defaults shape AI-generated writing across Ghostwriter and
-          resume tailoring.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("chat.intro")}</p>
 
         <div className="space-y-2">
           <label htmlFor="writingStylePreset" className="text-sm font-medium">
-            Preset
+            {t("chat.presetLabel")}
           </label>
           <Select
             value={selectedPresetId}
@@ -161,23 +159,21 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
             disabled={isLoading || isSaving}
           >
             <SelectTrigger id="writingStylePreset">
-              <SelectValue placeholder="Choose a writing preset" />
+              <SelectValue placeholder={t("chat.presetPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {WRITING_STYLE_PRESETS.map((preset) => (
                 <SelectItem key={preset.id} value={preset.id}>
-                  {preset.label}
+                  {t(`chat.presets.${preset.id}.label`)}
                 </SelectItem>
               ))}
-              <SelectItem value="custom">Custom</SelectItem>
+              <SelectItem value="custom">{t("chat.presetCustom")}</SelectItem>
             </SelectContent>
           </Select>
           <div className="text-xs text-muted-foreground">
             {selectedPresetId === "custom"
-              ? "Your current values are custom."
-              : (WRITING_STYLE_PRESETS.find(
-                  (preset) => preset.id === selectedPresetId,
-                )?.description ?? "")}
+              ? t("chat.presetCustomDescription")
+              : t(`chat.presets.${selectedPresetId}.description`)}
           </div>
         </div>
 
@@ -203,11 +199,10 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
               htmlFor="ghostwriterStopSlopEnabled"
               className="cursor-pointer text-sm font-medium leading-none"
             >
-              Use Stop Slop for Ghostwriter
+              {t("chat.stopSlopLabel")}
             </label>
             <p className="text-xs text-muted-foreground">
-              Applies extra Ghostwriter-only instructions to remove filler,
-              formulaic AI phrasing, passive voice, vague claims, and em dashes.
+              {t("chat.stopSlopHelp")}
             </p>
           </div>
         </div>
@@ -220,7 +215,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
               htmlFor="chatStyleLanguageMode"
               className="text-sm font-medium"
             >
-              Output language
+              {t("chat.outputLanguage")}
             </label>
             <Controller
               name="chatStyleLanguageMode"
@@ -241,26 +236,28 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                 >
                   <SelectTrigger
                     id="chatStyleLanguageMode"
-                    aria-label="Output language"
+                    aria-label={t("chat.outputLanguage")}
                   >
-                    <SelectValue placeholder="Select output language" />
+                    <SelectValue
+                      placeholder={t("chat.outputLanguagePlaceholder")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="match-resume">
-                      Match current resume language
+                      {languageModeLabel("match-resume")}
                     </SelectItem>
                     <SelectItem value="match-job-description">
-                      Match job description
+                      {languageModeLabel("match-job-description")}
                     </SelectItem>
                     <SelectItem value="manual">
-                      Choose specific language
+                      {languageModeLabel("manual")}
                     </SelectItem>
                   </SelectContent>
                 </Select>
               )}
             />
             <div className="text-xs text-muted-foreground">
-              Choose how AI picks the output language.
+              {t("chat.outputLanguageHelp")}
             </div>
           </div>
 
@@ -270,7 +267,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                 htmlFor="chatStyleManualLanguage"
                 className="text-sm font-medium"
               >
-                Specific language
+                {t("chat.specificLanguage")}
               </label>
               <Controller
                 name="chatStyleManualLanguage"
@@ -287,14 +284,16 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                   >
                     <SelectTrigger
                       id="chatStyleManualLanguage"
-                      aria-label="Specific language"
+                      aria-label={t("chat.specificLanguage")}
                     >
-                      <SelectValue placeholder="Select language" />
+                      <SelectValue
+                        placeholder={t("chat.specificLanguagePlaceholder")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {CHAT_STYLE_MANUAL_LANGUAGE_VALUES.map((language) => (
                         <SelectItem key={language} value={language}>
-                          {CHAT_STYLE_MANUAL_LANGUAGE_LABELS[language]}
+                          {manualLanguageLabel(language)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -302,7 +301,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                 )}
               />
               <div className="text-xs text-muted-foreground">
-                Used when output language is set to a specific language.
+                {t("chat.specificLanguageHelp")}
               </div>
             </div>
           ) : null}
@@ -311,7 +310,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label htmlFor="chatStyleTone" className="text-sm font-medium">
-              Tone
+              {t("chat.tone")}
             </label>
             <Controller
               name="chatStyleTone"
@@ -323,13 +322,21 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                   disabled={isLoading || isSaving}
                 >
                   <SelectTrigger id="chatStyleTone">
-                    <SelectValue placeholder="Select tone" />
+                    <SelectValue placeholder={t("chat.tonePlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="professional">Professional</SelectItem>
-                    <SelectItem value="concise">Concise</SelectItem>
-                    <SelectItem value="direct">Direct</SelectItem>
-                    <SelectItem value="friendly">Friendly</SelectItem>
+                    <SelectItem value="professional">
+                      {t("chat.tones.professional")}
+                    </SelectItem>
+                    <SelectItem value="concise">
+                      {t("chat.tones.concise")}
+                    </SelectItem>
+                    <SelectItem value="direct">
+                      {t("chat.tones.direct")}
+                    </SelectItem>
+                    <SelectItem value="friendly">
+                      {t("chat.tones.friendly")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -338,7 +345,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
 
           <div className="space-y-2">
             <label htmlFor="chatStyleFormality" className="text-sm font-medium">
-              Formality
+              {t("chat.formality")}
             </label>
             <Controller
               name="chatStyleFormality"
@@ -350,12 +357,18 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                   disabled={isLoading || isSaving}
                 >
                   <SelectTrigger id="chatStyleFormality">
-                    <SelectValue placeholder="Select formality" />
+                    <SelectValue placeholder={t("chat.formalityPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="low">
+                      {t("chat.formalities.low")}
+                    </SelectItem>
+                    <SelectItem value="medium">
+                      {t("chat.formalities.medium")}
+                    </SelectItem>
+                    <SelectItem value="high">
+                      {t("chat.formalities.high")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -365,27 +378,26 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
 
         <div className="space-y-2">
           <label htmlFor="chatStyleConstraints" className="text-sm font-medium">
-            Constraints
+            {t("chat.constraints")}
           </label>
           <Textarea
             id="chatStyleConstraints"
-            placeholder="Example: keep answers under 120 words and include bullet points"
+            placeholder={t("chat.constraintsPlaceholder")}
             disabled={isLoading || isSaving}
             {...register("chatStyleConstraints")}
           />
           <div className="text-xs text-muted-foreground">
-            Optional global writing constraints applied to Ghostwriter replies
-            and resume tailoring.
+            {t("chat.constraintsHelp")}
           </div>
           <div className="text-xs text-muted-foreground">
-            Current:{" "}
+            {t("shared.current")}{" "}
             <span className="font-mono">{constraints.effective || "—"}</span>
           </div>
         </div>
 
         <div className="space-y-2">
           <label htmlFor="chatStyleDoNotUse" className="text-sm font-medium">
-            Do-not-use terms
+            {t("chat.doNotUse")}
           </label>
           <TokenizedInput
             id="chatStyleDoNotUse"
@@ -398,13 +410,13 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                 shouldDirty: true,
               })
             }
-            placeholder='e.g. "synergize", "leverage"'
-            helperText="Optional words or phrases the AI should avoid when generating text. This is guidance to the model, not a guaranteed blocklist."
-            removeLabelPrefix="Remove do-not-use term"
+            placeholder={t("chat.doNotUsePlaceholder")}
+            helperText={t("chat.doNotUseHelp")}
+            removeLabelPrefix={t("chat.doNotUseRemove")}
             disabled={isLoading || isSaving}
           />
           <div className="text-xs text-muted-foreground">
-            Current:{" "}
+            {t("shared.current")}{" "}
             <span className="font-mono">{doNotUse.effective || "—"}</span>
           </div>
         </div>
@@ -413,40 +425,58 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
 
         <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <div className="text-xs text-muted-foreground">Tone</div>
-            <div className="break-words font-mono text-xs">
-              Effective: {tone.effective} | Default: {tone.default}
+            <div className="text-xs text-muted-foreground">
+              {t("chat.tone")}
             </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground">Formality</div>
             <div className="break-words font-mono text-xs">
-              Effective: {formality.effective} | Default: {formality.default}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground">Language mode</div>
-            <div className="break-words font-mono text-xs">
-              Effective: {LANGUAGE_MODE_LABELS[languageMode.effective]} |
-              Default: {LANGUAGE_MODE_LABELS[languageMode.default]}
+              {t("shared.effectiveDefault", {
+                effective: tone.effective,
+                default: tone.default,
+              })}
             </div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">
-              Specific language
+              {t("chat.formality")}
             </div>
             <div className="break-words font-mono text-xs">
-              Effective:{" "}
-              {CHAT_STYLE_MANUAL_LANGUAGE_LABELS[manualLanguage.effective]} |
-              Default:{" "}
-              {CHAT_STYLE_MANUAL_LANGUAGE_LABELS[manualLanguage.default]}
+              {t("shared.effectiveDefault", {
+                effective: formality.effective,
+                default: formality.default,
+              })}
             </div>
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">Stop Slop</div>
+            <div className="text-xs text-muted-foreground">
+              {t("chat.languageMode")}
+            </div>
             <div className="break-words font-mono text-xs">
-              Effective: {stopSlopEnabled.effective ? "Enabled" : "Disabled"} |
-              Default: {stopSlopEnabled.default ? "Enabled" : "Disabled"}
+              {t("shared.effectiveDefault", {
+                effective: languageModeLabel(languageMode.effective),
+                default: languageModeLabel(languageMode.default),
+              })}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">
+              {t("chat.specificLanguage")}
+            </div>
+            <div className="break-words font-mono text-xs">
+              {t("shared.effectiveDefault", {
+                effective: manualLanguageLabel(manualLanguage.effective),
+                default: manualLanguageLabel(manualLanguage.default),
+              })}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">
+              {t("chat.stopSlop")}
+            </div>
+            <div className="break-words font-mono text-xs">
+              {t("shared.effectiveDefault", {
+                effective: enabledLabel(stopSlopEnabled.effective),
+                default: enabledLabel(stopSlopEnabled.default),
+              })}
             </div>
           </div>
         </div>
@@ -459,7 +489,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
               htmlFor="chatStyleSummaryMaxWords"
               className="text-sm font-medium"
             >
-              Summary max words
+              {t("chat.summaryMaxWords")}
             </label>
             <Controller
               name="chatStyleSummaryMaxWords"
@@ -469,7 +499,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                   v === null ||
                   v === undefined ||
                   (Number.isInteger(v) && v >= 1 && v <= 500) ||
-                  "Must be between 1 and 500",
+                  t("chat.rangeError", { min: 1, max: 500 }),
               }}
               render={({ field }) => (
                 <Input
@@ -478,7 +508,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                   min={1}
                   max={500}
                   step={1}
-                  placeholder="No limit"
+                  placeholder={t("chat.noLimit")}
                   disabled={isLoading || isSaving}
                   value={field.value ?? ""}
                   onChange={(e) => {
@@ -494,11 +524,10 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
               </div>
             )}
             <div className="text-xs text-muted-foreground">
-              Limits words in the AI-generated summary. Overrides any word
-              limits in Constraints.
+              {t("chat.summaryMaxWordsHelp")}
             </div>
             <div className="text-xs text-muted-foreground">
-              Current:{" "}
+              {t("shared.current")}{" "}
               <span className="font-mono">
                 {summaryMaxWords.effective ?? "—"}
               </span>
@@ -510,7 +539,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
               htmlFor="chatStyleMaxKeywordsPerSkill"
               className="text-sm font-medium"
             >
-              Max keywords per skill
+              {t("chat.maxKeywords")}
             </label>
             <Controller
               name="chatStyleMaxKeywordsPerSkill"
@@ -520,7 +549,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                   v === null ||
                   v === undefined ||
                   (Number.isInteger(v) && v >= 1 && v <= 50) ||
-                  "Must be between 1 and 50",
+                  t("chat.rangeError", { min: 1, max: 50 }),
               }}
               render={({ field }) => (
                 <Input
@@ -529,7 +558,7 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
                   min={1}
                   max={50}
                   step={1}
-                  placeholder="No limit"
+                  placeholder={t("chat.noLimit")}
                   disabled={isLoading || isSaving}
                   value={field.value ?? ""}
                   onChange={(e) => {
@@ -545,11 +574,10 @@ export const ChatSettingsSection: React.FC<ChatSettingsSectionProps> = ({
               </div>
             )}
             <div className="text-xs text-muted-foreground">
-              Caps keywords per skill category. Overrides any keyword limits in
-              Constraints.
+              {t("chat.maxKeywordsHelp")}
             </div>
             <div className="text-xs text-muted-foreground">
-              Current:{" "}
+              {t("shared.current")}{" "}
               <span className="font-mono">
                 {maxKeywordsPerSkill.effective ?? "—"}
               </span>

@@ -1,10 +1,14 @@
 import * as api from "@client/api";
 import { ListItem } from "@client/components/layout";
 import { PipelineProgress } from "@client/components/PipelineProgress";
+import i18n from "@client/i18n";
 import { queryKeys } from "@client/lib/queryKeys";
 import { sourceLabel } from "@shared/extractors";
 import type { PipelineRun, PipelineRunInsights } from "@shared/types";
 import { useQuery } from "@tanstack/react-query";
+import type React from "react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Activity,
   AlertCircle,
@@ -12,9 +16,7 @@ import {
   GitCompareArrows,
   History,
   Loader2,
-} from "lucide-react";
-import type React from "react";
-import { useMemo, useState } from "react";
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -61,9 +63,11 @@ function getRunReason(
   displayStatus: PipelineRunDisplayStatus,
 ) {
   if (run.errorMessage) return run.errorMessage;
-  if (displayStatus === "cancelled") return "Run cancelled before completion.";
+  if (displayStatus === "cancelled") {
+    return i18n.t("overview:runs.reason.cancelled");
+  }
   if (displayStatus === "incomplete") {
-    return "This historical run never recorded a completion timestamp.";
+    return i18n.t("overview:runs.reason.incomplete");
   }
   return null;
 }
@@ -95,12 +99,14 @@ function RunStatusBadge(props: { status: PipelineRunDisplayStatus }) {
 }
 
 function formatSourceList(sources: string[]) {
-  if (sources.length === 0) return "None";
+  if (sources.length === 0) return i18n.t("overview:runs.values.none");
   return sources.join(", ");
 }
 
 function formatToggleState(value: boolean) {
-  return value ? "Enabled" : "Disabled";
+  return value
+    ? i18n.t("overview:runs.values.enabled")
+    : i18n.t("overview:runs.values.disabled");
 }
 
 function formatStageLabel(stage: string) {
@@ -113,13 +119,14 @@ function RunsList(props: {
   selectedRunId: string | null;
   onSelectRun: (runId: string) => void;
 }) {
+  const { t } = useTranslation("overview");
   return (
     <div className="space-y-2">
       <div className="hidden grid-cols-[minmax(0,1.6fr)_auto_auto_auto] gap-3 px-3 text-xs text-muted-foreground md:grid">
-        <div>Run</div>
-        <div>Status</div>
-        <div>Discovered</div>
-        <div>Processed</div>
+        <div>{t("runs.list.run")}</div>
+        <div>{t("runs.list.status")}</div>
+        <div>{t("runs.list.discovered")}</div>
+        <div>{t("runs.list.processed")}</div>
       </div>
 
       <div className="space-y-2">
@@ -147,11 +154,11 @@ function RunsList(props: {
                     {formatDateTime(run.startedAt) ?? run.startedAt}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Run {run.id.slice(0, 8)}
+                    {t("runs.list.runId", { id: run.id.slice(0, 8) })}
                   </span>
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Duration {duration}
+                  {t("runs.list.duration", { duration })}
                 </div>
               </div>
               <div className="md:self-center">
@@ -159,7 +166,7 @@ function RunsList(props: {
               </div>
               <div className="md:self-center md:text-right">
                 <div className="text-xs text-muted-foreground md:hidden">
-                  Discovered
+                  {t("runs.list.discovered")}
                 </div>
                 <div className="font-medium tabular-nums">
                   {run.jobsDiscovered.toLocaleString()}
@@ -167,7 +174,7 @@ function RunsList(props: {
               </div>
               <div className="md:self-center md:text-right">
                 <div className="text-xs text-muted-foreground md:hidden">
-                  Processed
+                  {t("runs.list.processed")}
                 </div>
                 <div className="font-medium tabular-nums">
                   {run.jobsProcessed.toLocaleString()}
@@ -185,6 +192,7 @@ function RunInsightsBody(props: {
   insights: PipelineRunInsights;
   isActiveRun: boolean;
 }) {
+  const { t } = useTranslation("overview");
   const { run, exactMetrics, inferredMetrics } = props.insights;
   const savedDetails = props.insights.savedDetails;
   const displayStatus = getPipelineRunDisplayStatus(run, {
@@ -193,85 +201,91 @@ function RunInsightsBody(props: {
   const runReason = getRunReason(run, displayStatus);
   const inferredHint =
     inferredMetrics.jobsCreated.quality === "unavailable"
-      ? "Unavailable for incomplete runs."
-      : "Approximate counts inferred from job timestamps in the run window. Other job activity in the same period may be included.";
+      ? t("runs.details.inferredUnavailable")
+      : t("runs.details.inferredHint");
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         <RunStatusBadge status={displayStatus} />
         <span className="text-sm text-muted-foreground">
-          Started {formatDateTime(run.startedAt) ?? run.startedAt}
+          {t("runs.details.started", {
+            date: formatDateTime(run.startedAt) ?? run.startedAt,
+          })}
         </span>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <MetricCard
-          label="Duration"
+          label={t("runs.metrics.duration")}
           value={formatPipelineDuration(exactMetrics.durationMs)}
         />
         <MetricCard
-          label="Jobs discovered"
+          label={t("runs.metrics.jobsDiscovered")}
           value={run.jobsDiscovered.toLocaleString()}
         />
         <MetricCard
-          label="Jobs processed"
+          label={t("runs.metrics.jobsProcessed")}
           value={run.jobsProcessed.toLocaleString()}
         />
         <MetricCard
-          label="Completed"
-          value={formatDateTime(run.completedAt) ?? "Not recorded"}
+          label={t("runs.metrics.completed")}
+          value={
+            formatDateTime(run.completedAt) ?? t("runs.values.notRecorded")
+          }
         />
       </div>
 
       {runReason ? (
         <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm">
-          <div className="font-medium">Notes</div>
+          <div className="font-medium">{t("runs.details.notes")}</div>
           <div className="mt-1 text-muted-foreground">{runReason}</div>
         </div>
       ) : null}
 
       <div className="space-y-3">
-        <div className="font-medium">Saved settings</div>
+        <div className="font-medium">{t("runs.details.savedSettings")}</div>
         {savedDetails ? (
           <div className="space-y-4">
             <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-              <div className="text-sm font-medium">Requested run</div>
+              <div className="text-sm font-medium">
+                {t("runs.details.requestedRun")}
+              </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <MetricCard
-                  label="Top N"
+                  label={t("runs.details.topN")}
                   value={savedDetails.requestedConfig.topN.toLocaleString()}
                 />
                 <MetricCard
-                  label="Min suitability score"
+                  label={t("runs.details.minSuitabilityScore")}
                   value={savedDetails.requestedConfig.minSuitabilityScore.toLocaleString()}
                 />
                 <MetricCard
-                  label="Sources"
+                  label={t("runs.details.sources")}
                   value={formatSourceList(
                     savedDetails.requestedConfig.sources.map(sourceLabel),
                   )}
                 />
                 <MetricCard
-                  label="Crawling"
+                  label={t("runs.details.crawling")}
                   value={formatToggleState(
                     savedDetails.requestedConfig.enableCrawling,
                   )}
                 />
                 <MetricCard
-                  label="Scoring"
+                  label={t("runs.details.scoring")}
                   value={formatToggleState(
                     savedDetails.requestedConfig.enableScoring,
                   )}
                 />
                 <MetricCard
-                  label="Importing"
+                  label={t("runs.details.importing")}
                   value={formatToggleState(
                     savedDetails.requestedConfig.enableImporting,
                   )}
                 />
                 <MetricCard
-                  label="Auto tailoring"
+                  label={t("runs.details.autoTailoring")}
                   value={formatToggleState(
                     savedDetails.requestedConfig.enableAutoTailoring,
                   )}
@@ -280,33 +294,35 @@ function RunInsightsBody(props: {
             </div>
 
             <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-              <div className="text-sm font-medium">Effective settings</div>
+              <div className="text-sm font-medium">
+                {t("runs.details.effectiveSettings")}
+              </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <MetricCard
-                  label="Country"
+                  label={t("runs.details.country")}
                   value={
                     savedDetails.effectiveConfig.countryLabel ??
-                    "Not restricted"
+                    t("runs.values.notRestricted")
                   }
                 />
                 <MetricCard
-                  label="Cities"
+                  label={t("runs.details.cities")}
                   value={
                     savedDetails.effectiveConfig.searchCities.length > 0
                       ? savedDetails.effectiveConfig.searchCities.join(", ")
-                      : "Not restricted"
+                      : t("runs.values.notRestricted")
                   }
                 />
                 <MetricCard
-                  label="Workplace types"
+                  label={t("runs.details.workplaceTypes")}
                   value={
                     savedDetails.effectiveConfig.workplaceTypes.length > 0
                       ? savedDetails.effectiveConfig.workplaceTypes.join(", ")
-                      : "Not restricted"
+                      : t("runs.values.notRestricted")
                   }
                 />
                 <MetricCard
-                  label="Location matching"
+                  label={t("runs.details.locationMatching")}
                   value={`${formatStageLabel(
                     savedDetails.effectiveConfig.locationSearchScope,
                   )}; ${formatStageLabel(
@@ -314,7 +330,7 @@ function RunInsightsBody(props: {
                   )}`}
                 />
                 <MetricCard
-                  label="Compatible sources"
+                  label={t("runs.details.compatibleSources")}
                   value={formatSourceList(
                     savedDetails.effectiveConfig.compatibleSources.map(
                       sourceLabel,
@@ -322,13 +338,13 @@ function RunInsightsBody(props: {
                   )}
                 />
                 <MetricCard
-                  label="Skipped sources"
+                  label={t("runs.details.skippedSources")}
                   value={
                     savedDetails.effectiveConfig.skippedSources.length > 0
                       ? savedDetails.effectiveConfig.skippedSources
                           .map((entry) => sourceLabel(entry.source))
                           .join(", ")
-                      : "None"
+                      : t("runs.values.none")
                   }
                   hint={
                     savedDetails.effectiveConfig.skippedSources.length > 0
@@ -339,68 +355,84 @@ function RunInsightsBody(props: {
                   }
                 />
                 <MetricCard
-                  label="Search terms"
+                  label={t("runs.details.searchTerms")}
                   value={savedDetails.effectiveConfig.searchTermsCount.toLocaleString()}
                 />
                 <MetricCard
-                  label="Blocked company filters"
+                  label={t("runs.details.blockedCompanyFilters")}
                   value={savedDetails.effectiveConfig.blockedCompanyKeywordsCount.toLocaleString()}
                 />
                 <MetricCard
-                  label="Auto-skip threshold"
+                  label={t("runs.details.autoSkipThreshold")}
                   value={
                     savedDetails.effectiveConfig.autoSkipScoreThreshold == null
-                      ? "Off"
+                      ? t("runs.values.off")
                       : savedDetails.effectiveConfig.autoSkipScoreThreshold.toLocaleString()
                   }
                 />
                 <MetricCard
-                  label="PDF renderer"
+                  label={t("runs.details.pdfRenderer")}
                   value={savedDetails.effectiveConfig.pdfRenderer}
                 />
                 <MetricCard
-                  label="Source limits"
+                  label={t("runs.details.sourceLimits")}
                   value={`Indeed ${savedDetails.effectiveConfig.sourceLimits.jobspyResultsWanted}; UK Visa Jobs ${savedDetails.effectiveConfig.sourceLimits.ukvisajobsMaxJobs}`}
                   hint={`Adzuna ${savedDetails.effectiveConfig.sourceLimits.adzunaMaxJobsPerTerm}; Gradcracker ${savedDetails.effectiveConfig.sourceLimits.gradcrackerMaxJobsPerTerm}; startup.jobs ${savedDetails.effectiveConfig.sourceLimits.startupjobsMaxJobsPerTerm}; Jobindex ${savedDetails.effectiveConfig.sourceLimits.jobindexMaxJobsPerTerm}`}
                 />
                 <MetricCard
-                  label="Resume projects"
-                  value={`${savedDetails.effectiveConfig.resumeProjects.maxProjects} max`}
-                  hint={`${savedDetails.effectiveConfig.resumeProjects.lockedProjectCount} locked, ${savedDetails.effectiveConfig.resumeProjects.aiSelectableProjectCount} AI-selectable`}
+                  label={t("runs.details.resumeProjects")}
+                  value={t("runs.details.resumeProjectsMax", {
+                    max: savedDetails.effectiveConfig.resumeProjects
+                      .maxProjects,
+                  })}
+                  hint={t("runs.details.resumeProjectsHint", {
+                    locked:
+                      savedDetails.effectiveConfig.resumeProjects
+                        .lockedProjectCount,
+                    selectable:
+                      savedDetails.effectiveConfig.resumeProjects
+                        .aiSelectableProjectCount,
+                  })}
                 />
                 <MetricCard
-                  label="Models"
+                  label={t("runs.details.models")}
                   value={savedDetails.effectiveConfig.models.scorer}
-                  hint={`Tailoring ${savedDetails.effectiveConfig.models.tailoring}; project selection ${savedDetails.effectiveConfig.models.projectSelection}`}
+                  hint={t("runs.details.modelsHint", {
+                    tailoring: savedDetails.effectiveConfig.models.tailoring,
+                    projectSelection:
+                      savedDetails.effectiveConfig.models.projectSelection,
+                  })}
                 />
               </div>
             </div>
 
             <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-              <div className="text-sm font-medium">Saved execution summary</div>
+              <div className="text-sm font-medium">
+                {t("runs.details.executionSummary")}
+              </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <MetricCard
-                  label="Last recorded stage"
+                  label={t("runs.details.lastRecordedStage")}
                   value={formatStageLabel(savedDetails.resultSummary.stage)}
                 />
                 <MetricCard
-                  label="Jobs scored"
+                  label={t("runs.details.jobsScored")}
                   value={
                     savedDetails.resultSummary.jobsScored == null
-                      ? "Not recorded"
+                      ? t("runs.values.notRecorded")
                       : savedDetails.resultSummary.jobsScored.toLocaleString()
                   }
                 />
                 <MetricCard
-                  label="Jobs selected"
+                  label={t("runs.details.jobsSelected")}
                   value={
                     savedDetails.resultSummary.jobsSelected == null
-                      ? "Not recorded"
+                      ? t("runs.values.notRecorded")
                       : savedDetails.resultSummary.jobsSelected.toLocaleString()
                   }
                 />
                 <MetricCard
-                  label="Source errors"
+                  label={t("runs.details.sourceErrors")}
                   value={savedDetails.resultSummary.sourceErrors.length.toLocaleString()}
                 />
               </div>
@@ -413,39 +445,39 @@ function RunInsightsBody(props: {
           </div>
         ) : (
           <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground">
-            Saved run settings are available for newer pipeline runs.
+            {t("runs.details.savedSettingsUnavailable")}
           </div>
         )}
       </div>
 
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="font-medium">What changed</div>
-          <Badge variant="outline">Inferred from timestamps</Badge>
+          <div className="font-medium">{t("runs.details.whatChanged")}</div>
+          <Badge variant="outline">{t("runs.details.inferredBadge")}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">{inferredHint}</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricCard
-            label="Jobs created"
+            label={t("runs.details.jobsCreated")}
             value={
               inferredMetrics.jobsCreated.value == null
-                ? "Not available"
+                ? t("runs.values.notAvailable")
                 : inferredMetrics.jobsCreated.value.toLocaleString()
             }
           />
           <MetricCard
-            label="Jobs updated"
+            label={t("runs.details.jobsUpdated")}
             value={
               inferredMetrics.jobsUpdated.value == null
-                ? "Not available"
+                ? t("runs.values.notAvailable")
                 : inferredMetrics.jobsUpdated.value.toLocaleString()
             }
           />
           <MetricCard
-            label="Jobs processed"
+            label={t("runs.metrics.jobsProcessed")}
             value={
               inferredMetrics.jobsProcessed.value == null
-                ? "Not available"
+                ? t("runs.values.notAvailable")
                 : inferredMetrics.jobsProcessed.value.toLocaleString()
             }
           />
@@ -456,6 +488,7 @@ function RunInsightsBody(props: {
 }
 
 export const OverviewPipelineRunsSection: React.FC = () => {
+  const { t } = useTranslation("overview");
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
 
   const pipelineStatusQuery = useQuery({
@@ -490,11 +523,11 @@ export const OverviewPipelineRunsSection: React.FC = () => {
       })
     : null;
   const currentStatusText = pipelineStatusQuery.data?.isRunning
-    ? "A pipeline run is currently in progress."
+    ? t("runs.current.inProgress")
     : latestRun
       ? (getRunReason(latestRun, currentStatus as PipelineRunDisplayStatus) ??
-        "The most recent pipeline activity is shown below.")
-      : "No pipeline runs recorded yet.";
+        t("runs.current.latestShown"))
+      : t("runs.current.noneRecorded");
   const selectedRun = useMemo(
     () =>
       (pipelineRunsQuery.data ?? []).find((run) => run.id === selectedRunId) ??
@@ -521,11 +554,9 @@ export const OverviewPipelineRunsSection: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <History className="h-4 w-4 text-muted-foreground" />
-                <CardTitle>Pipeline runs</CardTitle>
+                <CardTitle>{t("runs.title")}</CardTitle>
               </div>
-              <CardDescription>
-                Review recent pipeline activity without leaving Overview.
-              </CardDescription>
+              <CardDescription>{t("runs.description")}</CardDescription>
             </div>
             {currentStatus ? <RunStatusBadge status={currentStatus} /> : null}
           </div>
@@ -539,7 +570,7 @@ export const OverviewPipelineRunsSection: React.FC = () => {
           {isLoading && !latestRun && recentRuns.length === 0 ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Loading pipeline history…</span>
+              <span>{t("runs.current.loading")}</span>
             </div>
           ) : null}
 
@@ -547,7 +578,7 @@ export const OverviewPipelineRunsSection: React.FC = () => {
             <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
               {error instanceof Error
                 ? error.message
-                : "Failed to load pipeline history"}
+                : t("runs.current.loadError")}
             </div>
           ) : null}
 
@@ -557,12 +588,11 @@ export const OverviewPipelineRunsSection: React.FC = () => {
                 <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <Activity className="h-4 w-4 text-muted-foreground" />
-                    <span>Current status</span>
+                    <span>{t("runs.current.heading")}</span>
                   </div>
                   {statusError ? (
                     <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-                      Live status is temporarily unavailable. Showing the latest
-                      persisted run history.
+                      {t("runs.current.liveUnavailable")}
                     </div>
                   ) : null}
                   <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -575,31 +605,33 @@ export const OverviewPipelineRunsSection: React.FC = () => {
                   </div>
                   {pipelineStatusQuery.data?.nextScheduledRun ? (
                     <div className="mt-3 text-xs text-muted-foreground">
-                      Next scheduled run{" "}
-                      {formatDateTime(
-                        pipelineStatusQuery.data.nextScheduledRun,
-                      ) ?? pipelineStatusQuery.data.nextScheduledRun}
+                      {t("runs.current.nextScheduled", {
+                        date:
+                          formatDateTime(
+                            pipelineStatusQuery.data.nextScheduledRun,
+                          ) ?? pipelineStatusQuery.data.nextScheduledRun,
+                      })}
                     </div>
                   ) : null}
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <MetricCard
-                    label="Last run"
+                    label={t("runs.current.lastRun")}
                     value={
                       formatDateTime(latestRun.startedAt) ?? latestRun.startedAt
                     }
                   />
                   <MetricCard
-                    label="Duration"
+                    label={t("runs.metrics.duration")}
                     value={formatPipelineDuration(getDurationMs(latestRun))}
                   />
                   <MetricCard
-                    label="Jobs discovered"
+                    label={t("runs.metrics.jobsDiscovered")}
                     value={latestRun.jobsDiscovered.toLocaleString()}
                   />
                   <MetricCard
-                    label="Jobs processed"
+                    label={t("runs.metrics.jobsProcessed")}
                     value={latestRun.jobsProcessed.toLocaleString()}
                   />
                 </div>
@@ -608,11 +640,13 @@ export const OverviewPipelineRunsSection: React.FC = () => {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Clock3 className="h-4 w-4 text-muted-foreground" />
-                  <div className="font-medium">Recent runs</div>
+                  <div className="font-medium">
+                    {t("runs.current.recentRuns")}
+                  </div>
                 </div>
                 {runsError ? (
                   <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-                    Recent run history could not be refreshed just now.
+                    {t("runs.current.recentRefreshError")}
                   </div>
                 ) : null}
                 <RunsList
@@ -627,10 +661,9 @@ export const OverviewPipelineRunsSection: React.FC = () => {
 
           {!isLoading && !error && !latestRun ? (
             <div className="rounded-lg border border-dashed border-border/60 px-4 py-8 text-center">
-              <div className="font-medium">No pipeline runs yet</div>
+              <div className="font-medium">{t("runs.current.emptyTitle")}</div>
               <div className="mt-1 text-sm text-muted-foreground">
-                Once the pipeline runs, this section will show status, recent
-                history, and inferred changes.
+                {t("runs.current.emptyDescription")}
               </div>
             </div>
           ) : null}
@@ -650,15 +683,14 @@ export const OverviewPipelineRunsSection: React.FC = () => {
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <GitCompareArrows className="h-4 w-4" />
-              Run details
+              {t("runs.details.title")}
             </SheetTitle>
             <SheetDescription>
               {selectedRun
-                ? `Inspect exact and inferred signals for run ${selectedRun.id.slice(
-                    0,
-                    8,
-                  )}.`
-                : "Inspect exact and inferred signals for the selected run."}
+                ? t("runs.details.descriptionForRun", {
+                    id: selectedRun.id.slice(0, 8),
+                  })
+                : t("runs.details.descriptionSelected")}
             </SheetDescription>
           </SheetHeader>
 
@@ -666,7 +698,7 @@ export const OverviewPipelineRunsSection: React.FC = () => {
             {runInsightsQuery.isLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Loading run details…</span>
+                <span>{t("runs.details.loading")}</span>
               </div>
             ) : null}
 
@@ -674,7 +706,7 @@ export const OverviewPipelineRunsSection: React.FC = () => {
               <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
                 {runInsightsQuery.error instanceof Error
                   ? runInsightsQuery.error.message
-                  : "Failed to load run details"}
+                  : t("runs.details.loadError")}
               </div>
             ) : null}
 
@@ -692,10 +724,10 @@ export const OverviewPipelineRunsSection: React.FC = () => {
               <div className="rounded-lg border border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2 font-medium text-foreground">
                   <AlertCircle className="h-4 w-4" />
-                  <span>Run details unavailable</span>
+                  <span>{t("runs.details.unavailableTitle")}</span>
                 </div>
                 <div className="mt-2">
-                  The selected run could not be loaded. Try selecting it again.
+                  {t("runs.details.unavailableDescription")}
                 </div>
               </div>
             ) : null}

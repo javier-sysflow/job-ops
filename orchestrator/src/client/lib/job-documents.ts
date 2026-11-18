@@ -1,3 +1,4 @@
+import { formatNumber } from "@client/i18n/format";
 import {
   canOpenJobDocumentInline,
   canPreviewJobDocumentAsRawText,
@@ -24,16 +25,15 @@ export {
 };
 export type { JobDocumentTypeTarget };
 
-const bytesFormatter = new Intl.NumberFormat("en", {
-  maximumFractionDigits: 1,
-});
+const formatBytes = (value: number) =>
+  formatNumber(value, { maximumFractionDigits: 1 });
 
 export function formatJobDocumentByteSize(byteSize: number): string {
   if (byteSize < 1024) return `${byteSize} B`;
   if (byteSize < 1024 * 1024) {
-    return `${bytesFormatter.format(byteSize / 1024)} KB`;
+    return `${formatBytes(byteSize / 1024)} KB`;
   }
-  return `${bytesFormatter.format(byteSize / (1024 * 1024))} MB`;
+  return `${formatBytes(byteSize / (1024 * 1024))} MB`;
 }
 
 export function canPreviewJobDocumentAsObject(

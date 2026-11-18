@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
 import type React from "react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { X } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,7 @@ export const TokenizedInput: React.FC<TokenizedInputProps> = ({
   disabled = false,
   inputClassName,
 }) => {
+  const { t } = useTranslation("jobs");
   const [isFocused, setIsFocused] = useState(false);
   const tokensRef = useRef<HTMLDivElement | null>(null);
   const collapsedTokensRef = useRef<HTMLDivElement | null>(null);
@@ -201,7 +203,9 @@ export const TokenizedInput: React.FC<TokenizedInputProps> = ({
             ))}
             {collapsedPreview.hiddenCount > 0 ? (
               <span className={TOKEN_PILL_CLASS_NAME}>
-                +{collapsedPreview.hiddenCount} more
+                {t("tokenizedInput.more", {
+                  count: collapsedPreview.hiddenCount,
+                })}
               </span>
             ) : null}
           </motion.div>

@@ -90,7 +90,7 @@ export const ReactiveResumeSection: React.FC<ReactiveResumeSectionProps> = ({
   return (
     <SettingsSectionFrame
       mode={layoutMode}
-      title="Reactive Resume"
+      title="Reactive Resume" // i18n-ignore
       value="reactive-resume"
     >
       <ReactiveResumeConfigPanel

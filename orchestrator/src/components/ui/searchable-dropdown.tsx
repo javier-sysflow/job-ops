@@ -1,5 +1,6 @@
-import { Check, ChevronsUpDown, Search } from "lucide-react";
 import * as React from "react";
+import i18n from "@/client/i18n";
+import { Check, ChevronsUpDown, Search } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -76,8 +77,8 @@ export const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   options,
   onValueChange,
   placeholder,
-  searchPlaceholder = "Search...",
-  emptyText = "No results found.",
+  searchPlaceholder = i18n.t("shell:ui.searchPlaceholder"),
+  emptyText = i18n.t("shell:ui.noResults"),
   ariaLabel,
   disabled = false,
   triggerClassName,

@@ -1,9 +1,16 @@
-import { AlertTriangle, ExternalLink, Home, RotateCcw } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { ApiClientError } from "@/client/api/core";
 import { showErrorToast } from "@/client/lib/error-toast";
+import {
+  AlertTriangle,
+  ExternalLink,
+  Home,
+  RotateCcw,
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import i18n from "../i18n";
 import { GITHUB_REPO, getCurrentAppVersion } from "../lib/version";
 
 type FatalErrorSource = "react" | "runtime" | "unhandledrejection";
@@ -188,6 +195,7 @@ export function FatalErrorScreen({
   onReload?: () => void;
   snapshot: FatalErrorSnapshot;
 }) {
+  const { t } = useTranslation("shell");
   const issueUrl = buildFatalIssueUrl(snapshot);
 
   return (
@@ -199,12 +207,10 @@ export function FatalErrorScreen({
           </div>
           <div className="min-w-0 space-y-2">
             <h1 className="text-2xl font-semibold tracking-normal">
-              Something went wrong
+              {t("crash.title")}
             </h1>
             <p className="max-w-prose text-sm leading-6 text-muted-foreground">
-              JobOps hit an unexpected client error. Your data should still be
-              safe; reload the app or open a GitHub issue with the diagnostics
-              below.
+              {t("crash.description")}
             </p>
           </div>
         </div>
@@ -212,25 +218,25 @@ export function FatalErrorScreen({
         <div className="flex flex-wrap gap-2">
           <Button type="button" onClick={onReload}>
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
-            Reload app
+            {t("crash.reload")}
           </Button>
           <Button asChild variant="outline">
             <a href="/overview">
               <Home className="h-4 w-4" aria-hidden="true" />
-              Go home
+              {t("crash.goHome")}
             </a>
           </Button>
           <Button asChild variant="outline">
             <a href={issueUrl} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
-              Open GitHub issue
+              {t("crash.openIssue")}
             </a>
           </Button>
         </div>
 
         <details className="rounded-md border border-border bg-muted/30 p-4">
           <summary className="cursor-pointer text-sm font-medium">
-            Technical details
+            {t("crash.technicalDetails")}
           </summary>
           <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words text-xs leading-5 text-muted-foreground">
             {formatDetails(snapshot)}
@@ -351,7 +357,7 @@ export function AppErrorBoundary({ children }: { children: React.ReactNode }) {
       const reason = event.error ?? event.message;
       if (isRecoverableApiError(reason)) {
         event.preventDefault();
-        showErrorToast(reason, "API request failed");
+        showErrorToast(reason, i18n.t("errors:server.apiRequestFailed"));
         return;
       }
       event.preventDefault();
@@ -365,7 +371,7 @@ export function AppErrorBoundary({ children }: { children: React.ReactNode }) {
       const reason = event.reason;
       if (isRecoverableApiError(reason)) {
         event.preventDefault();
-        showErrorToast(reason, "API request failed");
+        showErrorToast(reason, i18n.t("errors:server.apiRequestFailed"));
         return;
       }
       if (isOpenPanelRejection(reason)) {

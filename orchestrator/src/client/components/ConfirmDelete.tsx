@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,18 +23,25 @@ export const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  title = "Are you sure?",
-  description = "This action cannot be undone. This will permanently delete this event from the timeline.",
+  title,
+  description,
 }) => {
+  const { t } = useTranslation(["shell", "common"]);
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogTitle>
+            {title ?? t("confirmDelete.title")}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {description ?? t("confirmDelete.description")}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={onClose}>
+            {t("common:actions.cancel")}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
               onConfirm();
@@ -41,7 +49,7 @@ export const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
             }}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Delete
+            {t("common:actions.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

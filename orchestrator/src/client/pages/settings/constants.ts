@@ -16,16 +16,8 @@ export const ALL_JOB_STATUSES: JobStatus[] = [
   "expired",
 ];
 
-/** Status descriptions for UI */
-export const STATUS_DESCRIPTIONS: Record<JobStatus, string> = {
-  discovered: "Crawled but not processed",
-  processing: "Currently generating resume",
-  ready: "PDF generated, waiting for user to apply",
-  applied: "Application sent",
-  in_progress: "Application moved beyond applied stage",
-  skipped: "User skipped this job",
-  expired: "Deadline passed",
-};
+// Status descriptions shown in the UI live in the i18n resources
+// (settings:danger.statusDescriptions.<status>).
 
 export type WritingStylePresetId =
   | "professional"
@@ -40,18 +32,18 @@ export type WritingStyleDraft = {
   doNotUse: string;
 };
 
+/**
+ * Preset labels and descriptions are translated in the UI
+ * (settings:chat.presets.<id>). The values are sent to the AI as-is.
+ */
 export type WritingStylePreset = {
   id: WritingStylePresetId;
-  label: string;
-  description: string;
   values: WritingStyleDraft;
 };
 
 export const WRITING_STYLE_PRESETS: WritingStylePreset[] = [
   {
     id: "professional",
-    label: "Professional",
-    description: "Balanced default for polished, job-ready writing.",
     values: {
       tone: "professional",
       formality: "medium",
@@ -61,8 +53,6 @@ export const WRITING_STYLE_PRESETS: WritingStylePreset[] = [
   },
   {
     id: "concise",
-    label: "Concise",
-    description: "Keeps responses compact and easy to scan.",
     values: {
       tone: "concise",
       formality: "medium",
@@ -72,8 +62,6 @@ export const WRITING_STYLE_PRESETS: WritingStylePreset[] = [
   },
   {
     id: "direct",
-    label: "Direct",
-    description: "Uses plain, decisive phrasing with minimal hedging.",
     values: {
       tone: "direct",
       formality: "medium",
@@ -83,8 +71,6 @@ export const WRITING_STYLE_PRESETS: WritingStylePreset[] = [
   },
   {
     id: "friendly",
-    label: "Friendly",
-    description: "Warm and personable while staying professional.",
     values: {
       tone: "friendly",
       formality: "low",

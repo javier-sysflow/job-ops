@@ -1,4 +1,5 @@
 import type { SectionWorkspaceGroup } from "@client/components/section-workspace/SectionWorkspace";
+import i18n from "@client/i18n";
 import type { DesignResumeDocument, DesignResumeJson } from "@shared/types";
 import {
   Award,
@@ -20,9 +21,13 @@ import {
   Trophy,
   UserRound,
   Wrench,
-} from "lucide-react";
+} from "@/components/icons";
 import { bucketCount } from "@/lib/analytics";
-import { ITEM_DEFINITIONS } from "./definitions";
+import {
+  getItemDefinitionDescription,
+  getItemDefinitionTitle,
+  ITEM_DEFINITIONS,
+} from "./definitions";
 import { asArray, asRecord, toText } from "./utils";
 
 export type DesignResumeSectionId = string;
@@ -66,27 +71,42 @@ export const DESIGN_RESUME_PROFILE_SECTIONS: SectionWorkspaceGroup<
 >["items"] = [
   {
     id: "basics",
-    label: "Contact",
-    description: "Name, headline, and contact details.",
+    get label() {
+      return i18n.t("resumeStudio:nav.basics.label");
+    },
+    get description() {
+      return i18n.t("resumeStudio:nav.basics.description");
+    },
     searchTerms: ["basics", "headline", "email", "phone", "location"],
   },
   {
     id: "summary",
-    label: "Summary",
-    description:
-      "Short intro shown near the top of your resume. Rewritten during Job Tailoring for each application.",
+    get label() {
+      return i18n.t("resumeStudio:nav.summary.label");
+    },
+    get description() {
+      return i18n.t("resumeStudio:nav.summary.description");
+    },
     searchTerms: ["intro", "profile", "overview"],
   },
   {
     id: "picture",
-    label: "Picture",
-    description: "Resume photo and picture presentation.",
+    get label() {
+      return i18n.t("resumeStudio:nav.picture.label");
+    },
+    get description() {
+      return i18n.t("resumeStudio:nav.picture.description");
+    },
     searchTerms: ["photo", "avatar", "image"],
   },
   {
     id: "basics-custom-fields",
-    label: "Custom Fields",
-    description: "Extra links or short details near your contact info.",
+    get label() {
+      return i18n.t("resumeStudio:nav.customFields.label");
+    },
+    get description() {
+      return i18n.t("resumeStudio:nav.customFields.description");
+    },
     searchTerms: ["links", "custom", "details"],
   },
 ];
@@ -94,12 +114,18 @@ export const DESIGN_RESUME_PROFILE_SECTIONS: SectionWorkspaceGroup<
 export const DESIGN_RESUME_ICON_GROUPS: DesignResumeNavGroup[] = [
   {
     id: "preview",
-    label: "Preview",
+    get label() {
+      return i18n.t("resumeStudio:nav.groups.preview");
+    },
     items: [
       {
         id: "live-preview",
-        label: "Live preview",
-        description: "See a preview of your resume as you edit it.",
+        get label() {
+          return i18n.t("resumeStudio:nav.livePreview.label");
+        },
+        get description() {
+          return i18n.t("resumeStudio:nav.livePreview.description");
+        },
         icon: Eye,
         sectionId: null,
       },
@@ -107,42 +133,65 @@ export const DESIGN_RESUME_ICON_GROUPS: DesignResumeNavGroup[] = [
   },
   {
     id: "profile",
-    label: "Profile",
+    get label() {
+      return i18n.t("resumeStudio:nav.groups.profile");
+    },
     items: [
       {
         id: "basics",
-        label: "Contact",
-        description: "Name, headline, and contact details.",
+        get label() {
+          return i18n.t("resumeStudio:nav.basics.label");
+        },
+        get description() {
+          return i18n.t("resumeStudio:nav.basics.description");
+        },
         icon: UserRound,
       },
       {
         id: "summary",
-        label: "Summary",
-        description:
-          "Short intro shown near the top of your resume. Rewritten during Job Tailoring for each application.",
+        get label() {
+          return i18n.t("resumeStudio:nav.summary.label");
+        },
+        get description() {
+          return i18n.t("resumeStudio:nav.summary.description");
+        },
         icon: FileText,
       },
       {
         id: "picture",
-        label: "Picture",
-        description: "Resume photo and picture presentation.",
+        get label() {
+          return i18n.t("resumeStudio:nav.picture.label");
+        },
+        get description() {
+          return i18n.t("resumeStudio:nav.picture.description");
+        },
         icon: ImageIcon,
       },
       {
         id: "basics-custom-fields",
-        label: "Custom Fields",
-        description: "Extra links or short details near your contact info.",
+        get label() {
+          return i18n.t("resumeStudio:nav.customFields.label");
+        },
+        get description() {
+          return i18n.t("resumeStudio:nav.customFields.description");
+        },
         icon: ListPlus,
       },
     ],
   },
   {
     id: "sections",
-    label: "Resume Sections",
+    get label() {
+      return i18n.t("resumeStudio:nav.groups.sections");
+    },
     items: ITEM_DEFINITIONS.map((definition) => ({
       id: definition.key,
-      label: definition.title,
-      description: definition.description,
+      get label() {
+        return getItemDefinitionTitle(definition);
+      },
+      get description() {
+        return getItemDefinitionDescription(definition);
+      },
       icon: SECTION_ICON_BY_ID[definition.key] ?? BookOpen,
     })),
   },
@@ -154,16 +203,24 @@ export const DESIGN_RESUME_NAV_GROUPS: SectionWorkspaceGroup<
 >[] = [
   {
     id: "profile",
-    label: "Profile",
+    get label() {
+      return i18n.t("resumeStudio:nav.groups.profile");
+    },
     items: DESIGN_RESUME_PROFILE_SECTIONS,
   },
   {
     id: "sections",
-    label: "Resume Sections",
+    get label() {
+      return i18n.t("resumeStudio:nav.groups.sections");
+    },
     items: ITEM_DEFINITIONS.map((definition) => ({
       id: definition.key,
-      label: definition.title,
-      description: definition.description,
+      get label() {
+        return getItemDefinitionTitle(definition);
+      },
+      get description() {
+        return getItemDefinitionDescription(definition);
+      },
       searchTerms: [
         definition.singularTitle,
         definition.primaryField,

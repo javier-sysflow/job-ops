@@ -1,9 +1,151 @@
+import enPipeline from "@client/i18n/locales/en/pipeline";
 import { runWithRequestContext } from "@infra/request-context";
 import { describe, expect, it } from "vitest";
-import { getProgress, progressHelpers, resetProgress } from "./progress";
+import {
+  getProgress,
+  progressHelpers,
+  resetProgress,
+  updateProgress,
+} from "./progress";
 
 const inTenant = <T>(tenantId: string, run: () => T) =>
   runWithRequestContext({ requestId: `test-${tenantId}`, tenantId }, run);
+
+type ResourceTree = { [key: string]: string | ResourceTree };
+
+/** English UI text for a progress translation key, interpolated like i18next. */
+function englishText(
+  key: string,
+  params: Record<string, string | number> | undefined,
+): string | undefined {
+  const [namespace, path] = key.split(":");
+  if (namespace !== "pipeline" || !path) return undefined;
+  let node: string | ResourceTree | undefined =
+    enPipeline as unknown as ResourceTree;
+  for (const part of path.split(".")) {
+    node = typeof node === "object" ? node[part] : undefined;
+  }
+  if (typeof node !== "string") return undefined;
+  return node.replace(/\{\{(\w+)\}\}/g, (_match, name: string) =>
+    String(params?.[name] ?? `{{${name}}}`),
+  );
+}
+
+function expectTranslatableText() {
+  const progress = getProgress();
+  expect(progress.messageKey).toBeDefined();
+  expect(englishText(progress.messageKey ?? "", progress.messageParams)).toBe(
+    progress.message,
+  );
+  if (progress.detailKey) {
+    expect(englishText(progress.detailKey, progress.detailParams)).toBe(
+      progress.detail,
+    );
+  }
+  return progress;
+}
+
+describe("pipeline progress translation keys", () => {
+  const job = { id: "job-1", title: "Backend Engineer", employer: "Acme" };
+  const challenge = (extractorId: string) => ({
+    extractorId,
+    extractorName: extractorId,
+    url: `https://example.com/${extractorId}`,
+    sources: [],
+  });
+
+  it("sends keys whose English text matches every server message", () => {
+    inTenant("progress-i18n", () => {
+      resetProgress();
+      expectTranslatableText();
+
+      progressHelpers.startCrawling(2);
+      expect(expectTranslatableText().detailKey).toBeDefined();
+
+      progressHelpers.startSource("indeed", 0, 2, { detail: "From source" });
+      expect(expectTranslatableText().detailKey).toBeUndefined();
+
+      progressHelpers.crawlingUpdate({
+        source: "indeed",
+        listPagesProcessed: 1,
+        jobPagesProcessed: 2,
+        jobPagesEnqueued: 4,
+      });
+      expect(expectTranslatableText().detailKey).toBeDefined();
+
+      progressHelpers.crawlingUpdate({
+        source: "indeed",
+        termsProcessed: 1,
+        termsTotal: 3,
+        listPagesTotal: 5,
+        jobCardsFound: 7,
+        phase: "list",
+        currentUrl: "https://example.com/list",
+      });
+      expect(expectTranslatableText().detailKey).toBeDefined();
+
+      progressHelpers.crawlingUpdate({
+        source: "indeed",
+        jobPagesSkipped: 2,
+        phase: "job",
+        currentUrl: "https://example.com/job",
+      });
+      expectTranslatableText();
+
+      progressHelpers.crawlingComplete(5);
+      expectTranslatableText();
+      progressHelpers.importingJob(1, 5, job);
+      expectTranslatableText();
+      progressHelpers.importComplete(3, 2);
+      expectTranslatableText();
+      progressHelpers.scoringJob(1, 3, job, 0);
+      expectTranslatableText();
+      progressHelpers.scoringComplete(3);
+      expectTranslatableText();
+      progressHelpers.processingJob(1, 2, job);
+      expectTranslatableText();
+      progressHelpers.generatingSummary(job);
+      expectTranslatableText();
+      progressHelpers.generatingPdf(job);
+      expectTranslatableText();
+      progressHelpers.jobComplete(1, 2);
+      expectTranslatableText();
+      progressHelpers.complete(5, 2);
+      expectTranslatableText();
+
+      progressHelpers.challengeRequired([challenge("one")]);
+      expectTranslatableText();
+      progressHelpers.challengeRequired([challenge("one"), challenge("two")]);
+      expectTranslatableText();
+      progressHelpers.challengeResolved([challenge("one")]);
+      expectTranslatableText();
+      progressHelpers.challengeResolved([challenge("one"), challenge("two")]);
+      expectTranslatableText();
+      progressHelpers.challengeResolved([]);
+      expectTranslatableText();
+
+      progressHelpers.cancelled("Cancelled by user");
+      expect(expectTranslatableText().detailKey).toBeUndefined();
+      progressHelpers.failed("Boom");
+      expectTranslatableText();
+      progressHelpers.configurationRequired("Missing key");
+      expectTranslatableText();
+    });
+  });
+
+  it("drops stale keys when text is updated without one", () => {
+    inTenant("progress-i18n-stale", () => {
+      resetProgress();
+      progressHelpers.scoringJob(1, 3, job, 0);
+      updateProgress({ message: "Custom message", detail: "Custom detail" });
+      const progress = getProgress();
+      expect(progress.messageKey).toBeUndefined();
+      expect(progress.messageParams).toBeUndefined();
+      expect(progress.detailKey).toBeUndefined();
+      expect(progress.detailParams).toBeUndefined();
+    });
+  });
+});
 
 describe("pipeline fanout progress", () => {
   it("tracks task and term transitions", () => {

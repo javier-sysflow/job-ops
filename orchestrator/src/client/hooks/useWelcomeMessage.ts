@@ -1,3 +1,5 @@
+import i18n from "@client/i18n";
+import { isJapaneseUi } from "@client/i18n/format";
 import welcomeMessages from "@shared/messages/jobs-welcome.json";
 import { useMemo } from "react";
 import { useProfile } from "./useProfile";
@@ -18,7 +20,8 @@ export function useWelcomeMessage(): string | null {
   return useMemo(() => {
     if (isLoading) return null;
 
-    const firstName = personName?.split(" ")[0] || "User";
+    const firstName =
+      personName?.split(" ")[0] || i18n.t("welcome:fallbackName");
     const today = new Date().toDateString();
 
     let isFirstDay = true;
@@ -32,6 +35,21 @@ export function useWelcomeMessage(): string | null {
     } catch (_e) {
       // Ignore localStorage errors (e.g. private mode restrictions)
       // Fallback to true so we just show the first message
+    }
+
+    // Japanese UI: pick from the translated set (each line may use {{name}}).
+    if (isJapaneseUi()) {
+      const translatedLines = i18n.t("welcome:lines", {
+        returnObjects: true,
+        name: firstName,
+      }) as string[];
+      if (Array.isArray(translatedLines) && translatedLines.length > 0) {
+        const translatedIndex = isFirstDay
+          ? 0
+          : Math.abs(hashCode(`${firstName}-${today}`)) %
+            translatedLines.length;
+        return translatedLines[translatedIndex];
+      }
     }
 
     const lines = welcomeMessages.lines;

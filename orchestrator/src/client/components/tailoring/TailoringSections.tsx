@@ -1,9 +1,14 @@
+import i18n from "@client/i18n";
 import { TokenizedInput } from "@client/pages/orchestrator/TokenizedInput";
 import { resolveResumeProjectSelection } from "@shared/resume-projects";
 import type {
   ResumeProjectCatalogItem,
   ResumeProjectsSettings,
 } from "@shared/types.js";
+import type React from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Tip } from "@/client/components/Tip";
 import {
   CheckCircle2,
   Circle,
@@ -14,10 +19,7 @@ import {
   Sparkles,
   Trash2,
   Undo2,
-} from "lucide-react";
-import type React from "react";
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Tip } from "@/client/components/Tip";
+} from "@/components/icons";
 import {
   Accordion,
   AccordionContent,
@@ -119,35 +121,29 @@ const actionButtonClass =
 
 const stateCopy: Record<
   SectionState,
-  { label: string; icon: React.ElementType; className: string }
+  { icon: React.ElementType; className: string }
 > = {
   ready: {
-    label: "Ready",
     icon: CheckCircle2,
     className: "border-emerald-500/20 bg-emerald-500/10 text-emerald-300",
   },
   review: {
-    label: "Needs review",
     icon: CircleAlert,
     className: "border-amber-500/20 bg-amber-500/10 text-amber-300",
   },
   missing: {
-    label: "Missing",
     icon: Circle,
     className: "border-rose-500/20 bg-rose-500/10 text-rose-300",
   },
   optional: {
-    label: "Optional",
     icon: Circle,
     className: "border-border/60 bg-muted/20 text-muted-foreground",
   },
   none: {
-    label: "None",
     icon: Circle,
     className: "border-border/60 bg-muted/20 text-muted-foreground",
   },
   source: {
-    label: "Source",
     icon: Circle,
     className: "border-sky-500/20 bg-sky-500/10 text-sky-300",
   },
@@ -180,27 +176,30 @@ export function getNoSelectedProjectsInfo(args: {
   if (args.isCatalogLoading) {
     return {
       reason: "projects-loading",
-      title: "Projects are still loading",
-      description:
-        "Project options are still loading. Wait a moment before deciding whether this job has no selected projects.",
+      title: i18n.t("jobDetail:tailoring.noProjectsInfo.projectsLoadingTitle"),
+      description: i18n.t(
+        "jobDetail:tailoring.noProjectsInfo.projectsLoadingDescription",
+      ),
     };
   }
 
   if (args.catalog.length === 0) {
     return {
       reason: "no-projects",
-      title: "No projects found",
-      description:
-        "No projects were found in your base resume. Add projects to your resume to include them here.",
+      title: i18n.t("jobDetail:tailoring.noProjectsInfo.noProjectsTitle"),
+      description: i18n.t(
+        "jobDetail:tailoring.noProjectsInfo.noProjectsDescription",
+      ),
     };
   }
 
   if (args.isResumeProjectsSettingsLoading) {
     return {
       reason: "settings-loading",
-      title: "Project settings are still loading",
-      description:
-        "Project options are available, but selection settings are still loading. Wait a moment or select projects manually below.",
+      title: i18n.t("jobDetail:tailoring.noProjectsInfo.settingsLoadingTitle"),
+      description: i18n.t(
+        "jobDetail:tailoring.noProjectsInfo.settingsLoadingDescription",
+      ),
     };
   }
 
@@ -208,8 +207,10 @@ export function getNoSelectedProjectsInfo(args: {
   if (!settings) {
     return {
       reason: "settings-loading",
-      title: "Project settings are still loading",
-      description: "Project choices will appear when settings finish loading.",
+      title: i18n.t("jobDetail:tailoring.noProjectsInfo.settingsLoadingTitle"),
+      description: i18n.t(
+        "jobDetail:tailoring.noProjectsInfo.settingsPendingDescription",
+      ),
     };
   }
 
@@ -223,19 +224,20 @@ export function getNoSelectedProjectsInfo(args: {
   if (resolution.targetCount === 0) {
     return {
       reason: "no-project-slots",
-      title: "No project slots available",
-      description:
-        "Project settings currently allow 0 projects. Increase the target to include projects.",
+      title: i18n.t("jobDetail:tailoring.noProjectsInfo.noSlotsTitle"),
+      description: i18n.t(
+        "jobDetail:tailoring.noProjectsInfo.noSlotsDescription",
+      ),
     };
   }
 
   return {
     reason: "selection-empty",
-    title: "No projects selected",
+    title: i18n.t("jobDetail:tailoring.noProjectsInfo.noneSelectedTitle"),
     description:
       resolution.aiSelectableIds.length === 0
-        ? "No projects are marked Must include or AI can select in Settings."
-        : "Choose projects below or use Pick again with AI.",
+        ? i18n.t("jobDetail:tailoring.noProjectsInfo.noneSelectableDescription")
+        : i18n.t("jobDetail:tailoring.noProjectsInfo.chooseBelowDescription"),
   };
 }
 
@@ -247,10 +249,11 @@ const SectionTriggerLabel: React.FC<{
   count?: number;
   children?: React.ReactNode;
 }> = ({ title, state, badgeLabel, badgeAdornment, count, children }) => {
+  const { t } = useTranslation("jobDetail");
   const copy = stateCopy[state];
   const resolvedBadgeLabel =
     badgeLabel ??
-    `${copy.label}${typeof count === "number" && count > 0 ? ` ${count}` : ""}`;
+    `${t(`tailoring.states.${state}`)}${typeof count === "number" && count > 0 ? ` ${count}` : ""}`;
 
   return (
     <span className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-2">
@@ -347,6 +350,7 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
   onToggleProject,
   onTracerLinksEnabledChange,
 }) => {
+  const { t } = useTranslation("jobDetail");
   const [keywordDrafts, setKeywordDrafts] = useState<Record<string, string>>(
     {},
   );
@@ -358,9 +362,9 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
   const summaryResizeObserverRef = useRef<ResizeObserver | null>(null);
   const tracerToggleDisabled =
     disableInputs || (!tracerLinksEnabled && tracerEnableBlocked);
-  const generateTooltip = "Generate";
-  const undoTooltip = "Undo to template";
-  const redoTooltip = "Redo to AI draft";
+  const generateTooltip = t("tailoring.generate");
+  const undoTooltip = t("tailoring.undoToTemplate");
+  const redoTooltip = t("tailoring.redoToAiDraft");
   const skillsState: SectionState =
     skillsDraft.length === 0
       ? "none"
@@ -438,9 +442,12 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
   return (
     <Accordion type="multiple" className="space-y-2">
       <AccordionItem value="summary" className={sectionClass}>
-        <AccordionTrigger className={triggerClass} aria-label="Summary">
+        <AccordionTrigger
+          className={triggerClass}
+          aria-label={t("tailoring.summary")}
+        >
           <SectionTriggerLabel
-            title="Summary"
+            title={t("tailoring.summary")}
             state={sectionStateForText(summary)}
           />
         </AccordionTrigger>
@@ -454,11 +461,11 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                 className={actionButtonClass}
                 onClick={onGenerateSummary}
                 disabled={disableInputs}
-                aria-label="Generate summary"
+                aria-label={t("tailoring.generateSummary")}
               >
                 <Sparkles className="mr-1 h-3.5 w-3.5" />
                 {generatingSection === "summary"
-                  ? "Generating..."
+                  ? t("tailoring.generating")
                   : generateTooltip}
               </Button>
             </Tip>
@@ -500,8 +507,8 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
               clickBehavior="none"
               content={
                 summaryCountMode === "words"
-                  ? "Toggle to characters"
-                  : "Toggle to words"
+                  ? t("tailoring.toggleToCharacters")
+                  : t("tailoring.toggleToWords")
               }
             >
               <Button
@@ -522,7 +529,7 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
               </Button>
             </Tip>
             <label htmlFor="tailor-summary-edit" className="sr-only">
-              Tailored Summary
+              {t("tailoring.tailoredSummary")}
             </label>
             <textarea
               id="tailor-summary-edit"
@@ -539,7 +546,7 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                 summaryFocusedRef.current = false;
                 syncSummaryTextareaHeight();
               }}
-              placeholder="Write a tailored summary for this role, or generate with AI..."
+              placeholder={t("tailoring.summaryPlaceholder")}
               disabled={disableInputs}
             />
           </div>
@@ -547,9 +554,12 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
       </AccordionItem>
 
       <AccordionItem value="headline" className={sectionClass}>
-        <AccordionTrigger className={triggerClass} aria-label="Headline">
+        <AccordionTrigger
+          className={triggerClass}
+          aria-label={t("tailoring.headline")}
+        >
           <SectionTriggerLabel
-            title="Headline"
+            title={t("tailoring.headline")}
             state={sectionStateForText(headline)}
           />
         </AccordionTrigger>
@@ -563,11 +573,11 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                 className={actionButtonClass}
                 onClick={onGenerateHeadline}
                 disabled={disableInputs}
-                aria-label="Generate headline"
+                aria-label={t("tailoring.generateHeadline")}
               >
                 <Sparkles className="mr-1 h-3.5 w-3.5" />
                 {generatingSection === "headline"
-                  ? "Generating..."
+                  ? t("tailoring.generating")
                   : generateTooltip}
               </Button>
             </Tip>
@@ -604,7 +614,7 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
             </Tip>
           </div>
           <label htmlFor="tailor-headline-edit" className="sr-only">
-            Tailored Headline
+            {t("tailoring.tailoredHeadline")}
           </label>
           <input
             id="tailor-headline-edit"
@@ -612,16 +622,19 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
             className={inputClass}
             value={headline}
             onChange={(event) => onHeadlineChange(event.target.value)}
-            placeholder="Write a concise headline tailored to this role..."
+            placeholder={t("tailoring.headlinePlaceholder")}
             disabled={disableInputs}
           />
         </AccordionContent>
       </AccordionItem>
 
       <AccordionItem value="skills" className={sectionClass}>
-        <AccordionTrigger className={triggerClass} aria-label="Tailored Skills">
+        <AccordionTrigger
+          className={triggerClass}
+          aria-label={t("tailoring.tailoredSkills")}
+        >
           <SectionTriggerLabel
-            title="Tailored Skills"
+            title={t("tailoring.tailoredSkills")}
             state={skillsState}
             count={skillsDraft.length > 0 ? skillsDraft.length : undefined}
           />
@@ -636,11 +649,11 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                 className={actionButtonClass}
                 onClick={onGenerateSkills}
                 disabled={disableInputs}
-                aria-label="Generate skills"
+                aria-label={t("tailoring.generateSkills")}
               >
                 <Sparkles className="mr-1 h-3.5 w-3.5" />
                 {generatingSection === "skills"
-                  ? "Generating..."
+                  ? t("tailoring.generating")
                   : generateTooltip}
               </Button>
             </Tip>
@@ -682,13 +695,13 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
               disabled={disableInputs}
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
-              Add Skill Group
+              {t("tailoring.addSkillGroup")}
             </Button>
           </div>
 
           {skillsDraft.length === 0 ? (
             <div className="rounded-md border border-dashed border-border/60 bg-background/40 px-3 py-4 text-center text-[11px] text-muted-foreground">
-              No skill groups yet. Add one to tailor keywords for this role.
+              {t("tailoring.noSkillGroups")}
             </div>
           ) : (
             <Accordion
@@ -705,7 +718,8 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                   className="rounded-md border border-border/55 bg-background/45 px-0"
                 >
                   <AccordionTrigger className="px-3 py-2 text-[11px] font-medium hover:bg-muted/20 hover:no-underline">
-                    {group.name.trim() || `Skill Group ${index + 1}`}
+                    {group.name.trim() ||
+                      t("tailoring.skillGroupFallback", { number: index + 1 })}
                   </AccordionTrigger>
                   <AccordionContent className="px-3 pb-3 pt-2">
                     <div className="space-y-2">
@@ -714,7 +728,7 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                           htmlFor={`tailor-skill-group-name-${group.id}`}
                           className="text-[11px] font-medium text-muted-foreground"
                         >
-                          Category
+                          {t("tailoring.category")}
                         </label>
                         <input
                           id={`tailor-skill-group-name-${group.id}`}
@@ -728,7 +742,7 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                               event.target.value,
                             )
                           }
-                          placeholder="Backend, Frontend, Infrastructure..."
+                          placeholder={t("tailoring.categoryPlaceholder")}
                           disabled={disableInputs}
                         />
                       </div>
@@ -738,7 +752,7 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                           htmlFor={`tailor-skill-group-keywords-${group.id}`}
                           className="text-[11px] font-medium text-muted-foreground"
                         >
-                          Keywords (comma-separated)
+                          {t("tailoring.keywords")}
                         </label>
                         <TokenizedInput
                           id={`tailor-skill-group-keywords-${group.id}`}
@@ -760,9 +774,9 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                               values.join(", "),
                             )
                           }
-                          placeholder="TypeScript, Node.js, REST APIs..."
-                          helperText="Press Enter, comma, or paste a list to add keywords."
-                          removeLabelPrefix="Remove keyword"
+                          placeholder={t("tailoring.keywordsPlaceholder")}
+                          helperText={t("tailoring.keywordsHelper")}
+                          removeLabelPrefix={t("tailoring.removeKeyword")}
                           disabled={disableInputs}
                         />
                       </div>
@@ -777,7 +791,7 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                           disabled={disableInputs}
                         >
                           <Trash2 className="mr-1 h-3.5 w-3.5" />
-                          Remove
+                          {t("tailoring.remove")}
                         </Button>
                       </div>
                     </div>
@@ -793,10 +807,10 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
         <AccordionItem value="projects" className={sectionClass}>
           <AccordionTrigger
             className={triggerClass}
-            aria-label="Selected Projects"
+            aria-label={t("tailoring.selectedProjects")}
           >
             <SectionTriggerLabel
-              title="Selected Projects"
+              title={t("tailoring.selectedProjects")}
               state={projectsState}
               badgeLabel={
                 selectedProjectCount > 0
@@ -823,7 +837,9 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                     disabled={disableInputs}
                   >
                     <Sparkles className="mr-1 h-3.5 w-3.5" />
-                    {isGeneratingProjects ? "Picking..." : "Pick again with AI"}
+                    {isGeneratingProjects
+                      ? t("tailoring.picking")
+                      : t("tailoring.pickAgain")}
                   </Button>
                 </div>
                 <ProjectSelector
@@ -835,7 +851,7 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
               </>
             ) : (
               <p className="py-3 text-xs text-muted-foreground">
-                Project settings are still loading.
+                {t("tailoring.projectSettingsLoading")}
               </p>
             )}
           </AccordionContent>
@@ -843,9 +859,12 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
       )}
 
       <AccordionItem value="tracer-links" className={sectionClass}>
-        <AccordionTrigger className={triggerClass} aria-label="Tracer Links">
+        <AccordionTrigger
+          className={triggerClass}
+          aria-label={t("tailoring.tracerLinks")}
+        >
           <SectionTriggerLabel
-            title="Tracer Links"
+            title={t("tailoring.tracerLinks")}
             state={tracerLinksEnabled ? "ready" : "optional"}
           />
         </AccordionTrigger>
@@ -864,17 +883,19 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
                 disabled={tracerToggleDisabled}
               />
               <span className="text-sm font-medium text-foreground">
-                Enable tracer links for this job
+                {t("tailoring.enableTracer")}
               </span>
             </label>
             <p className="mt-2 text-xs text-muted-foreground">
               {tracerReadinessChecking
-                ? "Checking tracer-link readiness..."
-                : "When enabled, outgoing resume links are rewritten to JobOps tracer links on the next PDF generation. Existing PDFs are unchanged."}
+                ? t("tailoring.checkingTracer")
+                : t("tailoring.tracerDescription")}
             </p>
             {tracerEnableBlockedReason && !tracerLinksEnabled ? (
               <p className="mt-2 text-xs text-destructive">
-                Tracer links are unavailable: {tracerEnableBlockedReason}
+                {t("tailoring.tracerUnavailableReason", {
+                  reason: tracerEnableBlockedReason,
+                })}
               </p>
             ) : null}
           </div>
@@ -882,9 +903,12 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
       </AccordionItem>
 
       <AccordionItem value="job-description" className={sectionClass}>
-        <AccordionTrigger className={triggerClass} aria-label="Job Description">
+        <AccordionTrigger
+          className={triggerClass}
+          aria-label={t("tailoring.jobDescription")}
+        >
           <SectionTriggerLabel
-            title="Job Description"
+            title={t("tailoring.jobDescription")}
             state={
               sectionStateForText(jobDescription) === "ready"
                 ? "source"
@@ -894,14 +918,14 @@ export const TailoringSections: React.FC<TailoringSectionsProps> = ({
         </AccordionTrigger>
         <AccordionContent className="px-3 pb-3 pt-3">
           <label htmlFor="tailor-jd-edit" className="sr-only">
-            Job Description
+            {t("tailoring.jobDescription")}
           </label>
           <textarea
             id="tailor-jd-edit"
             className={`${inputClass} min-h-[120px] max-h-[250px]`}
             value={jobDescription}
             onChange={(event) => onDescriptionChange(event.target.value)}
-            placeholder="The raw job description..."
+            placeholder={t("tailoring.jobDescriptionPlaceholder")}
             disabled={disableInputs}
           />
         </AccordionContent>

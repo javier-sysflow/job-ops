@@ -162,10 +162,18 @@ This enables you to:
 
 Open the **search links** row in the Ready summary to reveal the generated links.
 
+### Navigating between screens
+
+On screens 1024px wide and up, the navigation sidebar stays open on the left. It shows every screen and highlights the one you are on.
+
+- Below 1280px wide, the sidebar shows icons only. Hover an icon to see its name.
+- From 1280px wide, use the button at the bottom of the sidebar to switch between icons only and icons with names. JobOps remembers the choice on this device.
+- On phones and narrow windows, open the menu button at the top left of the page header.
+
 ### Opening documentation from the sidebar
 
-1. Open the sidebar menu.
-2. In the footer section under `Version vX.Y.Z`, click **Documentation**, which opens the locally hosted docs in a new tab.
+1. In the sidebar footer, next to `Version vX.Y.Z`, click the book icon (**Documentation**).
+2. The locally hosted docs open in a new tab.
 
 ### Generating PDFs
 

@@ -1,6 +1,8 @@
+import i18n from "@client/i18n";
 import type { JobListItem, PostApplicationInboxItem } from "@shared/types";
-import { CheckCircle2, CircleUserRound, XCircle } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
+import { CheckCircle2, CircleUserRound, XCircle } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { SearchableDropdown } from "@/components/ui/searchable-dropdown";
 import { formatDateTime } from "@/lib/utils";
@@ -30,8 +32,11 @@ export type EmailViewerListProps = {
 };
 
 function formatEpochMs(value?: number | null): string {
-  if (!value) return "n/a";
-  return formatDateTime(new Date(value).toISOString()) ?? "n/a";
+  if (!value) return i18n.t("tracking:notAvailable");
+  return (
+    formatDateTime(new Date(value).toISOString()) ??
+    i18n.t("tracking:notAvailable")
+  );
 }
 
 function getSenderLabel(
@@ -41,7 +46,7 @@ function getSenderLabel(
   const preferred = (senderName ?? "").trim();
   if (preferred) return preferred;
   const trimmed = fromAddress.trim();
-  if (!trimmed) return "Unknown sender";
+  if (!trimmed) return i18n.t("tracking:viewer.unknownSender");
   const bracketIndex = trimmed.indexOf("<");
   if (bracketIndex > 0) {
     return trimmed.slice(0, bracketIndex).trim() || trimmed;
@@ -75,6 +80,7 @@ const EmailViewerRow: React.FC<EmailViewerRowProps> = ({
   isActionLoading,
   isAppliedJobsLoading,
 }) => {
+  const { t } = useTranslation("tracking");
   const score = item.message.matchConfidence;
   const isActionable = item.message.processingStatus === "pending_user";
   const canDecide = isActionable && !!selectedAppliedJobId;
@@ -108,8 +114,7 @@ const EmailViewerRow: React.FC<EmailViewerRowProps> = ({
         <p className="truncate text-sm font-medium">{item.message.subject}</p>
         {item.message.matchedJobId ? null : (
           <p className="text-xs text-amber-600">
-            Relevant email with no reliable job match. Please select the correct
-            job.
+            {t("viewer.noReliableMatch")}
           </p>
         )}
       </div>
@@ -119,28 +124,34 @@ const EmailViewerRow: React.FC<EmailViewerRowProps> = ({
           value={selectedAppliedJobId}
           options={appliedJobOptions}
           onValueChange={onAppliedJobChange}
-          placeholder={isAppliedJobsLoading ? "Loading jobs..." : "Select job"}
-          searchPlaceholder="Search jobs..."
+          placeholder={
+            isAppliedJobsLoading
+              ? t("viewer.loadingJobs")
+              : t("viewer.selectJob")
+          }
+          searchPlaceholder={t("viewer.searchJobs")}
           emptyText={
-            isAppliedJobsLoading ? "Loading jobs..." : "No jobs found."
+            isAppliedJobsLoading
+              ? t("viewer.loadingJobs")
+              : t("viewer.noJobsFound")
           }
           disabled={isActionLoading}
           triggerClassName="min-w-0 flex-1"
           contentClassName="w-[360px]"
-          ariaLabel="Select job"
+          ariaLabel={t("viewer.selectJob")}
         />
 
         <span
           className={`shrink-0 text-xs tabular-nums ${scoreTextClass(score)}`}
         >
-          {score === null ? "n/a" : `${Math.round(score)}%`}
+          {score === null ? t("notAvailable") : `${Math.round(score)}%`}
         </span>
 
         <div className="flex shrink-0 items-center gap-2">
           <Button
             size="sm"
-            aria-label="Confirm email-job match"
-            title="Confirm email-job match"
+            aria-label={t("viewer.confirmMatch")}
+            title={t("viewer.confirmMatch")}
             onClick={onApprove}
             disabled={isActionLoading || !canDecide}
             className="h-8 w-8 p-0"
@@ -150,8 +161,8 @@ const EmailViewerRow: React.FC<EmailViewerRowProps> = ({
           <Button
             size="sm"
             variant="outline"
-            aria-label="Ignore this match"
-            title="Ignore this match"
+            aria-label={t("viewer.ignoreMatch")}
+            title={t("viewer.ignoreMatch")}
             onClick={onDeny}
             disabled={isActionLoading || !isActionable}
             className="h-8 w-8 p-0"

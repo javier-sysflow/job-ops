@@ -3,8 +3,9 @@
  */
 
 import type { ManualJobDraft } from "@shared/types.js";
-import { FileText } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
+import { FileText } from "@/components/icons";
 import {
   Sheet,
   SheetContent,
@@ -35,6 +36,7 @@ export const ManualImportSheet: React.FC<ManualImportSheetProps> = ({
   initialSource,
   initialSourceHost,
 }) => {
+  const { t } = useTranslation("manualImport");
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-xl overflow-hidden">
@@ -44,12 +46,9 @@ export const ManualImportSheet: React.FC<ManualImportSheetProps> = ({
               <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-muted/30">
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </span>
-              Add a job
+              {t("sheet.title")}
             </SheetTitle>
-            <SheetDescription>
-              Add a link, description, or PDF. Review the details before adding
-              the job.
-            </SheetDescription>
+            <SheetDescription>{t("sheet.description")}</SheetDescription>
           </SheetHeader>
 
           <div className="mt-4 min-h-0 flex-1">

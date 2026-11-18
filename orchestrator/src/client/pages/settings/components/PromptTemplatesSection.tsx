@@ -6,9 +6,10 @@ import {
   type PromptTemplateSettingKey,
 } from "@shared/prompt-template-definitions.js";
 import type { UpdateSettingsInput } from "@shared/settings-schema.js";
-import { AlertTriangle, RotateCcw } from "lucide-react";
 import type React from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { AlertTriangle, RotateCcw } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +30,7 @@ export const PromptTemplatesSection: React.FC<PromptTemplatesSectionProps> = ({
   isSaving,
   layoutMode,
 }) => {
+  const { t } = useTranslation(["settings", "common"]);
   const { control, setValue } = useFormContext<UpdateSettingsInput>();
 
   const handleResetOne = (key: PromptTemplateSettingKey) => {
@@ -44,23 +46,16 @@ export const PromptTemplatesSection: React.FC<PromptTemplatesSectionProps> = ({
   return (
     <SettingsSectionFrame
       mode={layoutMode}
-      title="Prompt Templates"
+      title={t("prompts.title")}
       value="prompt-templates"
     >
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Edit the base AI instructions used by Ghostwriter, resume tailoring,
-          and scoring.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("prompts.intro")}</p>
 
         <Alert variant="warning">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Advanced setting</AlertTitle>
-          <AlertDescription>
-            Changing these templates can degrade or break AI behavior. Removing
-            important instructions or placeholders may produce poor results. Use
-            reset to restore the default templates.
-          </AlertDescription>
+          <AlertTitle>{t("prompts.warningTitle")}</AlertTitle>
+          <AlertDescription>{t("prompts.warningBody")}</AlertDescription>
         </Alert>
 
         <div className="flex justify-end">
@@ -72,7 +67,7 @@ export const PromptTemplatesSection: React.FC<PromptTemplatesSectionProps> = ({
             disabled={isLoading || isSaving}
           >
             <RotateCcw className="h-4 w-4" />
-            Reset all prompts
+            {t("prompts.resetAll")}
           </Button>
         </div>
 
@@ -84,10 +79,10 @@ export const PromptTemplatesSection: React.FC<PromptTemplatesSectionProps> = ({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
                   <label htmlFor={key} className="text-sm font-medium">
-                    {definition.label}
+                    {t(`prompts.templates.${key}.label`)}
                   </label>
                   <p className="text-xs text-muted-foreground">
-                    {definition.description}
+                    {t(`prompts.templates.${key}.description`)}
                   </p>
                 </div>
                 <Button
@@ -97,7 +92,7 @@ export const PromptTemplatesSection: React.FC<PromptTemplatesSectionProps> = ({
                   onClick={() => handleResetOne(key)}
                   disabled={isLoading || isSaving}
                 >
-                  Reset
+                  {t("common:actions.reset")}
                 </Button>
               </div>
 
@@ -119,7 +114,7 @@ export const PromptTemplatesSection: React.FC<PromptTemplatesSectionProps> = ({
 
               <div className="space-y-2">
                 <div className="text-xs font-medium text-muted-foreground">
-                  Supported placeholders
+                  {t("prompts.supportedPlaceholders")}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {definition.placeholders.map((placeholder) => (

@@ -12,6 +12,12 @@ import type {
   ResumeProfile,
 } from "@shared/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Navigate } from "react-router-dom";
+import * as api from "@/client/api";
+import { queryKeys } from "@/client/lib/queryKeys";
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,12 +29,7 @@ import {
   MapPin,
   Sparkles,
   UserPlus,
-} from "lucide-react";
-import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Navigate } from "react-router-dom";
-import * as api from "@/client/api";
-import { queryKeys } from "@/client/lib/queryKeys";
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,6 +38,8 @@ import { Label } from "@/components/ui/label";
 import { SearchableDropdown } from "@/components/ui/searchable-dropdown";
 import { bucketDurationMs, trackProductEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { isJapaneseUi } from "../i18n/format";
+import { countryLabel } from "../i18n/labels";
 import { showErrorToast } from "../lib/error-toast";
 import {
   getErrorCategory,
@@ -49,12 +52,21 @@ import type { ValidationState } from "./onboarding/types";
 import { useOnboardingFlow } from "./onboarding/useOnboardingFlow";
 
 const STEP_ORDER: OnboardingRequirementId[] = ["profile", "model", "resume"];
-const COUNTRY_OPTIONS = SUPPORTED_COUNTRY_KEYS.filter(
+const COUNTRY_KEYS = SUPPORTED_COUNTRY_KEYS.filter(
   (country) => country !== "usa/ca",
-).map((country) => ({
-  value: country,
-  label: formatCountryLabel(country),
-}));
+);
+const STEP_TITLE_KEYS = {
+  profile: "steps.profile",
+  model: "steps.model",
+  resume: "steps.resume",
+} as const satisfies Record<OnboardingRequirementId, string>;
+const WORKPLACE_TYPES = ["remote", "hybrid", "onsite"] as const;
+
+/** English keeps the existing labels; Japanese uses localized country names. */
+function countryOptionLabel(country: string): string {
+  const english = formatCountryLabel(country);
+  return isJapaneseUi() ? countryLabel(country, english) : english;
+}
 
 function getRequirement(
   status: OnboardingStatusResponse | null,
@@ -76,12 +88,6 @@ function toValidationState(
   };
 }
 
-function stepTitle(id: OnboardingRequirementId): string {
-  if (id === "profile") return "Your search";
-  if (id === "model") return "AI connection";
-  return "Your resume";
-}
-
 function getRequirementAnalyticsStatus(
   requirement: OnboardingRequirement | null,
 ) {
@@ -89,6 +95,7 @@ function getRequirementAnalyticsStatus(
 }
 
 export const OnboardingPage: React.FC = () => {
+  const { t } = useTranslation("onboarding");
   const [bootstrapState, setBootstrapState] = useState<
     "checking" | "account" | "launch" | "error"
   >("checking");
@@ -136,12 +143,10 @@ export const OnboardingPage: React.FC = () => {
   }, [bootstrapState, trackStarted]);
 
   if (bootstrapState === "checking") {
-    return <LoadingState message="Preparing your workspace…" />;
+    return <LoadingState message={t("loading.preparing")} />;
   }
   if (bootstrapState === "error") {
-    return (
-      <LoadingState message="Job Ops could not check the workspace setup. Refresh the page to try again." />
-    );
+    return <LoadingState message={t("loading.checkFailed")} />;
   }
   if (bootstrapState === "account") {
     return <AccountSetup onComplete={() => setBootstrapState("launch")} />;
@@ -157,9 +162,14 @@ export const OnboardingPage: React.FC = () => {
 };
 
 function LoadingState({ message }: { message: string }) {
+  const { t } = useTranslation("onboarding");
   return (
     <>
-      <PageHeader icon={Sparkles} title="Set up Job Ops" subtitle={message} />
+      <PageHeader
+        icon={Sparkles}
+        title={t("header.title")}
+        subtitle={message}
+      />
       <PageMain>
         <Card className="border-border/60 shadow-none">
           <CardContent className="flex min-h-72 items-center justify-center text-sm text-muted-foreground">
@@ -172,6 +182,7 @@ function LoadingState({ message }: { message: string }) {
 }
 
 function AccountSetup({ onComplete }: { onComplete: () => void }) {
+  const { t } = useTranslation("onboarding");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -201,7 +212,7 @@ function AccountSetup({ onComplete }: { onComplete: () => void }) {
         credential_length_bucket: getTextLengthBucket(password),
         error_category: getErrorCategory(error),
       });
-      showErrorToast(error, "Could not create the workspace account");
+      showErrorToast(error, t("account.createFailed"));
     } finally {
       setBusy(false);
     }
@@ -211,27 +222,27 @@ function AccountSetup({ onComplete }: { onComplete: () => void }) {
     <>
       <PageHeader
         icon={UserPlus}
-        title="Create your workspace account"
-        subtitle="This private account owns your Job Ops workspace."
+        title={t("account.title")}
+        subtitle={t("account.subtitle")}
       />
       <PageMain>
         <Card className="mx-auto max-w-2xl border-border/60 shadow-none">
           <CardContent className="p-6 sm:p-8">
             <form className="space-y-5" onSubmit={submit}>
               <div className="space-y-5">
-                <Field label="Username">
+                <Field label={t("account.username")}>
                   <Input
-                    aria-label="Username"
+                    aria-label={t("account.username")}
                     autoComplete="username"
                     value={username}
                     onChange={(event) => setUsername(event.target.value)}
                     required
                   />
                 </Field>
-                <Field label="Password">
+                <Field label={t("account.password")}>
                   <div className="relative">
                     <Input
-                      aria-label="Password"
+                      aria-label={t("account.password")}
                       autoComplete="new-password"
                       className="pr-10"
                       type={showPassword ? "text" : "password"}
@@ -243,7 +254,9 @@ function AccountSetup({ onComplete }: { onComplete: () => void }) {
                     <button
                       type="button"
                       aria-label={
-                        showPassword ? "Hide password" : "Show password"
+                        showPassword
+                          ? t("account.hidePassword")
+                          : t("account.showPassword")
                       }
                       className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground hover:text-foreground"
                       onClick={() => setShowPassword((visible) => !visible)}
@@ -259,7 +272,7 @@ function AccountSetup({ onComplete }: { onComplete: () => void }) {
               </div>
               <div className="flex justify-end">
                 <Button type="submit" disabled={busy}>
-                  {busy ? "Creating account…" : "Create account"}
+                  {busy ? t("account.creating") : t("account.create")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -296,6 +309,7 @@ function LaunchSetup({
     demoMode: boolean,
   ) => void;
 }) {
+  const { t } = useTranslation("onboarding");
   const queryClient = useQueryClient();
   const onboarding = useOnboardingStatus();
   const flow = useOnboardingFlow();
@@ -403,7 +417,7 @@ function LaunchSetup({
     return <Navigate to="/jobs/ready" replace />;
   }
   if (onboarding.checking) {
-    return <LoadingState message="Loading your setup…" />;
+    return <LoadingState message={t("loading.loadingSetup")} />;
   }
 
   const resumeSource =
@@ -443,7 +457,7 @@ function LaunchSetup({
         error_category: getErrorCategory(error),
         http_status_bucket: getHttpStatusBucket(error),
       });
-      showErrorToast(error, "Could not save search preferences");
+      showErrorToast(error, t("profile.saveFailed"));
     } finally {
       setProfileBusy(false);
     }
@@ -472,7 +486,7 @@ function LaunchSetup({
         error_category: getErrorCategory(error),
         http_status_bucket: getHttpStatusBucket(error),
       });
-      showErrorToast(error, "Could not confirm this resume");
+      showErrorToast(error, t("resume.confirmFailed"));
     } finally {
       setConfirmBusy(false);
     }
@@ -482,12 +496,12 @@ function LaunchSetup({
     <>
       <PageHeader
         icon={Sparkles}
-        title="Set up Job Ops"
-        subtitle="Three focused choices, then you’re in. Search terms wait until your first run."
+        title={t("header.title")}
+        subtitle={t("header.subtitle")}
       />
       <PageMain>
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
-          <nav className="space-y-2" aria-label="Setup progress">
+          <nav className="space-y-2" aria-label={t("progress.label")}>
             {visibleSteps.map((step, index) => {
               const requirement = getRequirement(status, step);
               const complete = requirement?.status === "ready";
@@ -519,7 +533,7 @@ function LaunchSetup({
                   </span>
                   <span>
                     <span className="block text-sm font-medium">
-                      {stepTitle(step)}
+                      {t(STEP_TITLE_KEYS[step])}
                     </span>
                     <span
                       className={cn(
@@ -530,10 +544,10 @@ function LaunchSetup({
                       )}
                     >
                       {complete
-                        ? "Complete"
+                        ? t("progress.complete")
                         : step === status?.nextRequirementId
-                          ? "Up next"
-                          : "Locked"}
+                          ? t("progress.upNext")
+                          : t("progress.locked")}
                     </span>
                   </span>
                 </button>
@@ -558,9 +572,9 @@ function LaunchSetup({
                 />
               ) : activeStep === "model" ? (
                 <StepShell
-                  eyebrow="AI connection"
-                  title="Choose how Job Ops should think"
-                  description="Pick a provider first. Job Ops saves the configuration only after the server verifies the connection."
+                  eyebrow={t("steps.model")}
+                  title={t("model.title")}
+                  description={t("model.description")}
                 >
                   <LlmConnectionStep
                     apiKey={flow.watch("llmApiKey")}
@@ -594,7 +608,7 @@ function LaunchSetup({
                     onBack={() => setSelectedStep("profile")}
                     onContinue={saveModel}
                     busy={flow.isBusy}
-                    label="Connect and continue"
+                    label={t("model.connect")}
                   />
                 </StepShell>
               ) : (
@@ -656,18 +670,19 @@ function StepActions({
   busy: boolean;
   label: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between border-t pt-6">
       {onBack ? (
         <Button type="button" variant="ghost" onClick={onBack} disabled={busy}>
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t("actions.back")}
         </Button>
       ) : (
         <span />
       )}
       <Button type="button" onClick={() => void onContinue()} disabled={busy}>
-        {busy ? "Saving…" : label}
+        {busy ? t("status.saving") : label}
         <ArrowRight className="h-4 w-4" />
       </Button>
     </div>
@@ -688,6 +703,15 @@ function ProfileStep(props: {
   onVisaChange: (value: boolean) => void;
   onContinue: () => void;
 }) {
+  const { t } = useTranslation("onboarding");
+  const countryOptions = useMemo(
+    () =>
+      COUNTRY_KEYS.map((country) => ({
+        value: country,
+        label: countryOptionLabel(country),
+      })),
+    [],
+  );
   const toggle = (value: "remote" | "hybrid" | "onsite") =>
     props.onWorkplaceTypesChange(
       props.workplaceTypes.includes(value)
@@ -696,40 +720,40 @@ function ProfileStep(props: {
     );
   return (
     <StepShell
-      eyebrow="Your search"
-      title="Where do you want to work?"
-      description="These preferences seed new runs and help Job Ops prioritize location-aware and visa-sponsor sources. You can change them later."
+      eyebrow={t("steps.profile")}
+      title={t("profile.title")}
+      description={t("profile.description")}
     >
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Country or market">
+        <Field label={t("profile.country")}>
           <SearchableDropdown
             value={props.country}
-            options={COUNTRY_OPTIONS}
+            options={countryOptions}
             onValueChange={props.onCountryChange}
-            placeholder="Select country"
-            searchPlaceholder="Search country..."
-            emptyText="No matching countries."
+            placeholder={t("profile.selectCountry")}
+            searchPlaceholder={t("profile.searchCountry")}
+            emptyText={t("profile.noCountries")}
             triggerClassName="h-10 w-full"
             ariaLabel={
               props.country
-                ? formatCountryLabel(props.country)
-                : "Select country"
+                ? countryOptionLabel(props.country)
+                : t("profile.selectCountry")
             }
             allowCustomValue={false}
           />
         </Field>
-        <Field label="Preferred cities or regions (optional)">
+        <Field label={t("profile.cities")}>
           <Input
             value={props.cities}
             onChange={(event) => props.onCitiesChange(event.target.value)}
-            placeholder="London, Manchester"
+            placeholder={t("profile.citiesPlaceholder")}
           />
         </Field>
       </div>
       <div className="space-y-3">
-        <Label>Workplace style</Label>
+        <Label>{t("profile.workplaceStyle")}</Label>
         <div className="grid gap-3 sm:grid-cols-3">
-          {(["remote", "hybrid", "onsite"] as const).map((value) => (
+          {WORKPLACE_TYPES.map((value) => (
             <Label
               key={value}
               htmlFor={`workplace-${value}`}
@@ -740,7 +764,7 @@ function ProfileStep(props: {
                 checked={props.workplaceTypes.includes(value)}
                 onCheckedChange={() => toggle(value)}
               />
-              {value}
+              {t(`profile.workplace.${value}`)}
             </Label>
           ))}
         </div>
@@ -756,18 +780,17 @@ function ProfileStep(props: {
         />
         <span>
           <span className="block text-sm font-medium">
-            I need employer visa sponsorship
+            {t("profile.visaTitle")}
           </span>
           <span className="block text-sm text-muted-foreground">
-            Job Ops will show sponsor information and favor sponsor-aware
-            sources when available.
+            {t("profile.visaDescription")}
           </span>
         </span>
       </Label>
       <StepActions
         onContinue={props.onContinue}
         busy={props.busy || props.workplaceTypes.length === 0}
-        label="Save and continue"
+        label={t("profile.saveAndContinue")}
       />
     </StepShell>
   );
@@ -790,13 +813,14 @@ function ResumeStep({
   onBack: () => void;
   onConfirm: () => void;
 }) {
+  const { t } = useTranslation(["onboarding", "common"]);
   const experience = profile?.sections?.experience?.items ?? [];
   if (!hasResume) {
     return (
       <StepShell
-        eyebrow="Your resume"
-        title="Load the resume Job Ops should use"
-        description="Upload a file or connect Reactive Resume. After parsing, you’ll review the result before anything is marked complete."
+        eyebrow={t("steps.resume")}
+        title={t("resume.loadTitle")}
+        description={t("resume.loadDescription")}
       >
         <BaseResumeStep
           allowReactiveResume
@@ -828,13 +852,13 @@ function ResumeStep({
             onBack={onBack}
             onContinue={() => void flow.handleSaveRxresume()}
             busy={flow.isBusy}
-            label="Check connection"
+            label={t("resume.checkConnection")}
           />
         ) : (
           <div className="border-t pt-6">
             <Button type="button" variant="ghost" onClick={onBack}>
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t("common:actions.back")}
             </Button>
           </div>
         )}
@@ -843,26 +867,26 @@ function ResumeStep({
   }
   return (
     <StepShell
-      eyebrow="Resume review"
-      title="Is this the right resume?"
-      description="Confirm the parsed identity and recent experience. Completion is tied to this exact resume source, so replacing it requires confirmation again."
+      eyebrow={t("resume.reviewEyebrow")}
+      title={t("resume.reviewTitle")}
+      description={t("resume.reviewDescription")}
     >
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_15rem]">
         <div className="min-h-80 rounded-xl border border-border/60 bg-muted/15 p-6">
           <div className="mb-6 border-b pb-5">
             <h3 className="text-2xl font-semibold">
-              {profile?.basics?.name || "Parsed resume"}
+              {profile?.basics?.name || t("resume.parsedFallbackName")}
             </h3>
             <p className="text-muted-foreground">
               {profile?.basics?.headline ||
                 profile?.basics?.label ||
-                "Review the imported details"}
+                t("resume.reviewDetails")}
             </p>
             <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
               {profile?.basics?.location?.city ||
                 profile?.basics?.location?.region ||
-                "No location detected"}
+                t("resume.noLocation")}
             </p>
           </div>
           <div className="space-y-4">
@@ -880,8 +904,7 @@ function ResumeStep({
             ))}
             {experience.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No experience entries were detected. Open Resume Studio to
-                correct the document before confirming.
+                {t("resume.noExperience")}
               </p>
             ) : null}
           </div>
@@ -889,16 +912,17 @@ function ResumeStep({
         <div className="space-y-3">
           <div className="rounded-xl bg-muted/40 p-4">
             <FileCheck2 className="mb-3 h-5 w-5" />
-            <div className="text-sm font-medium">Parsed successfully</div>
+            <div className="text-sm font-medium">
+              {t("resume.parsedSuccessfully")}
+            </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              {experience.length} experience{" "}
-              {experience.length === 1 ? "entry" : "entries"}
+              {t("resume.experienceCount", { count: experience.length })}
             </div>
           </div>
           <Button type="button" variant="outline" className="w-full" asChild>
             <a href="/design-resume">
               <BriefcaseBusiness className="h-4 w-4" />
-              Edit in Resume Studio
+              {t("resume.editInStudio")}
             </a>
           </Button>
         </div>
@@ -907,7 +931,7 @@ function ResumeStep({
         onBack={onBack}
         onContinue={onConfirm}
         busy={busy}
-        label="Use this resume"
+        label={t("resume.useThisResume")}
       />
     </StepShell>
   );

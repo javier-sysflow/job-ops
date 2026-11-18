@@ -1,8 +1,16 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Bold, Italic, Link2, List, ListOrdered, Unlink } from "lucide-react";
 import type React from "react";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  Bold,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
+  Unlink,
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -19,12 +27,14 @@ type RichTextEditorProps = {
 export function RichTextEditor({
   value,
   onChange,
-  placeholder = "Write something useful...",
+  placeholder,
   className,
   editorClassName,
   formatLabel = "HTML",
   toolbarEnd,
 }: RichTextEditorProps) {
+  const { t } = useTranslation("resumeStudio");
+  const placeholderText = placeholder ?? t("richText.placeholder");
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -62,7 +72,7 @@ export function RichTextEditor({
 
   const applyLink = () => {
     const previous = editor.getAttributes("link").href as string | undefined;
-    const next = window.prompt("Enter link URL", previous ?? "");
+    const next = window.prompt(t("richText.linkPrompt"), previous ?? "");
     if (next === null) return;
     if (!next.trim()) {
       editor.chain().focus().unsetLink().run();
@@ -101,55 +111,55 @@ export function RichTextEditor({
       <div className="flex flex-wrap items-center gap-1 rounded-t-xl border-b border-border/60 bg-muted/20 px-2 py-2">
         {toolbarButton(
           editor.isActive("heading", { level: 1 }),
-          "Heading 1",
-          <span className="text-[11px] font-semibold">H1</span>,
+          t("richText.heading1"),
+          <span className="text-[11px] font-semibold">H1</span>, // i18n-ignore
           () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
         )}
         {toolbarButton(
           editor.isActive("heading", { level: 2 }),
-          "Heading 2",
-          <span className="text-[11px] font-semibold">H2</span>,
+          t("richText.heading2"),
+          <span className="text-[11px] font-semibold">H2</span>, // i18n-ignore
           () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
         )}
         {toolbarButton(
           editor.isActive("heading", { level: 3 }),
-          "Heading 3",
-          <span className="text-[11px] font-semibold">H3</span>,
+          t("richText.heading3"),
+          <span className="text-[11px] font-semibold">H3</span>, // i18n-ignore
           () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
         )}
         {toolbarButton(
           editor.isActive("bold"),
-          "Bold",
+          t("richText.bold"),
           <Bold className="h-4 w-4" />,
           () => editor.chain().focus().toggleBold().run(),
         )}
         {toolbarButton(
           editor.isActive("italic"),
-          "Italic",
+          t("richText.italic"),
           <Italic className="h-4 w-4" />,
           () => editor.chain().focus().toggleItalic().run(),
         )}
         {toolbarButton(
           editor.isActive("bulletList"),
-          "Bullet list",
+          t("richText.bulletList"),
           <List className="h-4 w-4" />,
           () => editor.chain().focus().toggleBulletList().run(),
         )}
         {toolbarButton(
           editor.isActive("orderedList"),
-          "Ordered list",
+          t("richText.orderedList"),
           <ListOrdered className="h-4 w-4" />,
           () => editor.chain().focus().toggleOrderedList().run(),
         )}
         {toolbarButton(
           editor.isActive("link"),
-          "Set link",
+          t("richText.setLink"),
           <Link2 className="h-4 w-4" />,
           applyLink,
         )}
         {toolbarButton(
           false,
-          "Remove link",
+          t("richText.removeLink"),
           <Unlink className="h-4 w-4" />,
           () => editor.chain().focus().unsetLink().run(),
         )}
@@ -167,7 +177,7 @@ export function RichTextEditor({
       <div className="relative">
         {!value && (
           <div className="pointer-events-none absolute left-4 top-3 text-sm text-muted-foreground/70">
-            {placeholder}
+            {placeholderText}
           </div>
         )}
         <EditorContent editor={editor} />

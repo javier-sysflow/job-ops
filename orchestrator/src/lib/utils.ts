@@ -1,3 +1,5 @@
+import i18n from "@client/i18n";
+import { getUiLocale } from "@client/i18n/language";
 import {
   EXTRACTOR_SOURCE_IDS,
   sourceLabel as getExtractorSourceLabel,
@@ -23,7 +25,7 @@ export const formatDate = (dateStr?: string | null) => {
       : dateStr.replace(" ", "T");
     const parsed = new Date(normalized);
     if (Number.isNaN(parsed.getTime())) return dateStr;
-    return parsed.toLocaleDateString("en-GB", {
+    return parsed.toLocaleDateString(getUiLocale(), {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -34,8 +36,8 @@ export const formatDate = (dateStr?: string | null) => {
 };
 
 export const formatTimestamp = (value?: number | null) => {
-  if (!value) return "No due date";
-  return new Date(value * 1000).toLocaleDateString("en-GB", {
+  if (!value) return i18n.t("common:dates.noDueDate");
+  return new Date(value * 1000).toLocaleDateString(getUiLocale(), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -43,10 +45,10 @@ export const formatTimestamp = (value?: number | null) => {
 };
 
 export const formatTimestampWithTime = (value?: number | null) => {
-  if (!value) return "No date";
+  if (!value) return i18n.t("common:dates.noDate");
   const date = new Date(value * 1000);
   const dateLabel = formatTimestamp(value);
-  const timeLabel = date.toLocaleTimeString("en-GB", {
+  const timeLabel = date.toLocaleTimeString(getUiLocale(), {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -61,12 +63,12 @@ export const formatDateTime = (dateStr?: string | null) => {
       : dateStr.replace(" ", "T");
     const parsed = new Date(normalized);
     if (Number.isNaN(parsed.getTime())) return dateStr;
-    const date = parsed.toLocaleDateString("en-GB", {
+    const date = parsed.toLocaleDateString(getUiLocale(), {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
-    const time = parsed.toLocaleTimeString("en-GB", {
+    const time = parsed.toLocaleTimeString(getUiLocale(), {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -146,7 +148,7 @@ export const sourceLabel: Partial<Record<Job["source"], string>> =
   );
 
 export function formatJobSourceLabel(source?: string | null): string {
-  if (!source) return "Unknown Source";
+  if (!source) return i18n.t("common:dates.unknownSource");
   if (isExtractorSourceId(source)) return getExtractorSourceLabel(source);
 
   const [namespace, ...rest] = source.split(":");

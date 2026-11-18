@@ -1,5 +1,6 @@
-import { Glasses } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
+import { Glasses } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 interface FitAssessmentContentProps {
@@ -13,13 +14,14 @@ export const FitAssessmentContent: React.FC<FitAssessmentContentProps> = ({
   suitabilityReason,
   className,
 }) => {
+  const { t } = useTranslation("jobDetail");
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between border-b border-border/50 pb-2">
         <div className="flex items-center gap-2">
           <Glasses className="h-4 w-4 text-emerald-400 animate-pulse" />
           <span className="font-semibold text-sm text-foreground">
-            Fit Assessment
+            {t("fitAssessment.title")}
           </span>
         </div>
         {score !== null && (

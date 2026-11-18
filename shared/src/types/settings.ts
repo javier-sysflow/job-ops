@@ -316,6 +316,7 @@ export interface AppSettings {
 
   // Simple strings:
   rxresumeBaseResumeId: string | null;
+  timeZone: string | null;
   rxresumeUrl: string | null;
   ukvisajobsEmail: string | null;
   adzunaAppId: string | null;

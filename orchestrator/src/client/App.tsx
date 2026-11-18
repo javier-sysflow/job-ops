@@ -2,8 +2,8 @@
  * Main App component.
  */
 
-import { X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Navigate,
   Route,
@@ -12,11 +12,13 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
+import { X } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import { AppModeContext } from "./components/layout";
+import { AppModeContext, AppShell } from "./components/layout";
 import { OnboardingGate } from "./components/OnboardingGate";
+import { TimeZoneSync } from "./components/TimeZoneSync";
 import { useAnalyticsIdentity } from "./hooks/useAnalyticsIdentity";
 import { useDemoInfo } from "./hooks/useDemoInfo";
 import { setAuthNavigator } from "./lib/auth-navigation";
@@ -57,6 +59,7 @@ const REDIRECTS: Array<{ from: string; to: string }> = [
 const DEMO_WAITLIST_BANNER_DISMISSED_KEY = "jobops.demoWaitlistBannerDismissed";
 
 export const App: React.FC = () => {
+  const { t } = useTranslation("shell");
   useAnalyticsIdentity();
   const location = useLocation();
   const navigate = useNavigate();
@@ -64,6 +67,12 @@ export const App: React.FC = () => {
   const isAuthRoute =
     location.pathname === "/sign-in" ||
     location.pathname.startsWith("/sso/callback/");
+  // Screens that stand alone, without the navigation sidebar.
+  const isStandaloneRoute =
+    isAuthRoute ||
+    location.pathname === "/onboarding" ||
+    location.pathname === "/offline" ||
+    location.pathname.startsWith("/oauth/");
   const demoInfo = useDemoInfo({ enabled: !isAuthRoute });
   const showDemoBanners = !isAuthRoute && demoInfo?.demoMode;
   const [demoWaitlistBannerDismissed, setDemoWaitlistBannerDismissed] =
@@ -107,26 +116,25 @@ export const App: React.FC = () => {
   return (
     <>
       <OnboardingGate />
+      <TimeZoneSync />
       {showDemoBanners && (
         <div className="sticky top-0 z-50 w-full border-b border-amber-400/50 bg-amber-500/20 px-4 py-2 text-xs text-amber-100 shadow-sm backdrop-blur">
           <div className="mx-auto flex items-center justify-center gap-3">
             <p className="flex-1 text-center">
               <span className="font-medium">
-                Demo mode: integrations are simulated and data resets every{" "}
-                {demoInfo.resetCadenceHours} hours.
+                {t("demo.banner", { hours: demoInfo.resetCadenceHours })}
               </span>
               {!demoWaitlistBannerDismissed && (
                 <>
                   {" "}
-                  This is a read-only demo. Want JobOps without the Docker
-                  setup?{" "}
+                  {t("demo.waitlistPrompt")}{" "}
                   <a
                     className="font-semibold underline underline-offset-2 hover:text-amber-50"
                     href="https://try.jobops.app?utm_source=demo&utm_medium=banner&utm_campaign=waitlist"
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Join the waitlist.
+                    {t("demo.waitlistLink")}
                   </a>
                 </>
               )}
@@ -150,13 +158,13 @@ export const App: React.FC = () => {
                 }}
               >
                 <X className="h-4 w-4" />
-                <span className="sr-only">Dismiss demo waitlist banner</span>
+                <span className="sr-only">{t("demo.dismiss")}</span>
               </Button>
             )}
           </div>
         </div>
       )}
-      <div>
+      <AppShell enabled={!isStandaloneRoute}>
         <SwitchTransition mode="out-in">
           <CSSTransition
             key={pageKey}
@@ -217,7 +225,7 @@ export const App: React.FC = () => {
             </div>
           </CSSTransition>
         </SwitchTransition>
-      </div>
+      </AppShell>
 
       <Toaster position="bottom-right" richColors closeButton />
     </>

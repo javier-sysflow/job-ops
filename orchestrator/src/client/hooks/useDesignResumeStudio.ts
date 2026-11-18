@@ -32,6 +32,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import i18n from "@/client/i18n";
 import { showErrorToast } from "@/client/lib/error-toast";
 import { downloadDesignResumePdf } from "@/client/lib/private-pdf";
 import { trackProductEvent } from "@/lib/analytics";
@@ -87,7 +88,7 @@ export function useDesignResumeStudio() {
   const notifyReadyPdfRefresh = useCallback(() => {
     if (readyPdfRefreshToastShownRef.current) return;
     readyPdfRefreshToastShownRef.current = true;
-    toast.info("Ready PDFs will refresh automatically.");
+    toast.info(i18n.t("shell:hooks.resumeStudio.pdfRefresh"));
   }, []);
 
   const pdfRenderer = settings?.pdfRenderer?.value ?? "rxresume";
@@ -96,7 +97,7 @@ export function useDesignResumeStudio() {
   const pictureEnabled = Boolean(tracerReadiness?.isPubliclyAvailable);
   const pictureDisabledReason =
     tracerReadiness?.reason ??
-    "Pictures require JobOps to be reachable at a public URL.";
+    i18n.t("shell:hooks.resumeStudio.pictureNeedsPublicUrl");
   const activeSection = sectionParam ?? null;
   const activeSectionIsValid =
     activeSection == null ||
@@ -149,9 +150,7 @@ export function useDesignResumeStudio() {
           // Saves replace the whole document, so re-saving after a rebase makes
           // this tab win over whatever bumped the revision. Say so instead of
           // overwriting silently.
-          toast.info(
-            "Resume Studio was updated elsewhere. Your edits here were kept and re-saved.",
-          );
+          toast.info(i18n.t("shell:hooks.resumeStudio.updatedElsewhere"));
         }
         setDraft((current) =>
           current ? { ...latest, resumeJson: current.resumeJson } : latest,
@@ -217,7 +216,10 @@ export function useDesignResumeStudio() {
       } catch (saveError) {
         if (await recoverFromRevisionConflict(saveError)) return;
         setSaveState("error");
-        showErrorToast(saveError, "Failed to save Resume Studio.");
+        showErrorToast(
+          saveError,
+          i18n.t("shell:hooks.resumeStudio.saveFailed"),
+        );
       }
     }, 700);
 
@@ -248,9 +250,7 @@ export function useDesignResumeStudio() {
       if (!draft) return null;
       if (!dirty) return draft;
       if (saveState === "saving") {
-        throw new Error(
-          "Resume Studio is still saving. Try again in a moment.",
-        );
+        throw new Error(i18n.t("shell:hooks.resumeStudio.stillSaving"));
       }
 
       const editVersionAtStart = editVersionRef.current;
@@ -339,7 +339,7 @@ export function useDesignResumeStudio() {
           source: "rxresume",
         });
       }
-      toast.success("Imported your resume.");
+      toast.success(i18n.t("shell:hooks.resumeStudio.imported"));
       notifyReadyPdfRefresh();
     } catch (importError) {
       trackProductEvent("resume_studio_import_completed", {
@@ -349,7 +349,10 @@ export function useDesignResumeStudio() {
         section_count_bucket: "0",
         item_count_bucket: "0",
       });
-      showErrorToast(importError, "Failed to import your resume.");
+      showErrorToast(
+        importError,
+        i18n.t("shell:hooks.resumeStudio.importFailed"),
+      );
     } finally {
       setResumeImporting(false);
     }
@@ -372,7 +375,7 @@ export function useDesignResumeStudio() {
       const match = /^data:([^;]+);base64,(.+)$/s.exec(dataUrl.trim());
 
       if (!match) {
-        throw new Error("Resume file could not be encoded for upload.");
+        throw new Error(i18n.t("shell:hooks.resumeStudio.encodeFailed"));
       }
 
       const imported = await api.importDesignResumeFromFile({
@@ -396,7 +399,7 @@ export function useDesignResumeStudio() {
           source: "file",
         });
       }
-      toast.success("Imported your resume file.");
+      toast.success(i18n.t("shell:hooks.resumeStudio.importedFile"));
       notifyReadyPdfRefresh();
     } catch (importError) {
       setSaveState("error");
@@ -408,7 +411,10 @@ export function useDesignResumeStudio() {
         section_count_bucket: "0",
         item_count_bucket: "0",
       });
-      showErrorToast(importError, "Failed to import your resume file.");
+      showErrorToast(
+        importError,
+        i18n.t("shell:hooks.resumeStudio.importFileFailed"),
+      );
     } finally {
       setResumeImporting(false);
       if (importFileInputRef.current) {
@@ -424,10 +430,13 @@ export function useDesignResumeStudio() {
       trackProductEvent("resume_studio_export_completed", {
         result: "success",
       });
-      toast.success("Exported your resume JSON.");
+      toast.success(i18n.t("shell:hooks.resumeStudio.exported"));
     } catch (exportError) {
       trackProductEvent("resume_studio_export_completed", { result: "error" });
-      showErrorToast(exportError, "Failed to export Resume Studio.");
+      showErrorToast(
+        exportError,
+        i18n.t("shell:hooks.resumeStudio.exportFailed"),
+      );
     }
   };
 
@@ -443,7 +452,7 @@ export function useDesignResumeStudio() {
         after_edit: downloadedAfterEdit,
         result: "success",
       });
-      toast.success("Your PDF is ready.");
+      toast.success(i18n.t("shell:hooks.resumeStudio.pdfReady"));
     } catch (downloadError) {
       trackProductEvent("resume_studio_pdf_downloaded", {
         renderer: pdfRenderer,
@@ -451,7 +460,10 @@ export function useDesignResumeStudio() {
         after_edit: downloadedAfterEdit,
         result: "error",
       });
-      showErrorToast(downloadError, "Failed to generate a PDF.");
+      showErrorToast(
+        downloadError,
+        i18n.t("shell:hooks.resumeStudio.pdfFailed"),
+      );
     } finally {
       setPdfDownloading(false);
     }
@@ -490,10 +502,13 @@ export function useDesignResumeStudio() {
         setDirty(true);
         setSaveState("idle");
       }
-      toast.success("Picture uploaded.");
+      toast.success(i18n.t("shell:hooks.resumeStudio.pictureUploaded"));
       notifyReadyPdfRefresh();
     } catch (uploadError) {
-      showErrorToast(uploadError, "Failed to upload picture.");
+      showErrorToast(
+        uploadError,
+        i18n.t("shell:hooks.resumeStudio.pictureUploadFailed"),
+      );
     } finally {
       setPictureUploading(false);
       if (fileInputRef.current) {
@@ -526,10 +541,13 @@ export function useDesignResumeStudio() {
         setDirty(true);
         setSaveState("idle");
       }
-      toast.success("Picture removed.");
+      toast.success(i18n.t("shell:hooks.resumeStudio.pictureRemoved"));
       notifyReadyPdfRefresh();
     } catch (deleteError) {
-      showErrorToast(deleteError, "Failed to delete picture.");
+      showErrorToast(
+        deleteError,
+        i18n.t("shell:hooks.resumeStudio.pictureDeleteFailed"),
+      );
     }
   };
 
@@ -542,10 +560,17 @@ export function useDesignResumeStudio() {
         pdfRenderer: nextRenderer,
       });
       queryClient.setQueryData(queryKeys.settings.current(), updatedSettings);
-      toast.success(`${PDF_RENDERER_LABELS[nextRenderer]} is now active.`);
+      toast.success(
+        i18n.t("shell:hooks.resumeStudio.rendererActive", {
+          renderer: PDF_RENDERER_LABELS[nextRenderer],
+        }),
+      );
       notifyReadyPdfRefresh();
     } catch (updateError) {
-      showErrorToast(updateError, "Failed to update the resume template.");
+      showErrorToast(
+        updateError,
+        i18n.t("shell:hooks.resumeStudio.rendererFailed"),
+      );
     } finally {
       setRendererUpdating(false);
     }
@@ -560,10 +585,17 @@ export function useDesignResumeStudio() {
         typstTheme: nextTheme,
       });
       queryClient.setQueryData(queryKeys.settings.current(), updatedSettings);
-      toast.success(`${TYPST_THEME_LABELS[nextTheme]} Typst theme is active.`);
+      toast.success(
+        i18n.t("shell:hooks.resumeStudio.themeActive", {
+          theme: TYPST_THEME_LABELS[nextTheme],
+        }),
+      );
       notifyReadyPdfRefresh();
     } catch (updateError) {
-      showErrorToast(updateError, "Failed to update the Typst theme.");
+      showErrorToast(
+        updateError,
+        i18n.t("shell:hooks.resumeStudio.themeFailed"),
+      );
     } finally {
       setRendererUpdating(false);
     }
@@ -589,26 +621,47 @@ export function useDesignResumeStudio() {
       if (sectionId === "basics") {
         const basics = asRecord(resumeJson.basics) ?? {};
         return toText(basics.name) || toText(basics.headline)
-          ? { label: "Ready", variant: "outline" }
-          : { label: "Empty", variant: "secondary" };
+          ? {
+              label: i18n.t("shell:hooks.resumeStudio.badges.ready"),
+              variant: "outline",
+            }
+          : {
+              label: i18n.t("shell:hooks.resumeStudio.badges.empty"),
+              variant: "secondary",
+            };
       }
       if (sectionId === "summary") {
         const summary = asRecord(resumeJson.summary) ?? {};
         return toText(summary.content)
-          ? { label: "Ready", variant: "outline" }
-          : { label: "Empty", variant: "secondary" };
+          ? {
+              label: i18n.t("shell:hooks.resumeStudio.badges.ready"),
+              variant: "outline",
+            }
+          : {
+              label: i18n.t("shell:hooks.resumeStudio.badges.empty"),
+              variant: "secondary",
+            };
       }
       if (sectionId === "picture") {
         const picture = asRecord(resumeJson.picture) ?? {};
         return toText(picture.url)
-          ? { label: "Uploaded", variant: "outline" }
-          : { label: "Optional", variant: "secondary" };
+          ? {
+              label: i18n.t("shell:hooks.resumeStudio.badges.uploaded"),
+              variant: "outline",
+            }
+          : {
+              label: i18n.t("shell:hooks.resumeStudio.badges.optional"),
+              variant: "secondary",
+            };
       }
       if (sectionId === "basics-custom-fields") {
         const basics = asRecord(resumeJson.basics) ?? {};
         const count = asArray(basics.customFields).length;
         return {
-          label: count === 0 ? "Empty" : `${count}`,
+          label:
+            count === 0
+              ? i18n.t("shell:hooks.resumeStudio.badges.empty")
+              : `${count}`,
           variant: "secondary",
         };
       }
@@ -617,7 +670,10 @@ export function useDesignResumeStudio() {
       const section = asRecord(sections[sectionId]) ?? {};
       const count = asArray(section.items).length;
       return {
-        label: count === 0 ? "Empty" : `${count}`,
+        label:
+          count === 0
+            ? i18n.t("shell:hooks.resumeStudio.badges.empty")
+            : `${count}`,
         variant: count === 0 ? "secondary" : "outline",
       };
     },

@@ -1,0 +1,164 @@
+// English strings: app frame: header, navigation, sign-in, error and offline pages.
+const shell = {
+  header: {
+    openNavigation: "Open navigation menu",
+    account: "Account",
+    remembered: "Remembered",
+    rememberedEmpty: "Sign in once to remember a username here.",
+    signOut: "Sign out",
+    version: "Version {{version}}",
+    updateAvailable: "Update available",
+    documentation: "Documentation",
+    mainNavigation: "Main navigation",
+    expandSidebar: "Expand sidebar",
+    collapseSidebar: "Collapse sidebar",
+  },
+  nav: {
+    overview: "Overview",
+    jobs: "Jobs",
+    inProgress: "In Progress",
+    resumeStudio: "Resume Studio",
+    trackingInbox: "Tracking Inbox",
+    tracerLinks: "Tracer Links",
+    visaSponsors: "Visa Sponsors",
+    watchlist: "Watchlist",
+    settings: "Settings",
+  },
+  scoreMeter: {
+    notScored: "Not scored",
+  },
+  status: {
+    tracerOn: "Tracer On",
+    tracerOff: "Tracer Off",
+    unknown: "Unknown",
+  },
+  signIn: {
+    signIn: "Sign in",
+    createAccount: "Create account",
+    signInDescription: "Enter your JobOps username and password.",
+    signupDescription: "Create your JobOps account for this hosted workspace.",
+    rememberedUsers: "Remembered on this browser",
+    nameLabel: "Name",
+    namePlaceholder: "Your name",
+    usernameLabel: "Username",
+    usernamePlaceholder: "Enter username",
+    passwordLabel: "Password",
+    passwordPlaceholder: "Enter password",
+    signingIn: "Signing in...",
+    creatingAccount: "Creating account...",
+    orContinueWith: "or continue with",
+    continueWith: "Continue with {{provider}}",
+    loadStatusFailed: "Unable to load sign-in status.",
+    missingCredentials: "Enter both username and password.",
+    passwordTooShort: "Password must be at least 8 characters.",
+    signInFailed: "Unable to sign in",
+    ssoFailed: "Unable to continue with {{provider}}",
+  },
+  sso: {
+    invalidFlow: "This sign-in link is no longer valid.",
+    providerRefused:
+      "Your identity provider refused the sign-in. Try again, or ask your administrator to check the provider configuration.",
+    linkAdded: "Connected account added.",
+    finishFailed: "Unable to finish single sign-on.",
+    failedTitle: "Sign-in failed",
+    finishingTitle: "Finishing sign-in…",
+    failedDescription:
+      "JobOps could not finish the handover from your identity provider.",
+    finishingDescription:
+      "Completing the handover from your identity provider.",
+    backToSignIn: "Back to sign in",
+  },
+  offline: {
+    title: "You seem offline",
+    checkConnection: "Check your internet connection and try again.",
+    autoRedirect:
+      "This page will automatically redirect when your connection is restored.",
+    tryAgain: "Try again",
+  },
+  gmailCallback: {
+    title: "Completing Gmail connection…",
+    closeHint: "You can close this window if it does not close automatically.",
+  },
+  crash: {
+    title: "Something went wrong",
+    description:
+      "JobOps hit an unexpected client error. Your data should still be safe; reload the app or open a GitHub issue with the diagnostics below.",
+    reload: "Reload app",
+    goHome: "Go home",
+    openIssue: "Open GitHub issue",
+    technicalDetails: "Technical details",
+  },
+  confirmDelete: {
+    title: "Are you sure?",
+    description:
+      "This action cannot be undone. This will permanently delete this event from the timeline.",
+  },
+  postingAge: {
+    justNow: "just now",
+    minutesAgo: "{{value}}m ago",
+    hoursAgo: "{{value}}h ago",
+    today: "today",
+    yesterday: "yesterday",
+    daysAgo: "{{value}}d ago",
+    weeksAgo: "{{value}}w ago",
+    monthsAgo: "{{value}}mo ago",
+    yearsAgo: "{{value}}y ago",
+    posted: "Posted {{label}}",
+    sourceReported: "Source reported: {{raw}}",
+    sourcePostingDate: "Source posting date: {{date}}",
+  },
+  ui: {
+    searchPlaceholder: "Search...",
+    noResults: "No results found.",
+  },
+  hooks: {
+    rescore: {
+      success: "Match recalculated",
+      failed: "Failed to recalculate match",
+    },
+    resumeStudio: {
+      pdfRefresh: "Ready PDFs will refresh automatically.",
+      pictureNeedsPublicUrl:
+        "Pictures require JobOps to be reachable at a public URL.",
+      updatedElsewhere:
+        "Resume Studio was updated elsewhere. Your edits here were kept and re-saved.",
+      saveFailed: "Failed to save Resume Studio.",
+      stillSaving: "Resume Studio is still saving. Try again in a moment.",
+      imported: "Imported your resume.",
+      importFailed: "Failed to import your resume.",
+      encodeFailed: "Resume file could not be encoded for upload.",
+      importedFile: "Imported your resume file.",
+      importFileFailed: "Failed to import your resume file.",
+      exported: "Exported your resume JSON.",
+      exportFailed: "Failed to export Resume Studio.",
+      pdfReady: "Your PDF is ready.",
+      pdfFailed: "Failed to generate a PDF.",
+      pictureUploaded: "Picture uploaded.",
+      pictureUploadFailed: "Failed to upload picture.",
+      pictureRemoved: "Picture removed.",
+      pictureDeleteFailed: "Failed to delete picture.",
+      rendererActive: "{{renderer}} is now active.",
+      rendererFailed: "Failed to update the resume template.",
+      themeActive: "{{theme}} Typst theme is active.",
+      themeFailed: "Failed to update the Typst theme.",
+      badges: {
+        ready: "Ready",
+        empty: "Empty",
+        uploaded: "Uploaded",
+        optional: "Optional",
+      },
+    },
+  },
+  demo: {
+    banner:
+      "Demo mode: integrations are simulated and data resets every {{hours}} hours.",
+    waitlistPrompt:
+      "This is a read-only demo. Want JobOps without the Docker setup?",
+    waitlistLink: "Join the waitlist.",
+    dismiss: "Dismiss demo waitlist banner",
+    simulatedTitle: "Simulated in Demo Mode",
+    blockedTitle: "Blocked in Public Demo",
+  },
+};
+
+export default shell;

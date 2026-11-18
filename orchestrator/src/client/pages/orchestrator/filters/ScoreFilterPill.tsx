@@ -1,5 +1,6 @@
-import { Star } from "lucide-react";
+import i18n from "@client/i18n";
 import type React from "react";
+import { Star } from "@/components/icons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -24,13 +25,13 @@ export const ScoreFilterPill: React.FC<ScoreFilterPillProps> = ({
 }) => (
   <FilterPill
     icon={<Star />}
-    label="Score"
+    label={i18n.t("jobs:filters.score.label")}
     active={scoreActive}
     summary={scoreSummary}
   >
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <span>Score</span>
+        <span>{i18n.t("jobs:filters.score.prefix")}</span>
         <Select
           value={scoreFilter.mode}
           onValueChange={(value) => {
@@ -44,7 +45,7 @@ export const ScoreFilterPill: React.FC<ScoreFilterPillProps> = ({
         >
           <SelectTrigger
             id="score-mode"
-            aria-label="Score filter mode"
+            aria-label={i18n.t("jobs:filters.score.modeAria")}
             className="h-8 w-[150px] text-foreground"
           >
             <SelectValue />
@@ -62,7 +63,9 @@ export const ScoreFilterPill: React.FC<ScoreFilterPillProps> = ({
       {scoreFilter.mode === "has" && (
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
-            <Label htmlFor="score-min-filter">Minimum</Label>
+            <Label htmlFor="score-min-filter">
+              {i18n.t("jobs:filters.score.minimum")}
+            </Label>
             <Input
               id="score-min-filter"
               value={scoreFilter.min == null ? "" : String(scoreFilter.min)}
@@ -77,12 +80,14 @@ export const ScoreFilterPill: React.FC<ScoreFilterPillProps> = ({
               inputMode="numeric"
               min={0}
               max={100}
-              placeholder="e.g. 60"
+              placeholder={i18n.t("jobs:filters.score.minPlaceholder")}
             />
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="score-max-filter">Maximum</Label>
+            <Label htmlFor="score-max-filter">
+              {i18n.t("jobs:filters.score.maximum")}
+            </Label>
             <Input
               id="score-max-filter"
               value={scoreFilter.max == null ? "" : String(scoreFilter.max)}
@@ -97,7 +102,7 @@ export const ScoreFilterPill: React.FC<ScoreFilterPillProps> = ({
               inputMode="numeric"
               min={0}
               max={100}
-              placeholder="e.g. 90"
+              placeholder={i18n.t("jobs:filters.score.maxPlaceholder")}
             />
           </div>
         </div>

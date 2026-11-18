@@ -1,6 +1,7 @@
 import type { ResumeProjectSelectionResolution } from "@shared/resume-projects";
 import type { ResumeProjectCatalogItem } from "@shared/types.js";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn, stripHtml } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ export const ProjectSelector: React.FC<ProjectSelectorProps> = ({
   onToggle,
   disabled,
 }) => {
+  const { t } = useTranslation("jobDetail");
   const mustIncludeIds = new Set(resolution.mustIncludeIds);
   const aiSelectableIds = new Set(resolution.aiSelectableIds);
   const selectedIds = new Set(resolution.effectiveSelectedIds);
@@ -29,7 +31,10 @@ export const ProjectSelector: React.FC<ProjectSelectorProps> = ({
   return (
     <div className="space-y-2">
       <p className="text-[11px] text-muted-foreground">
-        {selectedIds.size} of {resolution.targetCount} projects selected
+        {t("projects.selectedOfTarget", {
+          selected: selectedIds.size,
+          target: resolution.targetCount,
+        })}
       </p>
 
       <div className="space-y-1.5">
@@ -44,7 +49,7 @@ export const ProjectSelector: React.FC<ProjectSelectorProps> = ({
             <label
               key={project.id}
               htmlFor={`project-${project.id}`}
-              title={needsRemovalFirst ? "Remove a project first." : undefined}
+              title={needsRemovalFirst ? t("projects.removeFirst") : undefined}
               className={cn(
                 "flex items-start gap-2.5 rounded-lg border p-2.5 text-xs transition-colors cursor-pointer",
                 selected
@@ -65,10 +70,10 @@ export const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                   <span className="truncate font-medium">{project.name}</span>
                   <span className="shrink-0 text-[10px] text-muted-foreground">
                     {mustInclude
-                      ? "Must include"
+                      ? t("projects.mustInclude")
                       : selected
-                        ? "Selected"
-                        : "Available"}
+                        ? t("projects.selected")
+                        : t("projects.available")}
                   </span>
                 </div>
                 <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
@@ -76,7 +81,7 @@ export const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                 </div>
                 {needsRemovalFirst ? (
                   <div className="mt-1 text-[10px] text-muted-foreground">
-                    Remove a project first.
+                    {t("projects.removeFirst")}
                   </div>
                 ) : null}
               </div>

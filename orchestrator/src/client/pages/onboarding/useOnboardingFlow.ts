@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import i18n from "@/client/i18n";
 import { showErrorToast } from "@/client/lib/error-toast";
 import { bucketCount, trackProductEvent } from "@/lib/analytics";
 import {
@@ -122,7 +123,7 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
         result: "success",
         provider,
       });
-      toast.success("Model connection verified");
+      toast.success(i18n.t("onboarding:flow.modelVerified"));
       return status;
     } catch (error) {
       trackProductEvent("onboarding_model_verify_completed", {
@@ -131,7 +132,7 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
         error_category: getErrorCategory(error),
         http_status_bucket: getHttpStatusBucket(error),
       });
-      showErrorToast(error, "Failed to verify model connection");
+      showErrorToast(error, i18n.t("onboarding:flow.modelVerifyFailed"));
       return null;
     } finally {
       setIsSaving(false);
@@ -164,7 +165,9 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
         self_hosted: selfHosted,
       });
       toast.success(
-        status.complete ? "Resume source verified" : "Reactive Resume saved",
+        status.complete
+          ? i18n.t("onboarding:flow.resumeSourceVerified")
+          : i18n.t("onboarding:flow.rxResumeSaved"),
       );
       return status;
     } catch (error) {
@@ -174,7 +177,7 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
         error_category: getErrorCategory(error),
         http_status_bucket: getHttpStatusBucket(error),
       });
-      showErrorToast(error, "Failed to save Reactive Resume");
+      showErrorToast(error, i18n.t("onboarding:flow.rxResumeSaveFailed"));
       return null;
     } finally {
       setIsSaving(false);
@@ -226,7 +229,7 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
         const match = /^data:([^;]+);base64,(.+)$/s.exec(dataUrl.trim());
 
         if (!match) {
-          throw new Error("Resume file could not be encoded for upload.");
+          throw new Error(i18n.t("onboarding:flow.encodeFailed"));
         }
 
         const document = await api.importDesignResumeFromFile({
@@ -262,11 +265,11 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
             ).length,
           ),
         });
-        toast.success("Resume uploaded", {
+        toast.success(i18n.t("onboarding:flow.resumeUploaded"), {
           description:
             settings?.pdfRenderer?.value === "typst"
-              ? "Your local Resume Studio document is ready."
-              : "Your local Resume Studio document is ready and PDF rendering was switched to Typst.",
+              ? i18n.t("onboarding:flow.resumeReady")
+              : i18n.t("onboarding:flow.resumeReadyTypst"),
         });
       } catch (error) {
         trackProductEvent("onboarding_resume_upload_completed", {
@@ -275,7 +278,7 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
           duration_bucket: getDurationBucket(startedAt),
           error_category: getErrorCategory(error),
         });
-        showErrorToast(error, "Failed to import resume file");
+        showErrorToast(error, i18n.t("onboarding:flow.importFailed"));
       } finally {
         setIsImportingResume(false);
         setImportingResumeFileName(null);
@@ -311,13 +314,13 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
           await refreshOnboardingState(status);
           toast.success(
             status.complete
-              ? "Resume source verified"
-              : "Template saved. Recheck the resume source to continue.",
+              ? i18n.t("onboarding:flow.resumeSourceVerified")
+              : i18n.t("onboarding:flow.templateSaved"),
           );
         } catch (error) {
           setBaseResumeId(currentValue);
           setValue("rxresumeBaseResumeId", currentValue);
-          showErrorToast(error, "Failed to save selected resume");
+          showErrorToast(error, i18n.t("onboarding:flow.templateSaveFailed"));
         } finally {
           setIsSaving(false);
         }

@@ -5,6 +5,7 @@ import {
   type LlmProviderId,
 } from "@client/pages/settings/utils";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import type { ValidationState } from "../types";
 import { InlineValidation } from "./InlineValidation";
 
@@ -45,6 +46,7 @@ export const LlmConnectionStep: React.FC<{
   onModelChange,
   onProviderChange,
 }) => {
+  const { t } = useTranslation("onboarding");
   const providerConfig = getLlmProviderConfig(selectedProvider);
   const displayValidation =
     !providerConfig.requiresApiKey &&
@@ -82,7 +84,9 @@ export const LlmConnectionStep: React.FC<{
         validationSlot={
           <InlineValidation
             state={displayValidation}
-            successMessage={`${providerConfig.label} connection verified.`}
+            successMessage={t("model.verified", {
+              provider: providerConfig.label,
+            })}
           />
         }
         onCodexAuthStatusChange={onCodexAuthStatusChange}

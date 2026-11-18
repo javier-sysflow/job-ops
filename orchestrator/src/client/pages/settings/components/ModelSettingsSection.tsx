@@ -9,6 +9,7 @@ import type { UpdateSettingsInput } from "@shared/settings-schema.js";
 import type { LlmPurpose } from "@shared/types.js";
 import type React from "react";
 import { useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 type ModelSettingsSectionProps = {
   values: ModelValues;
@@ -23,6 +24,7 @@ export const ModelSettingsSection: React.FC<ModelSettingsSectionProps> = ({
   isSaving,
   layoutMode,
 }) => {
+  const { t } = useTranslation("settings");
   const {
     watch,
     setValue,
@@ -85,7 +87,11 @@ export const ModelSettingsSection: React.FC<ModelSettingsSectionProps> = ({
   };
 
   return (
-    <SettingsSectionFrame mode={layoutMode} title="Model" value="model">
+    <SettingsSectionFrame
+      mode={layoutMode}
+      title={t("model.title")}
+      value="model"
+    >
       <LlmModelConfiguration
         mode="settings"
         disabled={disabled}

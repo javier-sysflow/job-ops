@@ -1,7 +1,8 @@
-import { FileText, Upload } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { LlmProviderId } from "@/client/pages/settings/utils";
+import { FileText, Upload } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -14,17 +15,27 @@ const RESUME_IMPORT_TOTAL_MS = 25_000;
 const CODEX_RESUME_IMPORT_TOTAL_MS = 60_000;
 const RESUME_IMPORT_TICK_MS = 250;
 const RESUME_IMPORT_STEPS = [
-  "Reading file",
-  "Preparing import",
-  "Extracting resume text",
-  "Building Resume Studio document",
-  "Saving baseline",
-  "Finalizing setup",
+  "baseResume.importSteps.reading",
+  "baseResume.importSteps.preparing",
+  "baseResume.importSteps.extracting",
+  "baseResume.importSteps.building",
+  "baseResume.importSteps.saving",
+  "baseResume.importSteps.finalizing",
 ] as const;
-const DEFAULT_LONG_RUNNING_MESSAGE =
-  "Still working. Larger PDFs and DOCX files can take a little longer.";
-const CODEX_LONG_RUNNING_MESSAGE =
-  "Still working. Codex imports can take around a minute for larger resumes.";
+const DEFAULT_LONG_RUNNING_MESSAGE = "baseResume.longRunning" as const;
+const CODEX_LONG_RUNNING_MESSAGE = "baseResume.longRunningCodex" as const;
+const RESUME_SETUP_OPTIONS = [
+  {
+    value: "upload",
+    titleKey: "baseResume.options.upload.title",
+    descriptionKey: "baseResume.options.upload.description",
+  },
+  {
+    value: "rxresume",
+    titleKey: "baseResume.options.rxresume.title",
+    descriptionKey: "baseResume.options.rxresume.description",
+  },
+] as const;
 
 function getResumeImportProgressProfile(selectedProvider?: LlmProviderId) {
   if (selectedProvider === "codex") {
@@ -47,6 +58,7 @@ function ResumeImportProgress({
   fileName: string | null;
   selectedProvider?: LlmProviderId;
 }) {
+  const { t } = useTranslation("onboarding");
   const [elapsedMs, setElapsedMs] = useState(0);
   const progressProfile = getResumeImportProgressProfile(selectedProvider);
 
@@ -85,9 +97,11 @@ function ResumeImportProgress({
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <div className="text-sm font-medium">Importing resume</div>
+              <div className="text-sm font-medium">
+                {t("baseResume.importing")}
+              </div>
               <div className="truncate text-xs text-muted-foreground">
-                {fileName ?? "Selected resume file"}
+                {fileName ?? t("baseResume.selectedFile")}
               </div>
             </div>
             <div className="text-xs tabular-nums text-muted-foreground">
@@ -97,12 +111,12 @@ function ResumeImportProgress({
           <Progress
             value={progressValue}
             className="h-1.5"
-            aria-label="Resume import progress"
+            aria-label={t("baseResume.progressLabel")}
           />
           <p className="bg-gradient-to-r from-muted-foreground via-foreground to-muted-foreground bg-clip-text text-sm leading-6 text-transparent motion-safe:animate-pulse">
             {isLongRunning
-              ? progressProfile.longRunningMessage
-              : RESUME_IMPORT_STEPS[activeStepIndex]}
+              ? t(progressProfile.longRunningMessage)
+              : t(RESUME_IMPORT_STEPS[activeStepIndex])}
           </p>
         </div>
       </div>
@@ -157,19 +171,20 @@ export const BaseResumeStep: React.FC<{
   onRxresumeUrlChange,
   onTemplateResumeChange,
 }) => {
+  const { t } = useTranslation("onboarding");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const effectiveResumeSetupMode = allowReactiveResume
     ? resumeSetupMode
     : "upload";
   const uploadTitle = allowReactiveResume
-    ? "Upload a resume file"
-    : "Upload your existing resume, PDF or DOCX";
+    ? t("baseResume.uploadTitle")
+    : t("baseResume.uploadTitleNoRxResume");
   const uploadDescription = allowReactiveResume
-    ? "Job Ops imports Reactive Resume JSON directly. PDF and DOCX files are sent to your configured AI model and stored as a local Design Resume. That resume drives job matching, fit assessment, search terms, and application workflows."
-    : "Upload your existing resume as a PDF or DOCX. Job Ops will import it and use it as the baseline for matching, fit assessment, search terms, and application workflows.";
+    ? t("baseResume.uploadDescription")
+    : t("baseResume.uploadDescriptionNoRxResume");
   const supportedFormats = allowReactiveResume
-    ? "Supported formats: PDF, DOCX, and Reactive Resume JSON."
-    : "Supported formats: PDF and DOCX.";
+    ? t("baseResume.supportedFormats")
+    : t("baseResume.supportedFormatsNoRxResume");
 
   return (
     <div className="space-y-6" data-onboarding-target="resume-options">
@@ -197,20 +212,7 @@ export const BaseResumeStep: React.FC<{
           }
           className="grid gap-4 lg:grid-cols-2"
         >
-          {[
-            {
-              value: "upload",
-              title: "Upload a file",
-              description:
-                "Turn a PDF, DOCX, or Reactive Resume JSON into the baseline Job Ops uses for matching and tailoring.",
-            },
-            {
-              value: "rxresume",
-              title: "Use Reactive Resume",
-              description:
-                "Connect an existing Reactive Resume so Job Ops can assess fit and build applications from it.",
-            },
-          ].map((option) => {
+          {RESUME_SETUP_OPTIONS.map((option) => {
             const checked = resumeSetupMode === option.value;
             const radioId = `resume-setup-${option.value}`;
             return (
@@ -231,10 +233,10 @@ export const BaseResumeStep: React.FC<{
                 />
                 <div className="space-y-1">
                   <div className="text-base font-medium text-foreground">
-                    {option.title}
+                    {t(option.titleKey)}
                   </div>
                   <div className="text-sm leading-6 text-muted-foreground">
-                    {option.description}
+                    {t(option.descriptionKey)}
                   </div>
                 </div>
               </label>
@@ -266,7 +268,7 @@ export const BaseResumeStep: React.FC<{
                   disabled={isBusy}
                 >
                   <Upload className="h-4 w-4" />
-                  Upload resume file
+                  {t("baseResume.uploadButton")}
                 </Button>
                 <div className="text-xs text-muted-foreground">
                   {supportedFormats}
@@ -277,7 +279,7 @@ export const BaseResumeStep: React.FC<{
 
           <InlineValidation
             state={baseResumeValidation}
-            successMessage="Your base resume is loaded and ready."
+            successMessage={t("baseResume.ready")}
           />
         </>
       ) : (

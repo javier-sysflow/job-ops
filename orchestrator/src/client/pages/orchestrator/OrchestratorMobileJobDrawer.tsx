@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import type { Job, JobListItem } from "@shared/types.js";
 import type React from "react";
 import { Button } from "@/components/ui/button";
@@ -39,11 +40,11 @@ export const OrchestratorMobileJobDrawer: React.FC<
     <DrawerContent className="max-h-[90vh]">
       <div className="flex items-center justify-between px-4 pt-2">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Job details
+          {i18n.t("jobDetail:mobileDrawer.title")}
         </div>
         <DrawerClose asChild>
           <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
-            Close
+            {i18n.t("common:actions.close")}
           </Button>
         </DrawerClose>
       </div>

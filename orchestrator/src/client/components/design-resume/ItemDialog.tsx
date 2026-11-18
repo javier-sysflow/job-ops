@@ -1,11 +1,14 @@
+import i18n from "@client/i18n";
 import { TokenizedInput } from "@client/pages/orchestrator/TokenizedInput";
 import { createId } from "@paralleldrive/cuid2";
 import type {
   DesignResumeAiFieldValueType,
   DesignResumeJson,
 } from "@shared/types";
-import { Plus, Trash2 } from "lucide-react";
+import type { ParseKeys } from "i18next";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Plus, Trash2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,11 +35,18 @@ export type ItemFieldType =
   | "toggle"
   | "icon";
 
+export type ResumeStudioKey = `resumeStudio:${ParseKeys<"resumeStudio">}`;
+
 export type ItemFieldConfig = {
   key: string;
+  /** English label; also sent to the AI assistant. */
   label: string;
+  /** Translated UI label. Falls back to `label`. */
+  labelKey?: ResumeStudioKey;
   type: ItemFieldType;
   placeholder?: string;
+  /** Translated placeholder. Falls back to `placeholder`. */
+  placeholderKey?: ResumeStudioKey;
   required?: boolean;
   min?: number;
   step?: number;
@@ -66,6 +76,16 @@ type ItemDialogAiContext = {
   itemLabel?: string | null;
   pathPrefix: string;
 };
+
+function fieldLabel(field: ItemFieldConfig): string {
+  return field.labelKey ? i18n.t(field.labelKey) : field.label;
+}
+
+function fieldPlaceholder(field: ItemFieldConfig): string | undefined {
+  return field.placeholderKey
+    ? i18n.t(field.placeholderKey)
+    : field.placeholder;
+}
 
 function getValue(source: Record<string, unknown>, path: string): unknown {
   return path.split(".").reduce<unknown>((current, segment) => {
@@ -159,7 +179,7 @@ function renderTextField(
   return (
     <div key={field.key} className="grid gap-2">
       <label className="text-sm font-medium" htmlFor={fieldId}>
-        {field.label}
+        {fieldLabel(field)}
         {field.required ? <span className="ml-1 text-rose-400">*</span> : null}
       </label>
       {iconPrefix ? (
@@ -180,7 +200,7 @@ function renderTextField(
             }
             min={field.min}
             step={field.step}
-            placeholder={field.placeholder}
+            placeholder={fieldPlaceholder(field)}
             onChange={(event) => {
               if (fieldErrors[field.key]) {
                 setFieldErrors((current) => {
@@ -212,7 +232,7 @@ function renderTextField(
             }
             min={field.min}
             step={field.step}
-            placeholder={field.placeholder}
+            placeholder={fieldPlaceholder(field)}
             onChange={(event) => {
               if (fieldErrors[field.key]) {
                 setFieldErrors((current) => {
@@ -280,6 +300,7 @@ function renderAiAssistant(
       resumeJson={aiContext.resumeJson}
       fieldPath={`${aiContext.pathPrefix}.${field.key}`}
       label={field.label}
+      displayLabel={fieldLabel(field)}
       value={normalizedValue}
       valueType={valueType}
       section={aiContext.section}
@@ -312,11 +333,11 @@ function renderFields(
     if (field.type === "richtext") {
       nodes.push(
         <div key={field.key} className="grid gap-2">
-          <span className="text-sm font-medium">{field.label}</span>
+          <span className="text-sm font-medium">{fieldLabel(field)}</span>
           <RichTextEditor
             value={value as string}
             onChange={(next) => updateField(field.key, next)}
-            placeholder={field.placeholder}
+            placeholder={fieldPlaceholder(field)}
             toolbarEnd={assistant}
           />
         </div>,
@@ -329,13 +350,13 @@ function renderFields(
       nodes.push(
         <div key={field.key} className="grid gap-2">
           <label className="text-sm font-medium" htmlFor={fieldId}>
-            {field.label}
+            {fieldLabel(field)}
           </label>
           <div className="relative">
             <Textarea
               id={fieldId}
               value={value as string}
-              placeholder={field.placeholder}
+              placeholder={fieldPlaceholder(field)}
               onChange={(event) =>
                 updateField(field.key, event.currentTarget.value)
               }
@@ -358,7 +379,7 @@ function renderFields(
       nodes.push(
         <div key={field.key} className="grid gap-2">
           <label className="text-sm font-medium" htmlFor={fieldId}>
-            {field.label}
+            {fieldLabel(field)}
           </label>
           <div className="relative">
             <TokenizedInput
@@ -370,9 +391,12 @@ function renderFields(
                 setTagDrafts((current) => ({ ...current, [field.key]: next }))
               }
               onValuesChange={(next) => updateField(field.key, next)}
-              placeholder={field.placeholder ?? "Add a value"}
-              helperText="Press Enter, comma, or paste a list to add items."
-              removeLabelPrefix="Remove tag"
+              placeholder={
+                fieldPlaceholder(field) ??
+                i18n.t("resumeStudio:itemDialog.tagPlaceholder")
+              }
+              helperText={i18n.t("resumeStudio:itemDialog.tagHelper")}
+              removeLabelPrefix={i18n.t("resumeStudio:itemDialog.removeTag")}
               inputClassName={assistant ? "pr-11" : undefined}
             />
             {assistant ? (
@@ -392,10 +416,10 @@ function renderFields(
           className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-4 py-3"
         >
           <div>
-            <div className="text-sm font-medium">{field.label}</div>
-            {field.placeholder ? (
+            <div className="text-sm font-medium">{fieldLabel(field)}</div>
+            {fieldPlaceholder(field) ? (
               <div className="text-xs text-muted-foreground">
-                {field.placeholder}
+                {fieldPlaceholder(field)}
               </div>
             ) : null}
           </div>
@@ -446,7 +470,7 @@ function renderFields(
       nodes.push(
         <div key={field.key} className="grid gap-2">
           <label className="text-sm font-medium" htmlFor={fieldId}>
-            {field.label}
+            {fieldLabel(field)}
           </label>
           <IconPickerField
             id={fieldId}
@@ -490,6 +514,7 @@ export function ItemDialog({
   onSave,
   onDelete,
 }: ItemDialogProps) {
+  const { t } = useTranslation(["resumeStudio", "common"]);
   const initialDraft = useMemo(
     () =>
       structuredClone(
@@ -555,7 +580,7 @@ export function ItemDialog({
                 onClick={onDelete}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete
+                {t("common:actions.delete")}
               </Button>
             ) : null}
           </div>
@@ -565,7 +590,7 @@ export function ItemDialog({
               variant="ghost"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t("common:actions.cancel")}
             </Button>
             <Button
               type="button"
@@ -580,7 +605,9 @@ export function ItemDialog({
                     val === undefined ||
                     val === null
                   ) {
-                    errors[field.key] = `${field.label} is required.`;
+                    errors[field.key] = t("itemDialog.required", {
+                      label: fieldLabel(field),
+                    });
                   }
                 }
                 if (Object.keys(errors).length > 0) {
@@ -593,7 +620,7 @@ export function ItemDialog({
               }}
             >
               <Plus className="mr-2 h-4 w-4" />
-              Save item
+              {t("itemDialog.save")}
             </Button>
           </div>
         </DialogFooter>

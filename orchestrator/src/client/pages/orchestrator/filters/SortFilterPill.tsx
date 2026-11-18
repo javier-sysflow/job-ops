@@ -1,5 +1,6 @@
-import { ArrowDownUp } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
+import { ArrowDownUp } from "@/components/icons";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,7 @@ export const SortFilterPill: React.FC<SortFilterPillProps> = ({
   filteredCount,
   sortDirectionLabel,
 }) => {
+  const { t } = useTranslation("jobs");
   const applySortChange = (nextSort: JobSort) => {
     if (nextSort.key === sort.key && nextSort.direction === sort.direction) {
       return;
@@ -41,7 +43,7 @@ export const SortFilterPill: React.FC<SortFilterPillProps> = ({
   return (
     <FilterPill
       icon={<ArrowDownUp />}
-      label="Sort"
+      label={t("filters.sort.label")}
       active={false}
       summary={`${sortLabels[sort.key]}${
         sortDirectionLabel ? ` · ${sortDirectionLabel}` : ""
@@ -50,7 +52,7 @@ export const SortFilterPill: React.FC<SortFilterPillProps> = ({
     >
       <div className="space-y-3 text-sm text-muted-foreground">
         <div className="space-y-1">
-          <span>Sort by</span>
+          <span>{t("filters.sort.sortBy")}</span>
           <Select
             value={sort.key}
             onValueChange={(value) =>
@@ -62,7 +64,7 @@ export const SortFilterPill: React.FC<SortFilterPillProps> = ({
           >
             <SelectTrigger
               id="sort-key"
-              aria-label="Sort field"
+              aria-label={t("filters.sort.fieldAria")}
               className="h-8 w-full text-foreground"
             >
               <SelectValue placeholder={sortLabels[sort.key]} />
@@ -78,7 +80,7 @@ export const SortFilterPill: React.FC<SortFilterPillProps> = ({
         </div>
 
         <div className="space-y-1">
-          <span>Direction</span>
+          <span>{t("filters.sort.direction")}</span>
           <Select
             value={sort.direction}
             onValueChange={(value) =>
@@ -90,7 +92,7 @@ export const SortFilterPill: React.FC<SortFilterPillProps> = ({
           >
             <SelectTrigger
               id="sort-direction"
-              aria-label="Sort order"
+              aria-label={t("filters.sort.directionAria")}
               className="h-8 w-full text-foreground"
             >
               <SelectValue placeholder={sortDirectionLabel} />

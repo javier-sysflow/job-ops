@@ -12,6 +12,7 @@ import type { SsoProviderInfo } from "@shared/types";
 import { useQuery } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +25,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LanguageToggle } from "../components/LanguageToggle";
+import i18n from "../i18n";
 import { resolveNextPath } from "../lib/auth-navigation";
+import { getErrorMessage } from "../lib/error-format";
 import { queryKeys } from "../lib/queryKeys";
 import {
   loadRememberedAuthUsers,
@@ -36,6 +40,7 @@ import { SSO_PROVIDER_ICONS } from "../lib/sso-providers";
 type AuthMode = "sign-in" | "signup";
 
 export function SignInPage() {
+  const { t } = useTranslation("shell");
   const location = useLocation();
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>("sign-in");
@@ -97,9 +102,7 @@ export function SignInPage() {
       } catch (error) {
         if (!cancelled) {
           setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : "Unable to load sign-in status.",
+            getErrorMessage(error, i18n.t("shell:signIn.loadStatusFailed")),
           );
         }
       } finally {
@@ -118,11 +121,11 @@ export function SignInPage() {
     event.preventDefault();
     const normalizedUsername = username.trim();
     if (!normalizedUsername || !password) {
-      setErrorMessage("Enter both username and password.");
+      setErrorMessage(t("signIn.missingCredentials"));
       return;
     }
     if (authMode === "signup" && password.length < 8) {
-      setErrorMessage("Password must be at least 8 characters.");
+      setErrorMessage(t("signIn.passwordTooShort"));
       return;
     }
 
@@ -152,9 +155,7 @@ export function SignInPage() {
       }
       navigate(nextPath, { replace: true });
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Unable to sign in",
-      );
+      setErrorMessage(getErrorMessage(error, t("signIn.signInFailed")));
       setIsBusy(false);
     }
   };
@@ -175,9 +176,10 @@ export function SignInPage() {
       window.location.assign(start.authorizationUrl);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : `Unable to continue with ${provider.displayName}`,
+        getErrorMessage(
+          error,
+          t("signIn.ssoFailed", { provider: provider.displayName }),
+        ),
       );
       setIsBusy(false);
     }
@@ -189,16 +191,25 @@ export function SignInPage() {
     setPassword("");
   };
 
-  const title = authMode === "signup" ? "Create account" : "Sign in";
+  const title =
+    authMode === "signup" ? t("signIn.createAccount") : t("signIn.signIn");
   const description =
     authMode === "signup"
-      ? "Create your JobOps account for this hosted workspace."
-      : "Enter your JobOps username and password.";
+      ? t("signIn.signupDescription")
+      : t("signIn.signInDescription");
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.08),_transparent_45%),linear-gradient(180deg,_rgba(15,23,42,0.02),_transparent_30%)] px-4 py-16">
-      <div className="mx-auto flex min-h-[70vh] max-w-md items-center">
-        <Card className="w-full border-border/60 bg-background/95 shadow-xl">
+      <div className="absolute right-4 top-4">
+        <LanguageToggle />
+      </div>
+      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center gap-6">
+        <img
+          src="/favicon.png"
+          alt=""
+          className="size-11 self-center rounded-xl shadow-md"
+        />
+        <Card className="w-full border-border bg-card shadow-xl">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl tracking-tight">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
@@ -215,13 +226,13 @@ export function SignInPage() {
                     value="sign-in"
                     onClick={() => resetFormFeedback("sign-in")}
                   >
-                    Sign in
+                    {t("signIn.signIn")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="signup"
                     onClick={() => resetFormFeedback("signup")}
                   >
-                    Create account
+                    {t("signIn.createAccount")}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -229,7 +240,7 @@ export function SignInPage() {
             {authMode === "sign-in" && rememberedUsers.length > 0 ? (
               <div className="mb-5 space-y-2">
                 <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Remembered on this browser
+                  {t("signIn.rememberedUsers")}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {rememberedUsers.map((user) => (
@@ -265,7 +276,7 @@ export function SignInPage() {
                     className="text-sm font-medium"
                     htmlFor="auth-display-name"
                   >
-                    Name
+                    {t("signIn.nameLabel")}
                   </label>
                   <Input
                     id="auth-display-name"
@@ -274,27 +285,27 @@ export function SignInPage() {
                     onChange={(event) =>
                       setDisplayName(event.currentTarget.value)
                     }
-                    placeholder="Your name"
+                    placeholder={t("signIn.namePlaceholder")}
                     disabled={isBusy}
                   />
                 </div>
               ) : null}
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="auth-username">
-                  Username
+                  {t("signIn.usernameLabel")}
                 </label>
                 <Input
                   id="auth-username"
                   autoComplete="username"
                   value={username}
                   onChange={(event) => setUsername(event.currentTarget.value)}
-                  placeholder="Enter username"
+                  placeholder={t("signIn.usernamePlaceholder")}
                   disabled={isBusy}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="auth-password">
-                  Password
+                  {t("signIn.passwordLabel")}
                 </label>
                 <Input
                   id="auth-password"
@@ -304,7 +315,7 @@ export function SignInPage() {
                   }
                   value={password}
                   onChange={(event) => setPassword(event.currentTarget.value)}
-                  placeholder="Enter password"
+                  placeholder={t("signIn.passwordPlaceholder")}
                   disabled={isBusy}
                 />
               </div>
@@ -316,11 +327,11 @@ export function SignInPage() {
               <Button className="w-full" type="submit" disabled={isBusy}>
                 {isBusy
                   ? authMode === "signup"
-                    ? "Creating account..."
-                    : "Signing in..."
+                    ? t("signIn.creatingAccount")
+                    : t("signIn.signingIn")
                   : authMode === "signup"
-                    ? "Create account"
-                    : "Sign in"}
+                    ? t("signIn.createAccount")
+                    : t("signIn.signIn")}
               </Button>
             </form>
             {ssoProviders.length > 0 ? (
@@ -328,7 +339,7 @@ export function SignInPage() {
                 <div className="flex items-center gap-3">
                   <Separator className="flex-1" />
                   <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    or continue with
+                    {t("signIn.orContinueWith")}
                   </span>
                   <Separator className="flex-1" />
                 </div>
@@ -344,7 +355,9 @@ export function SignInPage() {
                       onClick={() => void handleSsoSignIn(provider)}
                     >
                       <ProviderIcon className="mr-2 h-4 w-4" />
-                      Continue with {provider.displayName}
+                      {t("signIn.continueWith", {
+                        provider: provider.displayName,
+                      })}
                     </Button>
                   );
                 })}

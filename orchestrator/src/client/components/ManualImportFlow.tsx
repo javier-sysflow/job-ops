@@ -1,6 +1,12 @@
 import * as api from "@client/api";
 import { useSettings } from "@client/hooks/useSettings";
 import type { ManualJobDraft } from "@shared/types.js";
+import type { ParseKeys } from "i18next";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { showErrorToast } from "@/client/lib/error-toast";
 import {
   ArrowDown,
   ArrowLeft,
@@ -21,11 +27,7 @@ import {
   Sparkles,
   Tag,
   Users,
-} from "lucide-react";
-import type React from "react";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
-import { showErrorToast } from "@/client/lib/error-toast";
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -84,11 +86,13 @@ type ManualJobDraftState = {
 
 type DraftFieldKey = keyof ManualJobDraftState;
 
+type ManualImportKey = ParseKeys<"manualImport">;
+
 type ReviewFieldConfig = {
   id: string;
   key: DraftFieldKey;
-  label: string;
-  placeholder: string;
+  labelKey: ManualImportKey;
+  placeholderKey: ManualImportKey;
   icon: React.ComponentType<{ className?: string }>;
   required?: boolean;
   multiline?: boolean;
@@ -118,33 +122,34 @@ const STEP_INDEX_BY_ID: Record<ManualImportProgressStep, number> = {
   review: 1,
 };
 
-const STEP_LABEL_BY_ID: Record<ManualImportProgressStep, string> = {
-  paste: "Add JD",
-  review: "Review & import",
-};
+const STEP_LABEL_KEY_BY_ID: Record<ManualImportProgressStep, ManualImportKey> =
+  {
+    paste: "steps.addJd",
+    review: "steps.review",
+  };
 
 const REQUIRED_REVIEW_FIELDS: ReviewFieldConfig[] = [
   {
     id: "draft-title",
     key: "title",
-    label: "Title",
-    placeholder: "e.g. Junior Backend Engineer",
+    labelKey: "fields.title.label",
+    placeholderKey: "fields.title.placeholder",
     icon: Tag,
     required: true,
   },
   {
     id: "draft-employer",
     key: "employer",
-    label: "Employer",
-    placeholder: "e.g. Acme Labs",
+    labelKey: "fields.employer.label",
+    placeholderKey: "fields.employer.placeholder",
     icon: Building2,
     required: true,
   },
   {
     id: "draft-jobDescription",
     key: "jobDescription",
-    label: "Description",
-    placeholder: "Paste the job description...",
+    labelKey: "fields.jobDescription.label",
+    placeholderKey: "fields.jobDescription.placeholder",
     icon: FileText,
     required: true,
     multiline: true,
@@ -152,8 +157,8 @@ const REQUIRED_REVIEW_FIELDS: ReviewFieldConfig[] = [
   {
     id: "draft-jobUrl",
     key: "jobUrl",
-    label: "Job URL",
-    placeholder: "https://...",
+    labelKey: "fields.jobUrl.label",
+    placeholderKey: "fields.jobUrl.placeholder",
     icon: Link2,
     required: true,
   },
@@ -163,71 +168,71 @@ const OTHER_REVIEW_FIELDS: ReviewFieldConfig[] = [
   {
     id: "draft-location",
     key: "location",
-    label: "Location",
-    placeholder: "e.g. London, UK",
+    labelKey: "fields.location.label",
+    placeholderKey: "fields.location.placeholder",
     icon: MapPin,
   },
   {
     id: "draft-salary",
     key: "salary",
-    label: "Salary",
-    placeholder: "e.g. GBP 45k-55k",
+    labelKey: "fields.salary.label",
+    placeholderKey: "fields.salary.placeholder",
     icon: DollarSign,
   },
   {
     id: "draft-jobType",
     key: "jobType",
-    label: "Job type",
-    placeholder: "e.g. Full-time",
+    labelKey: "fields.jobType.label",
+    placeholderKey: "fields.jobType.placeholder",
     icon: Briefcase,
   },
   {
     id: "draft-jobLevel",
     key: "jobLevel",
-    label: "Job level",
-    placeholder: "e.g. Graduate",
+    labelKey: "fields.jobLevel.label",
+    placeholderKey: "fields.jobLevel.placeholder",
     icon: ListChecks,
   },
   {
     id: "draft-jobFunction",
     key: "jobFunction",
-    label: "Job function",
-    placeholder: "e.g. Software Engineering",
+    labelKey: "fields.jobFunction.label",
+    placeholderKey: "fields.jobFunction.placeholder",
     icon: Users,
   },
   {
     id: "draft-disciplines",
     key: "disciplines",
-    label: "Disciplines",
-    placeholder: "e.g. Computer Science",
+    labelKey: "fields.disciplines.label",
+    placeholderKey: "fields.disciplines.placeholder",
     icon: ListChecks,
   },
   {
     id: "draft-deadline",
     key: "deadline",
-    label: "Deadline",
-    placeholder: "e.g. 30 Sep 2025",
+    labelKey: "fields.deadline.label",
+    placeholderKey: "fields.deadline.placeholder",
     icon: Calendar,
   },
   {
     id: "draft-degreeRequired",
     key: "degreeRequired",
-    label: "Degree required",
-    placeholder: "e.g. BSc or MSc",
+    labelKey: "fields.degreeRequired.label",
+    placeholderKey: "fields.degreeRequired.placeholder",
     icon: GraduationCap,
   },
   {
     id: "draft-starting",
     key: "starting",
-    label: "Starting",
-    placeholder: "e.g. September 2026",
+    labelKey: "fields.starting.label",
+    placeholderKey: "fields.starting.placeholder",
     icon: Calendar,
   },
   {
     id: "draft-applicationLink",
     key: "applicationLink",
-    label: "Application URL",
-    placeholder: "https://...",
+    labelKey: "fields.applicationLink.label",
+    placeholderKey: "fields.applicationLink.placeholder",
     icon: Link,
   },
 ];
@@ -325,6 +330,8 @@ function getBlockedAutofetchLabel(value: string): string | null {
 }
 
 const MAX_BULK_URLS = 25;
+const BULK_URLS_PLACEHOLDER =
+  "https://example.com/jobs/backend-engineer\nhttps://example.com/jobs/data-scientist";
 
 function parseBulkUrls(value: string): {
   urls: string[];
@@ -363,6 +370,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
   initialSource = null,
   initialSourceHost = null,
 }) => {
+  const { t } = useTranslation("manualImport");
   const [step, setStep] = useState<ManualImportStep>("paste");
   const [importMode, setImportMode] = useState<ManualImportMode>("single");
   const [rawDescription, setRawDescription] = useState("");
@@ -445,8 +453,8 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
   const stepIndex = STEP_INDEX_BY_ID[progressStep];
   const stepLabel =
     importMode === "url-list" && progressStep === "paste"
-      ? "Add URLs"
-      : STEP_LABEL_BY_ID[progressStep];
+      ? t("steps.addUrls")
+      : t(STEP_LABEL_KEY_BY_ID[progressStep]);
 
   const canAnalyze =
     rawDescription.trim().length > 0 &&
@@ -482,9 +490,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
     if (!trimmedUrl) return;
     const blockedLabel = getBlockedAutofetchLabel(trimmedUrl);
     if (blockedLabel) {
-      setError(
-        `Auto-fetch is not supported for ${blockedLabel} links. Paste the job description manually.`,
-      );
+      setError(t("errors.autofetchBlocked", { site: blockedLabel }));
       setWarning(null);
       setFetchNotice(null);
       return;
@@ -505,12 +511,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
       setImportSource("fetched_url");
       setImportSourceHost(getSourceHost(fetchedUrl));
       setFetchUrl(fetchedUrl);
-      setFetchNotice("Fetched the page text. Review it below, then analyze.");
+      setFetchNotice(t("paste.fetchNotice"));
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : "Couldn't fetch this URL automatically. Paste the job description manually.";
+        err instanceof Error ? err.message : t("errors.fetchFailed");
       setError(message);
       setStep("paste");
     } finally {
@@ -520,7 +524,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
 
   const handleAnalyze = async () => {
     if (!rawDescription.trim()) {
-      setError("Paste a job description to continue.");
+      setError(t("errors.pasteDescription"));
       return;
     }
 
@@ -545,9 +549,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
       setStep("review");
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : "Failed to analyze job description";
+        err instanceof Error ? err.message : t("errors.analyzeFailed");
       setError(message);
       setStep("paste");
     }
@@ -557,16 +559,19 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
     const { urls, invalidLines } = parseBulkUrls(bulkUrlText);
     if (invalidLines.length > 0) {
       setError(
-        `Line${invalidLines.length === 1 ? "" : "s"} ${invalidLines.join(", ")} ${invalidLines.length === 1 ? "is" : "are"} not valid http(s) URL${invalidLines.length === 1 ? "" : "s"}.`,
+        t("errors.invalidLines", {
+          count: invalidLines.length,
+          lines: invalidLines.join(", "),
+        }),
       );
       return;
     }
     if (urls.length === 0) {
-      setError("Paste at least one job URL to continue.");
+      setError(t("errors.noUrls"));
       return;
     }
     if (urls.length > MAX_BULK_URLS) {
-      setError(`Paste no more than ${MAX_BULK_URLS} URLs at a time.`);
+      setError(t("errors.tooManyUrls", { max: MAX_BULK_URLS }));
       return;
     }
 
@@ -580,7 +585,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
         const blockedLabel = getBlockedAutofetchLabel(url);
         if (blockedLabel) {
           throw new Error(
-            `Auto-fetch is not supported for ${blockedLabel} links.`,
+            t("errors.autofetchBlockedShort", { site: blockedLabel }),
           );
         }
         const fetched = await api.fetchJobFromUrl({ url });
@@ -602,7 +607,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
           url,
           status: "failed",
           error:
-            err instanceof Error ? err.message : "Could not analyze this URL.",
+            err instanceof Error ? err.message : t("errors.analyzeUrlFailed"),
         });
       }
       setBulkItems([...results]);
@@ -622,10 +627,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
         job: payload,
         skipTailoring,
       });
-      toast.success("Job imported", {
+      toast.success(t("toasts.imported"), {
         description: skipTailoring
-          ? "Saved to Discovered without tailoring. You can tailor it anytime from the job detail view."
-          : "The job was tailored and moved to the ready column.",
+          ? t("toasts.importedWithoutTailoring")
+          : t("toasts.importedTailored"),
       });
       await onImported({
         jobId: created.id,
@@ -637,7 +642,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
       });
       onClose();
     } catch (err) {
-      showErrorToast(err, "Failed to import job");
+      showErrorToast(err, t("errors.importJobFailed"));
     } finally {
       setIsImporting(false);
     }
@@ -676,7 +681,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
               ? {
                   ...candidate,
                   status: "failed",
-                  error: err instanceof Error ? err.message : "Import failed.",
+                  error:
+                    err instanceof Error
+                      ? err.message
+                      : t("errors.importFailed"),
                 }
               : candidate,
           ),
@@ -686,14 +694,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
 
     setIsBulkImporting(false);
     if (failedCount > 0) {
-      toast.error(
-        `${failedCount} URL${failedCount === 1 ? "" : "s"} could not be imported`,
-      );
+      toast.error(t("errors.bulkFailed", { count: failedCount }));
     }
     if (imported.length > 0) {
-      toast.success(
-        `Imported ${imported.length} job${imported.length === 1 ? "" : "s"}`,
-      );
+      toast.success(t("toasts.bulkImported", { count: imported.length }));
       const last = imported.at(-1);
       if (last) {
         await onImported({
@@ -718,7 +722,9 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
       <div className="space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Step {stepIndex + 1} of 2</span>
+            <span>
+              {t("steps.progress", { current: stepIndex + 1, total: 2 })}
+            </span>
             <span>{stepLabel}</span>
           </div>
           <div className="h-1 rounded-full bg-muted/40">
@@ -737,10 +743,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
             <div className="grid grid-cols-2 gap-1 rounded-lg border border-border/70 bg-muted/30 p-1">
               {(
                 [
-                  ["single", "Single job", FileText],
-                  ["url-list", "URL list", List],
+                  ["single", "paste.modes.single", FileText],
+                  ["url-list", "paste.modes.urlList", List],
                 ] as const
-              ).map(([mode, label, Icon]) => (
+              ).map(([mode, labelKey, Icon]) => (
                 <button
                   key={mode}
                   type="button"
@@ -754,7 +760,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                   onClick={() => setMode(mode)}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  {label}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
@@ -767,10 +773,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                       htmlFor="bulk-job-urls"
                       className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                     >
-                      Job URLs
+                      {t("paste.jobUrls")}
                     </label>
                     <span className="text-[11px] text-muted-foreground">
-                      Up to {MAX_BULK_URLS}
+                      {t("paste.upTo", { max: MAX_BULK_URLS })}
                     </span>
                   </div>
                   <Textarea
@@ -780,14 +786,11 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                       setBulkUrlText(event.target.value);
                       setError(null);
                     }}
-                    placeholder={
-                      "https://example.com/jobs/backend-engineer\nhttps://example.com/jobs/data-scientist"
-                    }
+                    placeholder={BULK_URLS_PLACEHOLDER}
                     className="min-h-[220px] font-mono text-sm leading-relaxed"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Paste one public job URL per line. Each page is fetched and
-                    analyzed before you review the results.
+                    {t("paste.urlListHint")}
                   </p>
                 </div>
 
@@ -803,7 +806,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                   className="h-10 w-full gap-2"
                 >
                   <Sparkles className="h-4 w-4" />
-                  Analyze URL list
+                  {t("paste.analyzeUrlList")}
                 </Button>
               </div>
             ) : (
@@ -814,10 +817,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                       htmlFor="fetch-url"
                       className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                     >
-                      Job URL
+                      {t("paste.jobUrl")}
                     </label>
                     <span className="text-[11px] text-muted-foreground">
-                      Optional helper
+                      {t("paste.optionalHelper")}
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -826,7 +829,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                       disabled={isReadingPdf}
                       value={fetchUrl}
                       onChange={(event) => setFetchUrl(event.target.value)}
-                      placeholder="https://example.com/job-posting"
+                      placeholder="https://example.com/job-posting" // i18n-ignore
                       className="flex-1"
                       onKeyDown={(event) => {
                         if (event.key === "Enter" && canFetch) {
@@ -847,13 +850,11 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                       ) : (
                         <Link className="h-4 w-4" />
                       )}
-                      {isFetching ? "Fetching..." : "Fetch"}
+                      {isFetching ? t("paste.fetching") : t("paste.fetch")}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Fetch tries to copy the job text into the description field.
-                    If the site blocks simple fetching, paste the description
-                    manually.
+                    {t("paste.fetchHint")}
                   </p>
                 </div>
 
@@ -886,7 +887,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                     htmlFor="raw-description"
                     className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                   >
-                    Job description
+                    {t("paste.jobDescription")}
                   </label>
                   <Textarea
                     id="raw-description"
@@ -901,7 +902,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                         setImportSourceHost(null);
                       }
                     }}
-                    placeholder="Paste the full job description here, or fetch it from a URL above..."
+                    placeholder={t("paste.descriptionPlaceholder")}
                     className="min-h-[200px] font-mono text-sm leading-relaxed"
                   />
                 </div>
@@ -924,7 +925,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                   className="w-full h-10 gap-2"
                 >
                   <Sparkles className="h-4 w-4" />
-                  Analyze JD
+                  {t("paste.analyzeJd")}
                 </Button>
               </>
             )}
@@ -934,11 +935,9 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
         {step === "loading" && (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            <div className="text-sm font-semibold">
-              Analyzing job description
-            </div>
+            <div className="text-sm font-semibold">{t("loading.title")}</div>
             <p className="text-xs text-muted-foreground max-w-xs">
-              Extracting title, company, location, and other details.
+              {t("loading.description")}
             </p>
           </div>
         )}
@@ -946,14 +945,18 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
         {step === "bulk-loading" && (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            <div className="text-sm font-semibold">Analyzing URL list</div>
+            <div className="text-sm font-semibold">
+              {t("bulkLoading.title")}
+            </div>
             <p className="max-w-xs text-xs text-muted-foreground">
-              Fetching and analyzing each job one at a time. This may take a
-              moment.
+              {t("bulkLoading.description")}
             </p>
             {bulkItems.length > 0 && (
               <p className="text-xs text-muted-foreground">
-                {bulkItems.length} of {parsedBulkUrls.urls.length} processed
+                {t("bulkLoading.progress", {
+                  done: bulkItems.length,
+                  total: parsedBulkUrls.urls.length,
+                })}
               </p>
             )}
           </div>
@@ -970,19 +973,18 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
             {showReviewIntro && (
               <div className="space-y-2">
                 <h3 className="text-2xl font-semibold tracking-tight">
-                  Review job details
+                  {t("review.title")}
                 </h3>
                 <p className="max-w-lg text-sm leading-6 text-muted-foreground">
-                  AI extracted these from the job description. Review anything
-                  missing or odd before importing.
+                  {t("review.description")}
                 </p>
               </div>
             )}
 
             <ReviewSection
               icon={CheckCircle2}
-              title="Required"
-              description="Title, employer, job URL, and description are needed to import."
+              title={t("review.required.title")}
+              description={t("review.required.description")}
             >
               <div className="divide-y divide-border/70">
                 {REQUIRED_REVIEW_FIELDS.map((field) => (
@@ -1000,8 +1002,8 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
 
             <ReviewSection
               icon={CircleAlert}
-              title="Other details"
-              description="Useful if available; blank fields can be added later."
+              title={t("review.other.title")}
+              description={t("review.other.description")}
             >
               <div className="grid gap-x-4 sm:grid-cols-2">
                 {OTHER_REVIEW_FIELDS.map((field) => (
@@ -1033,12 +1035,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                   htmlFor="tailor-after-import"
                   className="cursor-pointer text-sm font-medium leading-none"
                 >
-                  Tailor automatically after import
+                  {t("review.tailorLabel")}
                 </label>
                 <p className="text-xs text-muted-foreground">
-                  Off saves LLM tokens — the job lands in Discovered and you can
-                  tailor it later from the job detail view. Default comes from
-                  Settings → Display.
+                  {t("review.tailorHint")}
                 </p>
               </div>
             </div>
@@ -1051,7 +1051,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                 className="h-11 flex-1 gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Edit JD
+                {t("review.editJd")}
               </Button>
               <Button
                 onClick={() => void handleImport()}
@@ -1064,10 +1064,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                   <Sparkles className="h-4 w-4" />
                 )}
                 {isImporting
-                  ? "Importing..."
+                  ? t("review.importing")
                   : tailorAfterImport
-                    ? "Import & tailor"
-                    : "Import without tailoring"}
+                    ? t("review.importAndTailor")
+                    : t("review.importWithoutTailoring")}
               </Button>
             </div>
           </div>
@@ -1077,11 +1077,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
           <div className="space-y-5 pb-4">
             <div className="space-y-2">
               <h3 className="text-2xl font-semibold tracking-tight">
-                Review URL list
+                {t("bulkReview.title")}
               </h3>
               <p className="max-w-lg text-sm leading-6 text-muted-foreground">
-                Review the fields AI found before importing the successful rows.
-                Failed URLs stay listed so you can retry them separately.
+                {t("bulkReview.description")}
               </p>
             </div>
 
@@ -1112,10 +1111,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                     </div>
                     <span className="shrink-0 text-[11px] font-medium text-muted-foreground">
                       {item.status === "ready"
-                        ? "Ready"
+                        ? t("bulkReview.status.ready")
                         : item.status === "imported"
-                          ? "Imported"
-                          : "Failed"}
+                          ? t("bulkReview.status.imported")
+                          : t("bulkReview.status.failed")}
                     </span>
                   </div>
                 </div>
@@ -1137,10 +1136,10 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                   htmlFor="bulk-tailor-after-import"
                   className="cursor-pointer text-sm font-medium leading-none"
                 >
-                  Tailor automatically after import
+                  {t("review.tailorLabel")}
                 </label>
                 <p className="text-xs text-muted-foreground">
-                  Turn this off to save LLM tokens and leave jobs in Discovered.
+                  {t("bulkReview.tailorHint")}
                 </p>
               </div>
             </div>
@@ -1154,7 +1153,7 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                 disabled={isBulkImporting}
               >
                 <ArrowLeft className="h-4 w-4" />
-                Edit URLs
+                {t("bulkReview.editUrls")}
               </Button>
               <Button
                 onClick={() => void handleBulkImport()}
@@ -1171,7 +1170,9 @@ export const ManualImportFlow: React.FC<ManualImportFlowProps> = ({
                 ) : (
                   <Sparkles className="h-4 w-4" />
                 )}
-                {isBulkImporting ? "Importing..." : "Import ready jobs"}
+                {isBulkImporting
+                  ? t("review.importing")
+                  : t("bulkReview.importReady")}
               </Button>
             </div>
           </div>
@@ -1207,6 +1208,7 @@ const ReviewField: React.FC<{
   onChange: (value: string) => void;
   compact?: boolean;
 }> = ({ field, value, onChange, compact = false }) => {
+  const { t } = useTranslation("manualImport");
   const hasValue = value.trim().length > 0;
   const needsReview = Boolean(field.required) && !hasValue;
   const Icon = field.icon;
@@ -1227,7 +1229,7 @@ const ReviewField: React.FC<{
               htmlFor={field.id}
               className="text-xs font-medium text-muted-foreground"
             >
-              {field.label}
+              {t(field.labelKey)}
               {field.required ? " *" : ""}
             </label>
             <ReviewStatusBadge hasValue={hasValue} needsReview={needsReview} />
@@ -1237,7 +1239,7 @@ const ReviewField: React.FC<{
               id={field.id}
               value={value}
               onChange={(event) => onChange(event.target.value)}
-              placeholder={field.placeholder}
+              placeholder={t(field.placeholderKey)}
               className="min-h-[150px] resize-y border-border/70 bg-background/60 font-mono text-sm leading-relaxed"
             />
           ) : (
@@ -1245,7 +1247,7 @@ const ReviewField: React.FC<{
               id={field.id}
               value={value}
               onChange={(event) => onChange(event.target.value)}
-              placeholder={field.placeholder}
+              placeholder={t(field.placeholderKey)}
               className="h-9 border-border/70 bg-background/60 text-sm"
             />
           )}
@@ -1259,11 +1261,12 @@ const ReviewStatusBadge: React.FC<{
   hasValue: boolean;
   needsReview: boolean;
 }> = ({ hasValue, needsReview }) => {
+  const { t } = useTranslation("manualImport");
   if (needsReview) {
     return (
       <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] font-medium text-amber-200">
         <CircleAlert className="h-3 w-3" />
-        Review
+        {t("review.status.review")}
       </span>
     );
   }
@@ -1272,14 +1275,14 @@ const ReviewStatusBadge: React.FC<{
     return (
       <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-200">
         <CheckCircle2 className="h-3 w-3" />
-        Looks good
+        {t("review.status.looksGood")}
       </span>
     );
   }
 
   return (
     <span className="inline-flex shrink-0 items-center rounded-full border border-border bg-muted/40 px-2 py-1 text-[11px] font-medium text-muted-foreground">
-      Add
+      {t("review.status.add")}
     </span>
   );
 };

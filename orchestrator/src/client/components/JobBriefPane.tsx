@@ -1,8 +1,10 @@
 import type { Job, JobBrief } from "@shared/types.js";
 import { motion, useReducedMotion } from "framer-motion";
-import { Sparkles } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/client/i18n";
+import { Sparkles } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 type JobBriefPaneProps = {
@@ -15,23 +17,36 @@ const BULLET_ENTER_TRANSITION = { duration: 0.1, ease: "easeOut" } as const;
 const BULLET_STAGGER_SECONDS = 0.015;
 const BULLET_STAGGER_BASE_DELAY = 0.03;
 const HIGHLIGHT_X_OFFSET = 6;
-const FADE_ONLY_BULLET_SECTIONS = new Set(["Company offers", "They want"]);
+const FADE_ONLY_BULLET_SECTIONS = new Set(["companyOffers", "theyWant"]);
 
 export const JobBriefPane: React.FC<JobBriefPaneProps> = ({
   job,
   className,
 }) => {
+  const { t } = useTranslation("jobDetail");
   const brief = parseJobBrief(job.jobBrief);
   const prefersReducedMotion = useReducedMotion();
 
   const bulletSections = useMemo(() => {
     if (!brief) return [];
     return [
-      { title: "Company offers", items: brief.company_offers },
-      { title: "They want", items: brief.they_want },
-      { title: "Missing or unclear", items: brief.missing_or_unclear },
+      {
+        id: "companyOffers",
+        title: t("brief.sections.companyOffers"),
+        items: brief.company_offers,
+      },
+      {
+        id: "theyWant",
+        title: t("brief.sections.theyWant"),
+        items: brief.they_want,
+      },
+      {
+        id: "missingOrUnclear",
+        title: t("brief.sections.missingOrUnclear"),
+        items: brief.missing_or_unclear,
+      },
     ];
-  }, [brief]);
+  }, [brief, t]);
 
   const bulletSectionsWithOffset = useMemo(() => {
     let offset = 0;
@@ -52,7 +67,7 @@ export const JobBriefPane: React.FC<JobBriefPaneProps> = ({
       >
         <FitLine job={job} />
         <p className="mt-2 text-xs text-muted-foreground">
-          Recalculate match to generate a concise JD brief.
+          {t("brief.recalculateHint")}
         </p>
       </section>
     );
@@ -81,12 +96,12 @@ export const JobBriefPane: React.FC<JobBriefPaneProps> = ({
       <div className="flex flex-col gap-6 @3xl/brief:grid @3xl/brief:grid-cols-3 @3xl/brief:gap-x-4 @3xl/brief:gap-y-6">
         {bulletSectionsWithOffset.map((section) => (
           <BulletSection
-            key={section.title}
+            key={section.id}
             jobId={job.id}
             title={section.title}
             items={section.items}
             startIndex={section.startIndex}
-            fadeOnly={FADE_ONLY_BULLET_SECTIONS.has(section.title)}
+            fadeOnly={FADE_ONLY_BULLET_SECTIONS.has(section.id)}
             prefersReducedMotion={prefersReducedMotion}
           />
         ))}
@@ -120,7 +135,7 @@ const HighlightsSection: React.FC<{
 }> = ({ jobId, items, prefersReducedMotion }) => (
   <div className="w-full space-y-2">
     <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-      Highlights
+      {i18n.t("jobDetail:brief.highlights")}
     </div>
     <div className="flex flex-wrap gap-1.5">
       {items.map((item, index) => (

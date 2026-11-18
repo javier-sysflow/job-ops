@@ -3,24 +3,15 @@
  */
 
 import type { JobStatus } from "@shared/types.js";
-import { Loader2 } from "lucide-react";
 import type React from "react";
+import { Loader2 } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { jobStatusLabel } from "../i18n/labels";
 
 interface StatusBadgeProps {
   status: JobStatus;
 }
-
-const statusLabels: Record<JobStatus, string> = {
-  discovered: "Discovered",
-  processing: "Processing",
-  ready: "Ready",
-  applied: "Applied",
-  in_progress: "In Progress",
-  skipped: "Skipped",
-  expired: "Expired",
-};
 
 const statusStyles: Record<
   JobStatus,
@@ -50,7 +41,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   return (
     <Badge variant={variant} className={cn("gap-1", className)}>
       {status === "processing" && <Loader2 className="h-3 w-3 animate-spin" />}
-      {statusLabels[status]}
+      {jobStatusLabel(status)}
     </Badge>
   );
 };
