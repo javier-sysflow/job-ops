@@ -1,6 +1,19 @@
 import { logger } from "@infra/logger";
+import { saveJevScreen } from "@server/repositories/jev-screens";
 import * as jobsRepo from "@server/repositories/jobs";
 import * as settingsRepo from "@server/repositories/settings";
+import {
+  getJevScreenMode,
+  getJevScreenThreshold,
+  type JevScreenOutcome,
+  screenedOutReason,
+  screenedOutScore,
+  screenJob,
+} from "@server/services/jev/screen";
+import {
+  type JevScreenContext,
+  prepareJevScreenContext,
+} from "@server/services/jev/screen-context";
 import {
   LlmNotConfiguredError,
   ScoringUnavailableError,
@@ -23,6 +36,40 @@ const SCORING_CONCURRENCY = 4;
  * effectively never produce this many consecutive failures.
  */
 const SYSTEMIC_FAILURE_THRESHOLD = 3;
+
+/** Logs and stores one screening result; never throws. */
+async function recordJevScreen(
+  jobId: string,
+  mode: "shadow" | "gate",
+  outcome: JevScreenOutcome,
+): Promise<void> {
+  if (outcome.ok) {
+    logger.info("Jev screen", {
+      jobId,
+      mode,
+      verdict: outcome.verdict,
+      trigger: outcome.trigger,
+      unsuitable: outcome.signals.unsuitable,
+      differentProfession: outcome.signals.differentProfession,
+      latencyMs: outcome.latencyMs,
+    });
+  } else {
+    logger.warn("Jev screen failed", {
+      jobId,
+      mode,
+      reason: outcome.reason,
+      status: outcome.status,
+    });
+  }
+  try {
+    await saveJevScreen({ jobId, mode, outcome });
+  } catch (error) {
+    logger.warn("Failed to save Jev screen", {
+      jobId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
 
 export async function scoreJobsStep(args: {
   profile: Record<string, unknown>;
@@ -58,6 +105,26 @@ export async function scoreJobsStep(args: {
   let failed = 0;
   const scoringInstructions = args.scoringInstructions?.trim();
 
+  // Jev screening is off unless JEV_SCREEN_MODE and TYPESAFE_API_KEY are set,
+  // and any failure here leaves scoring exactly as it was.
+  const jevMode = getJevScreenMode();
+  const jevThreshold = getJevScreenThreshold();
+  let jevContext: JevScreenContext | null = null;
+  if (jevMode !== "off" && unprocessedJobs.length > 0) {
+    try {
+      jevContext = await prepareJevScreenContext(
+        args.profile,
+        scoringInstructions,
+      );
+    } catch (error) {
+      logger.warn("Jev screening unavailable for this run", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  const pendingShadowScreens: Promise<void>[] = [];
+  let screenedOut = 0;
+
   await asyncPool({
     items: unprocessedJobs,
     concurrency: SCORING_CONCURRENCY,
@@ -88,6 +155,59 @@ export async function scoreJobsStep(args: {
           suitabilityReason: job.suitabilityReason ?? "",
         });
         return;
+      }
+
+      const screenPromise = jevContext
+        ? screenJob(job, jevContext.candidate, { threshold: jevThreshold })
+        : null;
+
+      if (screenPromise && jevMode === "shadow") {
+        pendingShadowScreens.push(
+          screenPromise.then((screen) =>
+            recordJevScreen(job.id, "shadow", screen),
+          ),
+        );
+      }
+
+      if (screenPromise && jevContext && jevMode === "gate") {
+        const screen = await screenPromise;
+        await recordJevScreen(job.id, "gate", screen);
+        if (
+          screen.ok &&
+          screen.verdict === "skip" &&
+          job.status !== "applied"
+        ) {
+          if (args.shouldCancel?.()) return;
+          const score = screenedOutScore(screen.signals);
+          const reason = screenedOutReason(
+            screen.trigger,
+            screen.signals,
+            jevContext.languageFor(job),
+          );
+          await jobsRepo.updateJob(job.id, {
+            suitabilityScore: score,
+            suitabilityReason: reason,
+            status: "skipped",
+          });
+          screenedOut += 1;
+          completed += 1;
+          progressHelpers.scoringJob(
+            completed,
+            unprocessedJobs.length,
+            {
+              id: job.id,
+              title: `${job.title} (screened out)`,
+              employer: job.employer,
+            },
+            exceptional,
+          );
+          scoredJobs.push({
+            ...job,
+            suitabilityScore: score,
+            suitabilityReason: reason,
+          });
+          return;
+        }
       }
 
       const scoringResultPromise = args.hostedUsageReserved
@@ -199,11 +319,16 @@ export async function scoreJobsStep(args: {
     },
   });
 
+  await Promise.all(pendingShadowScreens);
+
   progressHelpers.scoringComplete(scoredJobs.length);
   logger.info("Scoring step completed", {
     scoredJobs: scoredJobs.length,
     failedJobs: failed,
     concurrency: SCORING_CONCURRENCY,
+    jevMode: jevContext ? jevMode : "off",
+    jevScreenedOut: screenedOut,
+    jevShadowScreens: pendingShadowScreens.length,
   });
 
   return { unprocessedJobs, scoredJobs };

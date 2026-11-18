@@ -1106,6 +1106,31 @@ export const tracerClickEvents = sqliteTable(
   }),
 );
 
+/**
+ * One Jev screening result per job (services/jev/screen.ts). Kept apart from
+ * `jobs` so the experiment never touches the Job type or the UI.
+ */
+export const jevScreens = sqliteTable("jev_screens", {
+  jobId: text("job_id")
+    .primaryKey()
+    .references(() => jobs.id, { onDelete: "cascade" }),
+  tenantId: text("tenant_id")
+    .notNull()
+    .default("tenant_default")
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => users.id, {
+    onDelete: "cascade",
+  }),
+  mode: text("mode", { enum: ["shadow", "gate"] }).notNull(),
+  version: text("version").notNull(),
+  verdict: text("verdict", { enum: ["skip", "score", "error"] }).notNull(),
+  model: text("model"),
+  result: text("result").notNull(),
+  inputTokens: integer("input_tokens"),
+  latencyMs: integer("latency_ms"),
+  screenedAt: text("screened_at").notNull().default(sql`(datetime('now'))`),
+});
+
 export type UserRow = typeof users.$inferSelect;
 export type NewUserRow = typeof users.$inferInsert;
 export type SsoIdentityRow = typeof ssoIdentities.$inferSelect;
@@ -1176,3 +1201,5 @@ export type TracerLinkRow = typeof tracerLinks.$inferSelect;
 export type NewTracerLinkRow = typeof tracerLinks.$inferInsert;
 export type TracerClickEventRow = typeof tracerClickEvents.$inferSelect;
 export type NewTracerClickEventRow = typeof tracerClickEvents.$inferInsert;
+export type JevScreenRow = typeof jevScreens.$inferSelect;
+export type NewJevScreenRow = typeof jevScreens.$inferInsert;

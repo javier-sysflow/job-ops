@@ -34,6 +34,25 @@ vi.mock("@server/services/visa-sponsors/index", () => ({
   calculateSponsorMatchSummary: vi.fn(),
 }));
 
+vi.mock("@server/repositories/jev-screens", () => ({
+  saveJevScreen: vi.fn(),
+}));
+
+vi.mock("@server/services/jev/screen-context", () => ({
+  prepareJevScreenContext: vi.fn(),
+}));
+
+vi.mock("@server/services/jev/screen", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@server/services/jev/screen")>();
+  return {
+    ...actual,
+    getJevScreenMode: vi.fn(() => "off"),
+    getJevScreenThreshold: vi.fn(() => 0.6),
+    screenJob: vi.fn(),
+  };
+});
+
 vi.mock("../progress", () => ({
   updateProgress: vi.fn(),
   progressHelpers: {
@@ -475,5 +494,178 @@ describe("scoreJobsStep auto-skip behavior", () => {
     expect(result.scoredJobs).toHaveLength(0);
     expect(vi.mocked(scorer.scoreJobSuitability)).not.toHaveBeenCalled();
     expect(vi.mocked(jobsRepo.updateJob)).not.toHaveBeenCalled();
+  });
+});
+
+describe("scoreJobsStep Jev screening", () => {
+  const skipOutcome = {
+    ok: true as const,
+    version: "screen-v1",
+    verdict: "skip" as const,
+    trigger: "overall_fit" as const,
+    threshold: 0.6,
+    signals: {
+      unsuitable: 0.9,
+      differentProfession: 0.4,
+      fitLevel: 0.2,
+      roleLevel: 1.1,
+      locationConflict: 0.2,
+      missingRequirement: 0.3,
+    },
+    model: "jev-1.13.0",
+    inputTokens: 4000,
+    latencyMs: 800,
+  };
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const jobsRepo = await import("@server/repositories/jobs");
+    const settingsRepo = await import("@server/repositories/settings");
+    const scorer = await import("@server/services/scorer");
+    const visaSponsors = await import("@server/services/visa-sponsors/index");
+    const context = await import("@server/services/jev/screen-context");
+    const screen = await import("@server/services/jev/screen");
+
+    vi.mocked(jobsRepo.getUnscoredDiscoveredJobs).mockResolvedValue([
+      createJob({
+        id: "job-1",
+        title: "Sustainability Manager",
+        status: "discovered",
+        suitabilityScore: null,
+        suitabilityReason: null,
+      }),
+    ]);
+    vi.mocked(jobsRepo.updateJob).mockResolvedValue(null);
+    vi.mocked(settingsRepo.getSetting).mockResolvedValue(null);
+    vi.mocked(scorer.scoreJobSuitability).mockResolvedValue({
+      score: 12,
+      reason: "Different field",
+      jobBrief: null,
+    });
+    vi.mocked(visaSponsors.searchSponsors).mockResolvedValue([]);
+    vi.mocked(visaSponsors.calculateSponsorMatchSummary).mockReturnValue({
+      sponsorMatchScore: 0,
+      sponsorMatchNames: null,
+    });
+    vi.mocked(context.prepareJevScreenContext).mockResolvedValue({
+      candidate: { basics: { headline: "Engineer" } },
+      languageFor: () => "english",
+    });
+    vi.mocked(screen.screenJob).mockResolvedValue(skipOutcome);
+    vi.mocked(screen.getJevScreenMode).mockReturnValue("off");
+  });
+
+  it("never calls Jev when screening is off", async () => {
+    const screen = await import("@server/services/jev/screen");
+    const context = await import("@server/services/jev/screen-context");
+    const scorer = await import("@server/services/scorer");
+
+    await scoreJobsStep({ profile: {} });
+
+    expect(context.prepareJevScreenContext).not.toHaveBeenCalled();
+    expect(screen.screenJob).not.toHaveBeenCalled();
+    expect(scorer.scoreJobSuitability).toHaveBeenCalledTimes(1);
+  });
+
+  it("shadow mode still scores every job and stores Jev's verdict", async () => {
+    const screen = await import("@server/services/jev/screen");
+    const scorer = await import("@server/services/scorer");
+    const jobsRepo = await import("@server/repositories/jobs");
+    const jevRepo = await import("@server/repositories/jev-screens");
+    vi.mocked(screen.getJevScreenMode).mockReturnValue("shadow");
+
+    await scoreJobsStep({ profile: {} });
+
+    expect(screen.screenJob).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "job-1" }),
+      { basics: { headline: "Engineer" } },
+      { threshold: 0.6 },
+    );
+    expect(scorer.scoreJobSuitability).toHaveBeenCalledTimes(1);
+    expect(jobsRepo.updateJob).toHaveBeenCalledWith(
+      "job-1",
+      expect.objectContaining({ suitabilityScore: 12 }),
+    );
+    expect(jevRepo.saveJevScreen).toHaveBeenCalledWith({
+      jobId: "job-1",
+      mode: "shadow",
+      outcome: skipOutcome,
+    });
+  });
+
+  it("gate mode skips the scoring call on a confident skip verdict", async () => {
+    const screen = await import("@server/services/jev/screen");
+    const scorer = await import("@server/services/scorer");
+    const jobsRepo = await import("@server/repositories/jobs");
+    const jevRepo = await import("@server/repositories/jev-screens");
+    vi.mocked(screen.getJevScreenMode).mockReturnValue("gate");
+
+    const result = await scoreJobsStep({ profile: {} });
+
+    expect(scorer.scoreJobSuitability).not.toHaveBeenCalled();
+    expect(jobsRepo.updateJob).toHaveBeenCalledWith("job-1", {
+      suitabilityScore: 5,
+      suitabilityReason: expect.stringContaining("90% sure"),
+      status: "skipped",
+    });
+    expect(jevRepo.saveJevScreen).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: "job-1", mode: "gate" }),
+    );
+    expect(result.scoredJobs).toHaveLength(1);
+    expect(result.scoredJobs[0].suitabilityScore).toBe(5);
+  });
+
+  it("gate mode falls back to normal scoring when Jev fails or says score", async () => {
+    const screen = await import("@server/services/jev/screen");
+    const scorer = await import("@server/services/scorer");
+    vi.mocked(screen.getJevScreenMode).mockReturnValue("gate");
+
+    vi.mocked(screen.screenJob).mockResolvedValueOnce({
+      ok: false,
+      version: "screen-v1",
+      reason: "timeout",
+      latencyMs: 15000,
+    });
+    await scoreJobsStep({ profile: {} });
+    expect(scorer.scoreJobSuitability).toHaveBeenCalledTimes(1);
+
+    vi.mocked(screen.screenJob).mockResolvedValueOnce({
+      ...skipOutcome,
+      verdict: "score",
+      trigger: null,
+    });
+    await scoreJobsStep({ profile: {} });
+    expect(scorer.scoreJobSuitability).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves scoring untouched when the screening context cannot be built", async () => {
+    const screen = await import("@server/services/jev/screen");
+    const context = await import("@server/services/jev/screen-context");
+    const scorer = await import("@server/services/scorer");
+    vi.mocked(screen.getJevScreenMode).mockReturnValue("gate");
+    vi.mocked(context.prepareJevScreenContext).mockRejectedValue(
+      new Error("settings unavailable"),
+    );
+
+    await scoreJobsStep({ profile: {} });
+
+    expect(screen.screenJob).not.toHaveBeenCalled();
+    expect(scorer.scoreJobSuitability).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not let a failed save break scoring", async () => {
+    const screen = await import("@server/services/jev/screen");
+    const jevRepo = await import("@server/repositories/jev-screens");
+    const jobsRepo = await import("@server/repositories/jobs");
+    vi.mocked(screen.getJevScreenMode).mockReturnValue("shadow");
+    vi.mocked(jevRepo.saveJevScreen).mockRejectedValue(new Error("db locked"));
+
+    const result = await scoreJobsStep({ profile: {} });
+
+    expect(result.scoredJobs).toHaveLength(1);
+    expect(jobsRepo.updateJob).toHaveBeenCalledWith(
+      "job-1",
+      expect.objectContaining({ suitabilityScore: 12 }),
+    );
   });
 });

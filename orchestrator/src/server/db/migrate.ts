@@ -1231,6 +1231,24 @@ const migrations = [
 
   `CREATE INDEX IF NOT EXISTS idx_job_chat_messages_parent ON job_chat_messages(parent_message_id)`,
 
+  // Jev screening results, one row per job (services/jev/screen.ts).
+  `CREATE TABLE IF NOT EXISTS jev_screens (
+    job_id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+    user_id TEXT,
+    mode TEXT NOT NULL CHECK(mode IN ('shadow', 'gate')),
+    version TEXT NOT NULL,
+    verdict TEXT NOT NULL CHECK(verdict IN ('skip', 'score', 'error')),
+    model TEXT,
+    result TEXT NOT NULL,
+    input_tokens INTEGER,
+    latency_ms INTEGER,
+    screened_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
+
   // Backfill: Mark closed applications from latest stage event.
   `UPDATE jobs
    SET

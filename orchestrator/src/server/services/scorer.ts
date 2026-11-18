@@ -535,7 +535,8 @@ function buildOutputLanguageInstruction(outputLanguage?: string): string {
   return `\n\nOUTPUT LANGUAGE: Write "reason" and every jobBrief string in ${outputLanguage}. Keep JSON keys and enum values exactly as specified, keep jobPatches values in their stated types, and quote evidence excerpts verbatim from the listing.`;
 }
 
-function sanitizeProfileForPrompt(
+/** Profile fields the scoring models see: no name, contact details or links. */
+export function sanitizeProfileForPrompt(
   profile: Record<string, unknown>,
 ): Record<string, unknown> {
   return {
