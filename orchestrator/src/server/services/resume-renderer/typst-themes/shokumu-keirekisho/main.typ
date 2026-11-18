@@ -11,6 +11,22 @@
 
 #let source = json(__RESUME_DATA_PATH__)
 
+// Document date: the user's local date (renderDate, YYYY-MM-DD, computed by
+// the server in the user's browser time zone), else the server's today.
+#let document-date = {
+  let raw = source.at("renderDate", default: none)
+  if type(raw) == str and raw.len() == 10 {
+    let parts = raw.split("-")
+    datetime(
+      year: int(parts.at(0)),
+      month: int(parts.at(1)),
+      day: int(parts.at(2)),
+    )
+  } else {
+    datetime.today()
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Data helpers
 // ---------------------------------------------------------------------------
@@ -313,7 +329,7 @@
 #align(center, text(font: sans-fonts, size: 18pt, weight: "bold", tracking: 0.45em)[職務経歴書#h(-0.45em)])
 #v(0.6em)
 #align(right)[
-  #datetime.today().display("[year]年[month padding:none]月[day padding:none]日現在") \
+  #document-date.display("[year]年[month padding:none]月[day padding:none]日現在") \
   #if name != "" [氏名#h(1em)#text(size: 11pt)[#name]]
 ]
 

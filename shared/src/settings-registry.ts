@@ -24,6 +24,16 @@ import {
   type TypstTheme,
 } from "./types/settings";
 
+export function isValidTimeZone(value: string): boolean {
+  if (!value) return false;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function parseNonEmptyStringOrNull(raw: string | undefined): string | null {
   return raw === undefined || raw === "" ? null : raw;
 }
@@ -920,6 +930,16 @@ export const settingsRegistry = {
   rxresumeBaseResumeId: {
     kind: "string" as const,
     schema: z.string().trim().max(200),
+  },
+  // Fork: the user's IANA time zone (e.g. "Asia/Tokyo"), captured from their
+  // browser, so documents such as the 職務経歴書 are dated in local time.
+  timeZone: {
+    kind: "string" as const,
+    schema: z
+      .string()
+      .trim()
+      .max(64)
+      .refine(isValidTimeZone, { message: "Unknown time zone" }),
   },
   rxresumeUrl: {
     kind: "string" as const,

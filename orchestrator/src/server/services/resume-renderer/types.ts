@@ -120,6 +120,8 @@ export interface LatexResumeDocument {
   references: LatexResumeEntry[];
   sectionOrder?: LatexResumeOrderedSectionKey[];
   sectionTitles?: LatexResumeSectionTitles;
+  /** Date the document is generated, YYYY-MM-DD in the user's time zone. */
+  renderDate?: string;
   /** Output language the document was written for; drives Typst `lang`. */
   language?: ChatStyleManualLanguage;
 }

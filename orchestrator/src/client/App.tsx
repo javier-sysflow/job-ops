@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { AppModeContext } from "./components/layout";
 import { OnboardingGate } from "./components/OnboardingGate";
+import { TimeZoneSync } from "./components/TimeZoneSync";
 import { useAnalyticsIdentity } from "./hooks/useAnalyticsIdentity";
 import { useDemoInfo } from "./hooks/useDemoInfo";
 import { setAuthNavigator } from "./lib/auth-navigation";
@@ -107,6 +108,7 @@ export const App: React.FC = () => {
   return (
     <>
       <OnboardingGate />
+      <TimeZoneSync />
       {showDemoBanners && (
         <div className="sticky top-0 z-50 w-full border-b border-amber-400/50 bg-amber-500/20 px-4 py-2 text-xs text-amber-100 shadow-sm backdrop-blur">
           <div className="mx-auto flex items-center justify-center gap-3">
