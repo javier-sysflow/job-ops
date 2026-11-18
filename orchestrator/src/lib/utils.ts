@@ -1,3 +1,4 @@
+import { getUiLocale } from "@client/i18n/language";
 import {
   EXTRACTOR_SOURCE_IDS,
   sourceLabel as getExtractorSourceLabel,
@@ -23,7 +24,7 @@ export const formatDate = (dateStr?: string | null) => {
       : dateStr.replace(" ", "T");
     const parsed = new Date(normalized);
     if (Number.isNaN(parsed.getTime())) return dateStr;
-    return parsed.toLocaleDateString("en-GB", {
+    return parsed.toLocaleDateString(getUiLocale(), {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -35,7 +36,7 @@ export const formatDate = (dateStr?: string | null) => {
 
 export const formatTimestamp = (value?: number | null) => {
   if (!value) return "No due date";
-  return new Date(value * 1000).toLocaleDateString("en-GB", {
+  return new Date(value * 1000).toLocaleDateString(getUiLocale(), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -46,7 +47,7 @@ export const formatTimestampWithTime = (value?: number | null) => {
   if (!value) return "No date";
   const date = new Date(value * 1000);
   const dateLabel = formatTimestamp(value);
-  const timeLabel = date.toLocaleTimeString("en-GB", {
+  const timeLabel = date.toLocaleTimeString(getUiLocale(), {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -61,12 +62,12 @@ export const formatDateTime = (dateStr?: string | null) => {
       : dateStr.replace(" ", "T");
     const parsed = new Date(normalized);
     if (Number.isNaN(parsed.getTime())) return dateStr;
-    const date = parsed.toLocaleDateString("en-GB", {
+    const date = parsed.toLocaleDateString(getUiLocale(), {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
-    const time = parsed.toLocaleTimeString("en-GB", {
+    const time = parsed.toLocaleTimeString(getUiLocale(), {
       hour: "2-digit",
       minute: "2-digit",
     });

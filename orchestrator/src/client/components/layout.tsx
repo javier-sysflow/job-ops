@@ -37,6 +37,7 @@ import {
   loadRememberedAuthUsers,
   type RememberedAuthUser,
 } from "../lib/remembered-auth-users";
+import { LanguageToggle } from "./LanguageToggle";
 import { isNavActive, NAV_LINKS } from "./navigation";
 import { StatusBadgeIndicator } from "./StatusIndicator";
 import { ThemeToggle } from "./ThemeToggle";
@@ -286,6 +287,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
         <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
           {actions}
+          <LanguageToggle />
           <ThemeToggle />
         </div>
       </div>
