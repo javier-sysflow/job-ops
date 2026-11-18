@@ -1,12 +1,12 @@
+import { stageLabel } from "@client/i18n/labels";
 import { resolveResumeProjectSelection } from "@shared/resume-projects";
-import {
-  type ApplicationStage,
-  type ApplicationTask,
-  type Job,
-  type JobNote,
-  type ResumeProjectCatalogItem,
-  STAGE_LABELS,
-  type StageEvent,
+import type {
+  ApplicationStage,
+  ApplicationTask,
+  Job,
+  JobNote,
+  ResumeProjectCatalogItem,
+  StageEvent,
 } from "@shared/types.js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -21,6 +21,7 @@ import {
   Trash2,
 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Link,
   useLocation,
@@ -51,10 +52,10 @@ import { logJobStageEvent } from "@/client/lib/logJobStageEvent";
 import { resolveFilenameLanguage } from "@/client/lib/pdf-filename";
 import {
   getPdfActionLabels,
+  getPdfRegeneratingMessage,
+  getStalePdfMessage,
   isPdfRegenerating,
   isPdfStale,
-  PDF_REGENERATING_MESSAGE,
-  STALE_PDF_MESSAGE,
 } from "@/client/lib/pdf-freshness";
 import { downloadJobPdf, openJobPdf } from "@/client/lib/private-pdf";
 import { queryKeys } from "@/client/lib/queryKeys";
@@ -142,6 +143,7 @@ export const JobPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const { t } = useTranslation(["jobDetail", "common"]);
   const [isLogModalOpen, setIsLogModalOpen] = React.useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const [isDeleteJobModalOpen, setIsDeleteJobModalOpen] = React.useState(false);
@@ -183,18 +185,9 @@ export const JobPage: React.FC = () => {
     enabled: Boolean(id) && activeAction !== "delete-job",
   });
 
-  useQueryErrorToast(
-    jobQuery.error,
-    "Failed to load job details. Please try again.",
-  );
-  useQueryErrorToast(
-    eventsQuery.error,
-    "Failed to load job timeline. Please try again.",
-  );
-  useQueryErrorToast(
-    tasksQuery.error,
-    "Failed to load job tasks. Please try again.",
-  );
+  useQueryErrorToast(jobQuery.error, t("page.toasts.loadJobFailed"));
+  useQueryErrorToast(eventsQuery.error, t("page.toasts.loadTimelineFailed"));
+  useQueryErrorToast(tasksQuery.error, t("page.toasts.loadTasksFailed"));
 
   const markAsAppliedMutation = useMarkAsAppliedMutation();
   const updateJobMutation = useUpdateJobMutation();
@@ -215,7 +208,7 @@ export const JobPage: React.FC = () => {
   const activeMemoryView = normalizeMemoryView(view);
   useQueryErrorToast(
     activeMemoryView === "note" ? null : notesQuery.error,
-    "Failed to load notes. Please try again.",
+    t("toasts.loadNotesFailed"),
   );
   const storedSelectedProjectIds = React.useMemo(
     () => parseSelectedProjectIds(job?.selectedProjectIds),
@@ -307,7 +300,7 @@ export const JobPage: React.FC = () => {
   ) => {
     if (!job) return;
     if (job.status !== "in_progress") {
-      toast.error("Move this job to In Progress to track stages.");
+      toast.error(t("page.toasts.moveToInProgress"));
       return;
     }
 
@@ -328,13 +321,15 @@ export const JobPage: React.FC = () => {
       await invalidateJobData(queryClient, job.id);
       pendingEventRef.current = null;
       setEditingEvent(null);
-      toast.success(eventId ? "Event updated" : "Event logged");
+      toast.success(
+        eventId ? t("page.toasts.eventUpdated") : t("page.toasts.eventLogged"),
+      );
 
       if (effectiveStage === "offer") {
         celebrateOffer();
       }
     } catch (error) {
-      showErrorToast(error, "Failed to log event");
+      showErrorToast(error, t("page.toasts.logEventFailed"));
     }
   };
 
@@ -348,9 +343,9 @@ export const JobPage: React.FC = () => {
     try {
       await api.deleteJobStageEvent(job.id, eventToDelete);
       await invalidateJobData(queryClient, job.id);
-      toast.success("Event deleted");
+      toast.success(t("page.toasts.eventDeleted"));
     } catch (error) {
-      showErrorToast(error, "Failed to delete event");
+      showErrorToast(error, t("page.toasts.deleteEventFailed"));
     } finally {
       setIsDeleteModalOpen(false);
       setEventToDelete(null);
@@ -370,19 +365,19 @@ export const JobPage: React.FC = () => {
         await task();
         await loadData();
       } catch (error) {
-        showErrorToast(error, "Failed to run action");
+        showErrorToast(error, t("page.toasts.runActionFailed"));
       } finally {
         setActiveAction(null);
       }
     },
-    [job, loadData],
+    [job, loadData, t],
   );
 
   const handleMarkApplied = async () => {
     await runAction("mark-applied", async () => {
       if (!job) return;
       await markAsAppliedMutation.mutateAsync(job.id);
-      toast.success("Marked as applied");
+      toast.success(t("toasts.markedApplied"));
     });
   };
 
@@ -390,7 +385,7 @@ export const JobPage: React.FC = () => {
     await runAction("skip", async () => {
       if (!job) return;
       await skipJobMutation.mutateAsync(job.id);
-      toast.message("Job skipped");
+      toast.message(t("toasts.jobSkipped"));
     });
   };
 
@@ -415,9 +410,9 @@ export const JobPage: React.FC = () => {
           queryKey[2] === job.id,
       });
       navigate(jobPageBackTo ?? getFallbackBackTarget(job), { replace: true });
-      toast.success("Job deleted");
+      toast.success(t("page.toasts.jobDeleted"));
     } catch (error) {
-      showErrorToast(error, "Failed to delete job");
+      showErrorToast(error, t("page.toasts.deleteJobFailed"));
       setActiveAction(null);
     }
   };
@@ -426,7 +421,7 @@ export const JobPage: React.FC = () => {
     await runAction("rescore", async () => {
       if (!job) return;
       await rescoreJobMutation.mutateAsync(job.id);
-      toast.success("Match recalculated");
+      toast.success(t("toasts.matchRecalculated"));
     });
   };
 
@@ -434,7 +429,7 @@ export const JobPage: React.FC = () => {
     await runAction("regenerate-pdf", async () => {
       if (!job) return;
       await generatePdfMutation.mutateAsync(job.id);
-      toast.success("Resume PDF generated");
+      toast.success(t("toasts.resumePdfGenerated"));
     });
   };
 
@@ -442,7 +437,7 @@ export const JobPage: React.FC = () => {
     await runAction("check-sponsor", async () => {
       if (!job) return;
       await checkSponsorMutation.mutateAsync(job.id);
-      toast.success("Sponsor check completed");
+      toast.success(t("page.toasts.sponsorCheckCompleted"));
     });
   };
 
@@ -450,11 +445,11 @@ export const JobPage: React.FC = () => {
     if (!job) return;
     try {
       await copyTextToClipboard(formatJobForWebhook(job));
-      toast.success("Copied job info", {
-        description: "Webhook payload copied to clipboard.",
+      toast.success(t("toasts.copiedJobInfo"), {
+        description: t("page.toasts.webhookCopied"),
       });
     } catch {
-      toast.error("Could not copy job info");
+      toast.error(t("toasts.copyJobInfoFailed"));
     }
   };
 
@@ -478,10 +473,12 @@ export const JobPage: React.FC = () => {
       await uploadJobPdfFromFile(job.id, file);
       await loadData();
       toast.success(
-        job.pdfPath ? "Resume PDF replaced" : "Resume PDF attached",
+        job.pdfPath
+          ? t("page.toasts.resumePdfReplaced")
+          : t("page.toasts.resumePdfAttached"),
       );
     } catch (error) {
-      showErrorToast(error, "Failed to upload resume PDF");
+      showErrorToast(error, t("page.toasts.uploadResumePdfFailed"));
     } finally {
       setIsUploadingPdf(false);
       if (uploadPdfInputRef.current) {
@@ -498,7 +495,7 @@ export const JobPage: React.FC = () => {
       language: filenameLanguage,
     })}-resume.pdf`;
     await downloadJobPdf(job.id, filename).catch((error) => {
-      showErrorToast(error, "Could not download PDF");
+      showErrorToast(error, t("toasts.downloadPdfFailed"));
     });
   };
 
@@ -528,7 +525,7 @@ export const JobPage: React.FC = () => {
   const isStalePdf = isPdfStale(job);
   const pdfLabels = getPdfActionLabels(job);
   const pdfRegeneratingReason = isRegeneratingPdf
-    ? PDF_REGENERATING_MESSAGE
+    ? getPdfRegeneratingMessage()
     : null;
   const pdfActionsDisabled = !job?.pdfPath || isRegeneratingPdf;
   const isDiscovered = job?.status === "discovered";
@@ -565,7 +562,7 @@ export const JobPage: React.FC = () => {
       <div className="mb-4 flex items-center justify-between gap-4">
         <Button variant="ghost" size="sm" onClick={handleBack}>
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t("common:actions.back")}
         </Button>
         {job && (
           <div className="flex items-center gap-2">
@@ -574,8 +571,8 @@ export const JobPage: React.FC = () => {
               className="border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
             >
               {currentStage
-                ? STAGE_LABELS[currentStage as ApplicationStage] || currentStage
-                : job.status}
+                ? stageLabel(currentStage as ApplicationStage) || currentStage
+                : t(`page.statusBadge.${job.status}`)}
             </Badge>
             <Button
               variant="destructive"
@@ -589,7 +586,9 @@ export const JobPage: React.FC = () => {
               }
             >
               <Trash2 data-icon="inline-start" />
-              {activeAction === "delete-job" ? "Deleting..." : "Delete job"}
+              {activeAction === "delete-job"
+                ? t("page.deleting")
+                : t("page.deleteJob")}
             </Button>
           </div>
         )}
@@ -597,7 +596,7 @@ export const JobPage: React.FC = () => {
 
       {!job && (
         <div className="rounded-lg border border-dashed border-border/40 p-6 text-sm text-muted-foreground">
-          {isLoading ? "Loading application..." : "Application not found."}
+          {isLoading ? t("page.loadingApplication") : t("page.notFound")}
         </div>
       )}
 
@@ -629,12 +628,12 @@ export const JobPage: React.FC = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2 text-sm font-semibold">
                         <MessageSquareText className="h-4 w-4 text-primary" />
-                        Notes
+                        {t("page.notes")}
                       </div>
                       <Badge variant="secondary" className="text-[10px]">
                         {notesQuery.isLoading
-                          ? "Loading"
-                          : `${notes.length} saved`}
+                          ? t("page.loading")
+                          : t("page.savedCount", { number: notes.length })}
                       </Badge>
                     </div>
                     <div className="mt-4 min-h-[5.5rem] rounded-lg border border-border/50 bg-background/25 p-3">
@@ -644,9 +643,11 @@ export const JobPage: React.FC = () => {
                             {latestNote.title}
                           </div>
                           <div className="mt-1 text-xs text-muted-foreground">
-                            Updated{" "}
-                            {formatDateTime(latestNote.updatedAt) ??
-                              latestNote.updatedAt}
+                            {t("page.updated", {
+                              date:
+                                formatDateTime(latestNote.updatedAt) ??
+                                latestNote.updatedAt,
+                            })}
                           </div>
                           {latestNotePreview && (
                             <p className="mt-3 text-sm leading-6 text-muted-foreground">
@@ -656,7 +657,7 @@ export const JobPage: React.FC = () => {
                         </div>
                       ) : (
                         <div className="text-sm text-muted-foreground">
-                          No notes or transcripts captured yet.
+                          {t("page.noNotes")}
                         </div>
                       )}
                     </div>
@@ -670,7 +671,7 @@ export const JobPage: React.FC = () => {
                         to={`${baseJobPath}/notes`}
                         state={jobPageNavigationState}
                       >
-                        Open notes
+                        {t("page.openNotes")}
                         <ExternalLink className="h-3.5 w-3.5" />
                       </Link>
                     </Button>
@@ -680,27 +681,33 @@ export const JobPage: React.FC = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2 text-sm font-semibold">
                         <FileText className="h-4 w-4 text-primary" />
-                        Documents
+                        {t("page.documents")}
                       </div>
                       <Badge variant="secondary" className="text-[10px]">
-                        {job.pdfPath ? "Resume ready" : "No resume PDF"}
+                        {job.pdfPath
+                          ? t("page.resumeReady")
+                          : t("page.noResumePdf")}
                       </Badge>
                     </div>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <div className="rounded-lg border border-border/50 bg-background/25 p-3">
                         <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Resume PDF
+                          {t("page.resumePdf")}
                         </div>
                         <div className="mt-2 text-sm font-medium">
-                          {job.pdfPath ? "Stored for this job" : "Missing"}
+                          {job.pdfPath
+                            ? t("page.storedForJob")
+                            : t("page.missing")}
                         </div>
                       </div>
                       <div className="rounded-lg border border-border/50 bg-background/25 p-3">
                         <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Job description
+                          {t("page.jobDescription")}
                         </div>
                         <div className="mt-2 text-sm font-medium">
-                          {job.jobDescription ? "Saved" : "Missing"}
+                          {job.jobDescription
+                            ? t("page.saved")
+                            : t("page.missing")}
                         </div>
                       </div>
                     </div>
@@ -719,7 +726,7 @@ export const JobPage: React.FC = () => {
                         to={`${baseJobPath}/documents`}
                         state={jobPageNavigationState}
                       >
-                        Open documents
+                        {t("page.openDocuments")}
                         <ExternalLink className="h-3.5 w-3.5" />
                       </Link>
                     </Button>
@@ -729,11 +736,11 @@ export const JobPage: React.FC = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2 text-sm font-semibold">
                         <ClipboardList className="h-4 w-4 text-primary" />
-                        Timeline
+                        {t("page.timeline")}
                       </div>
                       {currentStage && (
                         <Badge variant="secondary" className="text-[10px]">
-                          {STAGE_LABELS[currentStage as ApplicationStage] ||
+                          {stageLabel(currentStage as ApplicationStage) ||
                             currentStage}
                         </Badge>
                       )}
@@ -758,7 +765,7 @@ export const JobPage: React.FC = () => {
                         </div>
                       ) : (
                         <div className="text-sm text-muted-foreground">
-                          No timeline events yet.
+                          {t("page.noTimelineEvents")}
                         </div>
                       )}
                     </div>
@@ -771,7 +778,7 @@ export const JobPage: React.FC = () => {
                       >
                         <span className="flex items-center gap-2">
                           <PlusCircle className="h-3.5 w-3.5" />
-                          Log event
+                          {t("page.logEvent")}
                         </span>
                       </Button>
                     ) : (
@@ -785,7 +792,7 @@ export const JobPage: React.FC = () => {
                           to={`${baseJobPath}/timeline`}
                           state={jobPageNavigationState}
                         >
-                          Open timeline
+                          {t("page.openTimeline")}
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Link>
                       </Button>
@@ -809,7 +816,7 @@ export const JobPage: React.FC = () => {
                   pdfRegeneratingReason={pdfRegeneratingReason}
                   pdfViewLabel={pdfLabels.view}
                   pdfDownloadLabel={pdfLabels.download}
-                  stalePdfMessage={STALE_PDF_MESSAGE}
+                  stalePdfMessage={getStalePdfMessage()}
                   onUploadPdf={() => uploadPdfInputRef.current?.click()}
                   onViewPdf={() => {
                     if (pdfActionsDisabled) return;
@@ -817,7 +824,7 @@ export const JobPage: React.FC = () => {
                       toast.error(
                         error instanceof Error
                           ? error.message
-                          : "Could not open PDF",
+                          : t("toasts.openPdfFailed"),
                       );
                     });
                   }}
@@ -843,7 +850,7 @@ export const JobPage: React.FC = () => {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2 text-base font-semibold">
                       <ClipboardList className="h-4 w-4" />
-                      Timeline
+                      {t("page.timeline")}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {job.salary && (
@@ -857,7 +864,7 @@ export const JobPage: React.FC = () => {
                       )}
                       {currentStage && (
                         <Badge variant="secondary">
-                          {STAGE_LABELS[currentStage as ApplicationStage] ||
+                          {stageLabel(currentStage as ApplicationStage) ||
                             currentStage}
                         </Badge>
                       )}
@@ -869,7 +876,7 @@ export const JobPage: React.FC = () => {
                           onClick={() => setIsLogModalOpen(true)}
                         >
                           <PlusCircle className="mr-1.5 h-3.5 w-3.5" />
-                          Log event
+                          {t("page.logEvent")}
                         </Button>
                       )}
                     </div>
@@ -878,13 +885,12 @@ export const JobPage: React.FC = () => {
                 <div className="p-4">
                   {!isInProgress && !isApplied && (
                     <div className="mb-4 rounded-md border border-dashed border-border/60 p-3 text-sm text-muted-foreground">
-                      Mark this job as applied to start tracking application
-                      stages.
+                      {t("page.markAppliedToTrack")}
                     </div>
                   )}
                   {(isInProgress || isApplied) && isClosedStage && (
                     <div className="mb-4 rounded-md border border-dashed border-border/60 p-3 text-sm text-muted-foreground">
-                      This application is closed. Stage logging is disabled.
+                      {t("page.applicationClosed")}
                     </div>
                   )}
                   <JobTimeline
@@ -904,7 +910,7 @@ export const JobPage: React.FC = () => {
                 <div className="border-b border-border/50 px-4 py-3">
                   <div className="flex items-center gap-2 text-base font-semibold">
                     <Sparkles className="h-4 w-4" />
-                    Ghostwriter
+                    Ghostwriter{/* i18n-ignore */}
                   </div>
                 </div>
                 <div className="h-[calc(100vh-140px)] px-4">
@@ -944,7 +950,7 @@ export const JobPage: React.FC = () => {
                   toast.error(
                     error instanceof Error
                       ? error.message
-                      : "Could not open PDF",
+                      : t("toasts.openPdfFailed"),
                   );
                 });
               }}
@@ -976,8 +982,11 @@ export const JobPage: React.FC = () => {
         isOpen={isDeleteJobModalOpen}
         onClose={() => setIsDeleteJobModalOpen(false)}
         onConfirm={() => void handleDeleteJob()}
-        title="Delete job permanently?"
-        description={`Permanently delete “${job?.title}” at ${job?.employer}, including its notes, documents, timeline, and chat history? This cannot be undone. The job may be discovered again in future searches.`}
+        title={t("page.deleteJobDialog.title")}
+        description={t("page.deleteJobDialog.description", {
+          title: job?.title ?? "",
+          employer: job?.employer ?? "",
+        })}
       />
 
       <ConfirmDelete

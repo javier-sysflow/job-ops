@@ -12,6 +12,7 @@ import type {
 import { Settings2 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { showErrorToast } from "@/client/lib/error-toast";
@@ -44,6 +45,7 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
   initialPrompt,
   onInitialPromptConsumed,
 }) => {
+  const { t } = useTranslation(["jobDetail", "common"]);
   const [messages, setMessages] = useState<JobChatMessage[]>([]);
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [notes, setNotes] = useState<JobNote[]>([]);
@@ -99,11 +101,11 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
       const data = await api.getJobNotes(job.id);
       setNotes(data);
     } catch (error) {
-      showErrorToast(error, "Failed to load notes");
+      showErrorToast(error, t("ghostwriter.toasts.loadNotesFailed"));
     } finally {
       setAreNotesLoading(false);
     }
-  }, [job.id]);
+  }, [job.id, t]);
 
   const loadEmails = useCallback(async () => {
     setAreEmailsLoading(true);
@@ -111,11 +113,11 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
       const data = await api.getJobEmails(job.id, { limit: JOB_EMAIL_LIMIT });
       setEmails(data.items);
     } catch (error) {
-      showErrorToast(error, "Failed to load emails");
+      showErrorToast(error, t("ghostwriter.toasts.loadEmailsFailed"));
     } finally {
       setAreEmailsLoading(false);
     }
-  }, [job.id]);
+  }, [job.id, t]);
 
   const loadDocuments = useCallback(async () => {
     setAreDocumentsLoading(true);
@@ -123,11 +125,11 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
       const data = await api.getJobDocuments(job.id);
       setDocuments(data);
     } catch (error) {
-      showErrorToast(error, "Failed to load documents");
+      showErrorToast(error, t("ghostwriter.toasts.loadDocumentsFailed"));
     } finally {
       setAreDocumentsLoading(false);
     }
-  }, [job.id]);
+  }, [job.id, t]);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -139,11 +141,11 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
         loadDocuments(),
       ]);
     } catch (error) {
-      showErrorToast(error, "Failed to load Ghostwriter");
+      showErrorToast(error, t("ghostwriter.toasts.loadFailed"));
     } finally {
       setIsLoading(false);
     }
-  }, [loadDocuments, loadEmails, loadMessages, loadNotes]);
+  }, [loadDocuments, loadEmails, loadMessages, loadNotes, t]);
 
   useEffect(() => {
     void load();
@@ -298,7 +300,7 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
           return;
         }
 
-        showErrorToast(error, "Failed to send message");
+        showErrorToast(error, t("ghostwriter.toasts.sendFailed"));
       } finally {
         streamAbortRef.current = null;
         setIsStreaming(false);
@@ -313,6 +315,7 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
       selectedEmailIds,
       selectedDocumentIds,
       selectedNoteIds,
+      t,
     ],
   );
 
@@ -327,9 +330,9 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
       setStreamingMessageId(null);
       await loadMessages();
     } catch (error) {
-      showErrorToast(error, "Failed to stop run");
+      showErrorToast(error, t("ghostwriter.toasts.stopFailed"));
     }
-  }, [activeRunId, job.id, loadMessages]);
+  }, [activeRunId, job.id, loadMessages, t]);
 
   const regenerate = useCallback(
     async (assistantMessageId: string) => {
@@ -366,7 +369,7 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
         if (error instanceof Error && error.name === "AbortError") {
           return;
         }
-        showErrorToast(error, "Failed to regenerate response");
+        showErrorToast(error, t("ghostwriter.toasts.regenerateFailed"));
       } finally {
         streamAbortRef.current = null;
         setIsStreaming(false);
@@ -380,6 +383,7 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
       selectedEmailIds,
       selectedDocumentIds,
       selectedNoteIds,
+      t,
     ],
   );
 
@@ -443,7 +447,7 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
         if (error instanceof Error && error.name === "AbortError") {
           return;
         }
-        showErrorToast(error, "Failed to edit message");
+        showErrorToast(error, t("ghostwriter.toasts.editFailed"));
       } finally {
         streamAbortRef.current = null;
         setIsStreaming(false);
@@ -457,6 +461,7 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
       selectedEmailIds,
       selectedDocumentIds,
       selectedNoteIds,
+      t,
     ],
   );
 
@@ -508,27 +513,27 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
     (nextSelectedNoteIds: string[]) =>
       updateSelectedContext({
         selectedNoteIds: nextSelectedNoteIds,
-        errorMessage: "Failed to update Ghostwriter notes",
+        errorMessage: t("ghostwriter.toasts.updateNotesFailed"),
       }),
-    [updateSelectedContext],
+    [t, updateSelectedContext],
   );
 
   const updateSelectedEmails = useCallback(
     (nextSelectedEmailIds: string[]) =>
       updateSelectedContext({
         selectedEmailIds: nextSelectedEmailIds,
-        errorMessage: "Failed to update Ghostwriter emails",
+        errorMessage: t("ghostwriter.toasts.updateEmailsFailed"),
       }),
-    [updateSelectedContext],
+    [t, updateSelectedContext],
   );
 
   const updateSelectedDocuments = useCallback(
     (nextSelectedDocumentIds: string[]) =>
       updateSelectedContext({
         selectedDocumentIds: nextSelectedDocumentIds,
-        errorMessage: "Failed to update Ghostwriter documents",
+        errorMessage: t("ghostwriter.toasts.updateDocumentsFailed"),
       }),
-    [updateSelectedContext],
+    [t, updateSelectedContext],
   );
 
   const switchBranch = useCallback(
@@ -538,10 +543,10 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
         setMessages(result.messages);
         setBranches(result.branches);
       } catch (error) {
-        showErrorToast(error, "Failed to switch branch");
+        showErrorToast(error, t("ghostwriter.toasts.switchBranchFailed"));
       }
     },
-    [job.id],
+    [job.id, t],
   );
 
   const canReset = useMemo(() => {
@@ -569,11 +574,11 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
       await api.resetJobGhostwriterConversation(job.id);
       setMessages([]);
       setBranches([]);
-      toast.success("Conversation cleared");
+      toast.success(t("ghostwriter.toasts.conversationCleared"));
     } catch (error) {
-      showErrorToast(error, "Failed to reset conversation");
+      showErrorToast(error, t("ghostwriter.toasts.resetFailed"));
     }
-  }, [job.id]);
+  }, [job.id, t]);
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col max-w-6xl mx-auto">
@@ -584,12 +589,13 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
         {messages.length === 0 && !isLoading ? (
           <div className="flex h-full min-h-[260px] justify-center px-3 flex-col text-left">
             <h4 className="font-medium">
-              {job.title} at {job.employer}
+              {t("ghostwriter.jobAtEmployer", {
+                title: job.title,
+                employer: job.employer,
+              })}
             </h4>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Ghostwriter already has this job description, your resume and your
-              writing style preferences. Ask for tailored response drafts, or
-              concise role-fit talking points.
+              {t("ghostwriter.intro")}
             </p>
             <div className="mt-4">
               <Button
@@ -600,7 +606,7 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
               >
                 <Link to="/settings#chat">
                   <Settings2 className="h-4 w-4" />
-                  Alter personality
+                  {t("ghostwriter.alterPersonality")}
                 </Link>
               </Button>
             </div>
@@ -656,19 +662,20 @@ export const GhostwriterPanel: React.FC<GhostwriterPanelProps> = ({
       <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Start over?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("ghostwriter.resetDialog.title")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently erase the entire conversation. This action
-              cannot be undone.
+              {t("ghostwriter.resetDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => void resetConversation()}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Erase conversation
+              {t("ghostwriter.resetDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

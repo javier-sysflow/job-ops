@@ -4,6 +4,7 @@ import type { JobChatImageAttachment } from "@shared/types";
 import { Eraser, ImagePlus, Send, Square } from "lucide-react";
 import type React from "react";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,12 +34,13 @@ export const AiAssistComposer: React.FC<AiAssistComposerProps> = ({
   isStreaming,
   canReset = false,
   contextSlot,
-  placeholder = "Ask for a better draft...",
+  placeholder,
   allowScreenshots = false,
   onStop,
   onSend,
   onReset,
 }) => {
+  const { t } = useTranslation("jobDetail");
   const [value, setValue] = useState("");
   const [attachments, setAttachments] = useState<JobChatImageAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -48,23 +50,23 @@ export const AiAssistComposer: React.FC<AiAssistComposerProps> = ({
 
     const remainingSlots = MAX_SCREENSHOTS - attachments.length;
     if (remainingSlots <= 0) {
-      toast.error(`Attach up to ${MAX_SCREENSHOTS} screenshots.`);
+      toast.error(t("aiAssist.attachLimit", { max: MAX_SCREENSHOTS }));
       return;
     }
 
     const nextFiles = Array.from(files).slice(0, remainingSlots);
     if (files.length > remainingSlots) {
-      toast.info(`Only ${MAX_SCREENSHOTS} screenshots can be attached.`);
+      toast.info(t("aiAssist.attachTruncated", { max: MAX_SCREENSHOTS }));
     }
 
     const nextAttachments: JobChatImageAttachment[] = [];
     for (const file of nextFiles) {
       if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
-        toast.error("Screenshots must be PNG, JPEG, or WebP images.");
+        toast.error(t("aiAssist.invalidType"));
         continue;
       }
       if (file.size > MAX_SCREENSHOT_BYTES) {
-        toast.error(`${file.name} is larger than 2 MB.`);
+        toast.error(t("aiAssist.tooLarge", { name: file.name }));
         continue;
       }
 
@@ -78,7 +80,7 @@ export const AiAssistComposer: React.FC<AiAssistComposerProps> = ({
           reader.readAsDataURL(file);
         });
       } catch {
-        toast.error(`Could not read ${file.name}.`);
+        toast.error(t("aiAssist.readFailed", { name: file.name }));
         continue;
       }
 
@@ -128,7 +130,7 @@ export const AiAssistComposer: React.FC<AiAssistComposerProps> = ({
         />
       )}
       <Textarea
-        placeholder={placeholder}
+        placeholder={placeholder ?? t("aiAssist.placeholder")}
         value={value}
         onChange={(event) => setValue(event.target.value)}
         onPaste={(event) => {
@@ -154,7 +156,7 @@ export const AiAssistComposer: React.FC<AiAssistComposerProps> = ({
         <div className="flex min-w-0 items-center gap-2">
           {contextSlot}
           <div className="text-[10px] text-muted-foreground">
-            {getMetaShortcutLabel("Enter")} to send
+            {t("aiAssist.toSend", { shortcut: getMetaShortcutLabel("Enter") })}
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -176,8 +178,8 @@ export const AiAssistComposer: React.FC<AiAssistComposerProps> = ({
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={disabled || attachments.length >= MAX_SCREENSHOTS}
-                aria-label="Attach screenshots"
-                title="Attach screenshots"
+                aria-label={t("aiAssist.attachScreenshots")}
+                title={t("aiAssist.attachScreenshots")}
               >
                 <ImagePlus className="h-3.5 w-3.5" />
               </Button>
@@ -190,8 +192,8 @@ export const AiAssistComposer: React.FC<AiAssistComposerProps> = ({
               variant="outline"
               onClick={onReset}
               disabled={disabled || !canReset}
-              aria-label="Start over"
-              title="Start over"
+              aria-label={t("aiAssist.startOver")}
+              title={t("aiAssist.startOver")}
               className="text-destructive hover:text-destructive"
             >
               <Eraser className="h-3.5 w-3.5" />
@@ -203,8 +205,8 @@ export const AiAssistComposer: React.FC<AiAssistComposerProps> = ({
               size="icon"
               variant="outline"
               onClick={() => void onStop()}
-              aria-label="Stop generating"
-              title="Stop generating"
+              aria-label={t("aiAssist.stopGenerating")}
+              title={t("aiAssist.stopGenerating")}
             >
               <Square className="h-3.5 w-3.5" />
             </Button>
@@ -214,8 +216,8 @@ export const AiAssistComposer: React.FC<AiAssistComposerProps> = ({
             size="icon"
             onClick={() => void submit()}
             disabled={disabled || !value.trim()}
-            aria-label="Send message"
-            title="Send message"
+            aria-label={t("aiAssist.sendMessage")}
+            title={t("aiAssist.sendMessage")}
           >
             <Send className="h-3.5 w-3.5" />
           </Button>

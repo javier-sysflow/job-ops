@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import type { Job, JobListItem } from "@shared/types";
 
 type PdfFreshnessCarrier = Pick<
@@ -5,11 +6,11 @@ type PdfFreshnessCarrier = Pick<
   "pdfFreshness" | "pdfRegenerating"
 >;
 
-export const STALE_PDF_MESSAGE =
-  "PDF is out of date. A new one will regenerate automatically.";
+export const getStalePdfMessage = (): string =>
+  i18n.t("jobDetail:pdf.staleMessage");
 
-export const PDF_REGENERATING_MESSAGE =
-  "PDF is being regenerated after recent changes. You can view or download it again when regeneration finishes.";
+export const getPdfRegeneratingMessage = (): string =>
+  i18n.t("jobDetail:pdf.regeneratingMessage");
 
 export function getPdfFreshness(
   job: PdfFreshnessCarrier | null | undefined,
@@ -31,11 +32,11 @@ export function getPdfActionLabels(
 ) {
   return isPdfStale(job)
     ? {
-        view: "View old PDF",
-        download: "Download old PDF",
+        view: i18n.t("jobDetail:pdf.viewOld"),
+        download: i18n.t("jobDetail:pdf.downloadOld"),
       }
     : {
-        view: "View PDF",
-        download: "Download PDF",
+        view: i18n.t("jobDetail:pdf.view"),
+        download: i18n.t("jobDetail:pdf.download"),
       };
 }

@@ -1,3 +1,5 @@
+import i18n from "@client/i18n";
+
 export type TextCountMode = "words" | "characters";
 
 const graphemeSegmenter =
@@ -25,11 +27,11 @@ function countCharacters(text: string): number {
 export function formatTextCount(text: string, mode: TextCountMode): string {
   if (mode === "words") {
     const count = countWords(text);
-    return `${count} ${count === 1 ? "word" : "words"}`;
+    return i18n.t("jobDetail:tailoring.wordCount", { count });
   }
 
   const count = countCharacters(text);
-  return `${count} ${count === 1 ? "character" : "characters"}`;
+  return i18n.t("jobDetail:tailoring.characterCount", { count });
 }
 
 export const TAILOR_TEXTAREA_MIN_HEIGHT_PX = 120;

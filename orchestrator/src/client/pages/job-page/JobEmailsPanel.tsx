@@ -11,8 +11,10 @@ import {
   MailWarning,
 } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import * as api from "@/client/api";
 import { useQueryErrorToast } from "@/client/hooks/useQueryErrorToast";
+import i18n from "@/client/i18n";
 import { queryKeys } from "@/client/lib/queryKeys";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,37 +30,40 @@ type JobEmailsPanelProps = {
 
 const filterOptions: Array<{
   id: EmailFilter;
-  label: string;
   matches: (status: PostApplicationProcessingStatus) => boolean;
 }> = [
   {
     id: "all",
-    label: "All",
     matches: () => true,
   },
   {
     id: "auto_linked",
-    label: "Auto linked",
     matches: (status) => status === "auto_linked",
   },
   {
     id: "manual_linked",
-    label: "Manual",
     matches: (status) => status === "manual_linked",
   },
   {
     id: "pending_user",
-    label: "Needs review",
     matches: (status) => status === "pending_user",
   },
 ];
 
-const statusLabel: Record<PostApplicationProcessingStatus, string> = {
-  auto_linked: "Auto linked",
-  pending_user: "Needs review",
-  manual_linked: "Manual",
-  ignored: "Ignored",
-};
+const MESSAGE_TYPE_KEYS = new Set([
+  "interview",
+  "rejection",
+  "offer",
+  "update",
+  "other",
+] as const);
+type MessageTypeKey = typeof MESSAGE_TYPE_KEYS extends Set<infer T> ? T : never;
+
+function formatMessageType(value: string): string {
+  return MESSAGE_TYPE_KEYS.has(value as MessageTypeKey)
+    ? i18n.t(`jobDetail:emails.messageType.${value as MessageTypeKey}`)
+    : value.replace(/_/g, " ");
+}
 
 const statusClassName: Record<PostApplicationProcessingStatus, string> = {
   auto_linked: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
@@ -68,19 +73,22 @@ const statusClassName: Record<PostApplicationProcessingStatus, string> = {
 };
 
 function formatEpochMs(value: number | null): string {
-  if (!value) return "Unknown date";
-  return formatDateTime(new Date(value).toISOString()) ?? "Unknown date";
+  if (!value) return i18n.t("jobDetail:emails.unknownDate");
+  return (
+    formatDateTime(new Date(value).toISOString()) ??
+    i18n.t("jobDetail:emails.unknownDate")
+  );
 }
 
 function getSenderLabel(item: PostApplicationJobEmailItem): string {
   const senderName = item.message.senderName?.trim();
   if (senderName) return senderName;
   const address = item.message.fromAddress.trim();
-  return address || "Unknown sender";
+  return address || i18n.t("jobDetail:emails.unknownSender");
 }
 
 function formatConfidence(value: number | null): string {
-  if (value === null) return "n/a";
+  if (value === null) return i18n.t("jobDetail:emails.notAvailable");
   return `${Math.round(value)}%`;
 }
 
@@ -94,7 +102,7 @@ function getAccountLabel(items: PostApplicationJobEmailItem[]): string | null {
   );
   if (labels.length === 0) return null;
   if (labels.length === 1) return labels[0] ?? null;
-  return `${labels.length} accounts`;
+  return i18n.t("jobDetail:emails.accounts", { number: labels.length });
 }
 
 const EmptyState: React.FC<{
@@ -116,6 +124,7 @@ const EmptyState: React.FC<{
 const EmailRow: React.FC<{ item: PostApplicationJobEmailItem }> = ({
   item,
 }) => {
+  const { t } = useTranslation("jobDetail");
   const sender = getSenderLabel(item);
   const date = formatEpochMs(item.message.receivedAt);
 
@@ -132,10 +141,10 @@ const EmailRow: React.FC<{ item: PostApplicationJobEmailItem }> = ({
               <span className="text-xs text-muted-foreground">{date}</span>
             </div>
             <div className="mt-1 truncate text-sm font-medium">
-              {item.message.subject || "No subject"}
+              {item.message.subject || t("emails.noSubject")}
             </div>
             <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
-              {item.message.snippet || "No snippet captured."}
+              {item.message.snippet || t("emails.noSnippet")}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge
@@ -145,13 +154,15 @@ const EmailRow: React.FC<{ item: PostApplicationJobEmailItem }> = ({
                   statusClassName[item.message.processingStatus],
                 )}
               >
-                {statusLabel[item.message.processingStatus]}
+                {t(`emails.status.${item.message.processingStatus}`)}
               </Badge>
               <Badge variant="secondary" className="text-[10px] capitalize">
-                {item.message.messageType.replace(/_/g, " ")}
+                {formatMessageType(item.message.messageType)}
               </Badge>
               <Badge variant="outline" className="text-[10px]">
-                {formatConfidence(item.message.matchConfidence)} confidence
+                {t("emails.confidence", {
+                  value: formatConfidence(item.message.matchConfidence),
+                })}
               </Badge>
             </div>
           </div>
@@ -165,16 +176,18 @@ const EmailRow: React.FC<{ item: PostApplicationJobEmailItem }> = ({
               href={item.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              aria-label={`Open in Gmail: ${item.message.subject || sender}`}
+              aria-label={t("emails.openInGmailLabel", {
+                subject: item.message.subject || sender,
+              })}
             >
-              Open in Gmail
+              {t("emails.openInGmail")}
               <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
             </a>
           </Button>
         ) : (
           <div className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/60 px-2 text-xs text-muted-foreground">
             <MailWarning className="h-3.5 w-3.5" />
-            Gmail link unavailable
+            {t("emails.gmailLinkUnavailable")}
           </div>
         )}
       </div>
@@ -183,16 +196,14 @@ const EmailRow: React.FC<{ item: PostApplicationJobEmailItem }> = ({
 };
 
 export const JobEmailsPanel: React.FC<JobEmailsPanelProps> = ({ jobId }) => {
+  const { t } = useTranslation("jobDetail");
   const [activeFilter, setActiveFilter] = React.useState<EmailFilter>("all");
   const emailsQuery = useQuery({
     queryKey: queryKeys.jobs.emails(jobId, JOB_EMAIL_LIMIT),
     queryFn: () => api.getJobEmails(jobId, { limit: JOB_EMAIL_LIMIT }),
   });
 
-  useQueryErrorToast(
-    emailsQuery.error,
-    "Failed to load captured emails. Please try again.",
-  );
+  useQueryErrorToast(emailsQuery.error, t("emails.loadFailed"));
 
   const items = emailsQuery.data?.items ?? [];
   const filter = filterOptions.find((option) => option.id === activeFilter);
@@ -209,13 +220,14 @@ export const JobEmailsPanel: React.FC<JobEmailsPanelProps> = ({ jobId }) => {
             <Mail className="h-4 w-4" />
             <div>
               <div className="flex flex-wrap items-center gap-2 text-base font-semibold">
-                Captured emails
+                {t("emails.title")}
                 <Badge variant="secondary" className="text-[10px]">
                   {emailsQuery.isLoading
-                    ? "Loading"
-                    : `${filteredItems.length} of ${
-                        emailsQuery.data?.total ?? items.length
-                      }`}
+                    ? t("emails.loading")
+                    : t("emails.shownOfTotal", {
+                        shown: filteredItems.length,
+                        total: emailsQuery.data?.total ?? items.length,
+                      })}
                 </Badge>
               </div>
               {accountLabel && (
@@ -236,7 +248,7 @@ export const JobEmailsPanel: React.FC<JobEmailsPanelProps> = ({ jobId }) => {
                 className="h-8 px-2 text-xs"
                 onClick={() => setActiveFilter(option.id)}
               >
-                {option.label}
+                {t(`emails.filters.${option.id}`)}
               </Button>
             ))}
           </div>
@@ -246,15 +258,15 @@ export const JobEmailsPanel: React.FC<JobEmailsPanelProps> = ({ jobId }) => {
       <div className="p-4">
         {emailsQuery.isLoading && (
           <EmptyState
-            title="Loading captured emails"
-            description="Checking stored post-application message metadata for this job."
+            title={t("emails.states.loadingTitle")}
+            description={t("emails.states.loadingDescription")}
           />
         )}
 
         {!emailsQuery.isLoading && emailsQuery.isError && (
           <EmptyState
-            title="Emails could not be loaded"
-            description="The saved email metadata is temporarily unavailable."
+            title={t("emails.states.errorTitle")}
+            description={t("emails.states.errorDescription")}
             icon={MailWarning}
           />
         )}
@@ -263,8 +275,8 @@ export const JobEmailsPanel: React.FC<JobEmailsPanelProps> = ({ jobId }) => {
           !emailsQuery.isError &&
           items.length === 0 && (
             <EmptyState
-              title="No linked emails"
-              description="When post-application messages are linked to this job, their stored sender, subject, status, and snippet will appear here."
+              title={t("emails.states.emptyTitle")}
+              description={t("emails.states.emptyDescription")}
             />
           )}
 
@@ -273,8 +285,8 @@ export const JobEmailsPanel: React.FC<JobEmailsPanelProps> = ({ jobId }) => {
           items.length > 0 &&
           filteredItems.length === 0 && (
             <EmptyState
-              title="No emails match this filter"
-              description="Try another status filter to see the captured messages linked to this job."
+              title={t("emails.states.noMatchTitle")}
+              description={t("emails.states.noMatchDescription")}
             />
           )}
 

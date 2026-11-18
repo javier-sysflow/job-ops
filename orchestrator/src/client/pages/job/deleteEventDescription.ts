@@ -1,7 +1,8 @@
-import { STAGE_LABELS, type StageEvent } from "@shared/types.js";
+import i18n from "@client/i18n";
+import { stageLabel } from "@client/i18n/labels";
+import type { StageEvent } from "@shared/types.js";
 
-const DEFAULT_DESCRIPTION =
-  "This action cannot be undone. This will permanently delete this event from the timeline.";
+const getDefaultDescription = () => i18n.t("jobDetail:deleteEvent.default");
 
 /**
  * Build a delete-confirmation description for a stage event.
@@ -14,18 +15,18 @@ export function getDeleteEventDescription(
   events: StageEvent[],
   eventToDelete: string | null,
 ): string {
-  if (!eventToDelete) return DEFAULT_DESCRIPTION;
+  if (!eventToDelete) return getDefaultDescription();
 
   const lastEvent = events.at(-1);
   if (!lastEvent || lastEvent.id !== eventToDelete) {
-    return DEFAULT_DESCRIPTION;
+    return getDefaultDescription();
   }
 
   const previousEvent = events.at(-2);
   if (!previousEvent) {
-    return "This is the only event on this job. Deleting it will reset the job to its initial discovered state.";
+    return i18n.t("jobDetail:deleteEvent.onlyEvent");
   }
 
-  const previousLabel = STAGE_LABELS[previousEvent.toStage];
-  return `Deleting this event will roll the job's stage back to "${previousLabel}".`;
+  const previousLabel = stageLabel(previousEvent.toStage);
+  return i18n.t("jobDetail:deleteEvent.rollback", { stage: previousLabel });
 }

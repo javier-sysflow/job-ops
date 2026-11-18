@@ -3,6 +3,7 @@ import type { AppliedDuplicateMatch, Job, JobListItem } from "@shared/types.js";
 import { Calendar, DollarSign, Loader2, MapPin, Search } from "lucide-react";
 import type React from "react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn, formatDate, formatJobSourceLabel, sourceLabel } from "@/lib/utils";
@@ -30,6 +31,7 @@ interface SponsorPillProps {
 }
 
 const SponsorPill: React.FC<SponsorPillProps> = ({ score, names, onCheck }) => {
+  const { t } = useTranslation("jobDetail");
   const [isChecking, setIsChecking] = useState(false);
 
   const parsedNames = useMemo(() => {
@@ -57,7 +59,7 @@ const SponsorPill: React.FC<SponsorPillProps> = ({ score, names, onCheck }) => {
       <Tip
         asChild
         clickBehavior="none"
-        content={<p className="text-xs">Check if employer is a visa sponsor</p>}
+        content={<p className="text-xs">{t("header.checkSponsorTooltip")}</p>}
       >
         <Button
           size="sm"
@@ -71,7 +73,9 @@ const SponsorPill: React.FC<SponsorPillProps> = ({ score, names, onCheck }) => {
           ) : (
             <Search className="h-2 w-2" />
           )}
-          <span>{isChecking ? "Checking..." : "Check Sponsorship Status"}</span>
+          <span>
+            {isChecking ? t("header.checking") : t("header.checkSponsorship")}
+          </span>
         </Button>
       </Tip>
     );
@@ -84,18 +88,18 @@ const SponsorPill: React.FC<SponsorPillProps> = ({ score, names, onCheck }) => {
   const getStatus = (s: number) => {
     if (s >= 95)
       return {
-        label: "Confirmed Sponsor",
+        label: t("header.sponsor.confirmed"),
         dot: "bg-emerald-500",
         color: "text-emerald-400",
       };
     if (s >= 80)
       return {
-        label: "Potential Sponsor",
+        label: t("header.sponsor.potential"),
         dot: "bg-amber-500",
         color: "text-amber-400",
       };
     return {
-      label: "Sponsor Not Found",
+      label: t("header.sponsor.notFound"),
       dot: "bg-slate-500",
       color: "text-slate-400",
     };
@@ -106,11 +110,13 @@ const SponsorPill: React.FC<SponsorPillProps> = ({ score, names, onCheck }) => {
     <>
       {parsedNames.length > 0 && (
         <p className="text-xs font-medium space-x-1">
-          <span className="opacity-70">Matched</span>
+          <span className="opacity-70">{t("header.matched")}</span>
           <span>{parsedNames.join(", ")}</span>
         </p>
       )}
-      <p className="opacity-80 mt-1 text-[10px]">{`${score}% match`}</p>
+      <p className="opacity-80 mt-1 text-[10px]">
+        {t("header.matchPercent", { score })}
+      </p>
     </>
   );
 
@@ -128,17 +134,18 @@ const SponsorPill: React.FC<SponsorPillProps> = ({ score, names, onCheck }) => {
 const AppliedDuplicatePill: React.FC<{
   match: AppliedDuplicateMatch | null | undefined;
 }> = ({ match }) => {
+  const { t } = useTranslation("jobDetail");
   if (!match) {
     return null;
   }
 
-  const appliedDate = formatDate(match.appliedAt) ?? "Unknown date";
+  const appliedDate = formatDate(match.appliedAt) ?? t("header.unknownDate");
   const tooltip = (
     <div className="space-y-1">
       <p className="text-xs font-medium">{match.title}</p>
       <p className="text-xs opacity-80">{match.employer}</p>
       <p className="text-[10px] opacity-80">
-        Applied {appliedDate} · {match.score}% match
+        {t("header.appliedMatch", { date: appliedDate, score: match.score })}
       </p>
     </div>
   );
@@ -166,6 +173,7 @@ export const JobHeader: React.FC<JobHeaderProps> = ({
   onCheckSponsor,
   jobCTA,
 }) => {
+  const { t } = useTranslation("jobDetail");
   const jobStatus = getJobStatusIndicator(job.status);
   const fullJob = "tracerLinksEnabled" in job ? job : null;
   const tracerStatus = fullJob
@@ -182,16 +190,13 @@ export const JobHeader: React.FC<JobHeaderProps> = ({
   const postingAge = formatPostingAgeLabel(job.datePosted);
   const jobStatusTooltip =
     job.status === "discovered" ? (
-      <p className="text-xs">Found by the pipeline. Not tailored yet.</p>
+      <p className="text-xs">{t("header.discoveredTooltip")}</p>
     ) : job.status === "ready" ? (
-      <p className="text-xs">Tailored and ready to apply.</p>
+      <p className="text-xs">{t("header.readyTooltip")}</p>
     ) : undefined;
   const tracerStatusTooltip =
     fullJob && !fullJob.tracerLinksEnabled ? (
-      <p className="text-xs">
-        Tracer links are turned off for this job, so click tracking will not be
-        recorded.
-      </p>
+      <p className="text-xs">{t("header.tracerOffTooltip")}</p>
     ) : undefined;
   return (
     <div
@@ -218,7 +223,7 @@ export const JobHeader: React.FC<JobHeaderProps> = ({
               <span className="flex items-center gap-1">
                 <MapPin className="size-4" />
                 {job.location?.trim()}
-                {fullJob?.isRemote && ", Remote"}
+                {fullJob?.isRemote && t("header.remoteSuffix")}
               </span>
             )}
             {deadline && (
@@ -275,7 +280,13 @@ export const JobHeader: React.FC<JobHeaderProps> = ({
           {job.source && (
             <StatusIndicator
               variant="sky"
-              tooltip={`Job found ${job.source === "manual" ? "manually" : `on ${formatJobSourceLabel(job.source)}`}`}
+              tooltip={
+                job.source === "manual"
+                  ? t("header.foundManually")
+                  : t("header.foundOn", {
+                      source: formatJobSourceLabel(job.source),
+                    })
+              }
               label={
                 sourceLabel[job.source] ?? formatJobSourceLabel(job.source)
               }
@@ -295,9 +306,9 @@ export const JobHeader: React.FC<JobHeaderProps> = ({
           {fullJob?.isRemote === true && (
             <StatusIndicator
               variant="emerald"
-              label="Remote"
+              label={t("header.remote")}
               dotColor="bg-emerald-400"
-              tooltip="The job claims to be remote"
+              tooltip={t("header.remoteTooltip")}
             />
           )}
 

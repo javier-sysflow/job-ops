@@ -1,8 +1,9 @@
+import { outcomeLabel, stageLabel } from "@client/i18n/labels";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { StageEvent } from "@shared/types.js";
-import { STAGE_LABELS } from "@shared/types.js";
+import type { ApplicationStage, StageEvent } from "@shared/types.js";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import * as z from "zod";
 import {
   AlertDialog,
@@ -25,16 +26,22 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-const logEventSchema = z.object({
-  stage: z.string(),
-  title: z.string().min(1, "Title is required"),
-  date: z.string().min(1, "Date is required"),
-  notes: z.string().optional(),
-  reasonCode: z.string().optional(),
-  salary: z.string().optional(),
-});
+const createLogEventSchema = (messages: {
+  titleRequired: string;
+  dateRequired: string;
+}) =>
+  z.object({
+    stage: z.string(),
+    title: z.string().min(1, messages.titleRequired),
+    date: z.string().min(1, messages.dateRequired),
+    notes: z.string().optional(),
+    reasonCode: z.string().optional(),
+    salary: z.string().optional(),
+  });
 
-export type LogEventFormValues = z.infer<typeof logEventSchema>;
+export type LogEventFormValues = z.infer<
+  ReturnType<typeof createLogEventSchema>
+>;
 
 interface LogEventModalProps {
   isOpen: boolean;
@@ -45,21 +52,44 @@ interface LogEventModalProps {
   employer?: string;
 }
 
-const STAGE_OPTIONS = [
-  { label: "No Stage Change (Keep current status)", value: "no_change" },
-  { label: STAGE_LABELS.applied, value: "applied" },
-  { label: STAGE_LABELS.recruiter_screen, value: "recruiter_screen" },
-  { label: STAGE_LABELS.assessment, value: "assessment" },
-  { label: STAGE_LABELS.hiring_manager_screen, value: "hiring_manager_screen" },
-  { label: STAGE_LABELS.technical_interview, value: "technical_interview" },
-  { label: STAGE_LABELS.onsite, value: "onsite" },
-  { label: STAGE_LABELS.offer, value: "offer" },
-  { label: "Rejected", value: "rejected" },
-  { label: "Withdrawn", value: "withdrawn" },
-  { label: STAGE_LABELS.closed, value: "closed" },
+type StageOptionValue =
+  | "no_change"
+  | ApplicationStage
+  | "rejected"
+  | "withdrawn";
+
+const STAGE_OPTION_VALUES: StageOptionValue[] = [
+  "no_change",
+  "applied",
+  "recruiter_screen",
+  "assessment",
+  "hiring_manager_screen",
+  "technical_interview",
+  "onsite",
+  "offer",
+  "rejected",
+  "withdrawn",
+  "closed",
 ];
 
-const REASON_CODES = ["Skills", "Visa", "Timing", "Culture", "Unknown"];
+const getStageOptions = (noStageChangeLabel: string) =>
+  STAGE_OPTION_VALUES.map((value) => ({
+    value,
+    label:
+      value === "no_change"
+        ? noStageChangeLabel
+        : value === "rejected" || value === "withdrawn"
+          ? outcomeLabel(value)
+          : stageLabel(value),
+  }));
+
+const REASON_CODES = [
+  "Skills",
+  "Visa",
+  "Timing",
+  "Culture",
+  "Unknown",
+] as const;
 
 const toDateTimeLocal = (value: Date) => {
   const pad = (num: number) => String(num).padStart(2, "0");
@@ -76,6 +106,20 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
   jobTitle,
   employer,
 }) => {
+  const { t } = useTranslation(["jobDetail", "common"]);
+  const logEventSchema = React.useMemo(
+    () =>
+      createLogEventSchema({
+        titleRequired: t("logEvent.validation.titleRequired"),
+        dateRequired: t("logEvent.validation.dateRequired"),
+      }),
+    [t],
+  );
+  const stageOptions = React.useMemo(
+    () => getStageOptions(t("logEvent.noStageChange")),
+    [t],
+  );
+  const defaultTitle = t("logEvent.defaultTitle");
   const {
     register,
     handleSubmit,
@@ -88,7 +132,7 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
     resolver: zodResolver(logEventSchema),
     defaultValues: {
       stage: "no_change",
-      title: "Update",
+      title: defaultTitle,
       date: toDateTimeLocal(new Date()),
       notes: "",
     },
@@ -112,27 +156,27 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
       } else {
         reset({
           stage: "no_change",
-          title: "Update",
+          title: defaultTitle,
           date: toDateTimeLocal(new Date()),
           notes: "",
         });
       }
     }
-  }, [isOpen, reset, editingEvent]);
+  }, [isOpen, reset, editingEvent, defaultTitle]);
 
   React.useEffect(() => {
     // Only auto-update title if we're not editing or if the title is empty/default
     if (!editingEvent) {
       if (selectedStage === "no_change") {
-        setValue("title", "Update");
+        setValue("title", defaultTitle);
       } else {
-        const option = STAGE_OPTIONS.find((o) => o.value === selectedStage);
+        const option = stageOptions.find((o) => o.value === selectedStage);
         if (option) {
           setValue("title", option.label);
         }
       }
     }
-  }, [selectedStage, setValue, editingEvent]);
+  }, [selectedStage, setValue, editingEvent, defaultTitle, stageOptions]);
 
   const onSubmit = async (values: LogEventFormValues) => {
     await onLog(values, editingEvent?.id);
@@ -147,32 +191,32 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
       >
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {editingEvent ? "Edit Event" : "Log Event"}
+            {editingEvent ? t("logEvent.editTitle") : t("logEvent.logTitle")}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {editingEvent
-              ? "Update the details of this event."
+              ? t("logEvent.editDescription")
               : jobTitle
-                ? `Record a new update or stage change for ${jobTitle}${
-                    employer ? ` at ${employer}` : ""
-                  }.`
-                : "Record a new update or stage change for this application."}
+                ? employer
+                  ? t("logEvent.recordForJobAtEmployer", { jobTitle, employer })
+                  : t("logEvent.recordForJob", { jobTitle })
+                : t("logEvent.recordGeneric")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Field>
-            <FieldLabel>New Stage</FieldLabel>
+            <FieldLabel>{t("logEvent.newStage")}</FieldLabel>
             <Controller
               name="stage"
               control={control}
               render={({ field }) => (
                 <Select onValueChange={field.onChange} value={field.value}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select stage" />
+                    <SelectValue placeholder={t("logEvent.selectStage")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {STAGE_OPTIONS.map((option) => (
+                    {stageOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -185,38 +229,44 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
           </Field>
 
           <Field>
-            <FieldLabel>Event Title</FieldLabel>
-            <Input {...register("title")} placeholder="e.g. Recruiter Screen" />
+            <FieldLabel>{t("logEvent.eventTitle")}</FieldLabel>
+            <Input
+              {...register("title")}
+              placeholder={t("logEvent.eventTitlePlaceholder")}
+            />
             <FieldError errors={[errors.title]} />
           </Field>
 
           <Field>
-            <FieldLabel>Date</FieldLabel>
+            <FieldLabel>{t("logEvent.date")}</FieldLabel>
             <Input type="datetime-local" {...register("date")} />
             <FieldError errors={[errors.date]} />
           </Field>
 
           <Field>
-            <FieldLabel>Notes (Optional)</FieldLabel>
-            <Textarea {...register("notes")} placeholder="Add details..." />
+            <FieldLabel>{t("logEvent.notes")}</FieldLabel>
+            <Textarea
+              {...register("notes")}
+              placeholder={t("logEvent.notesPlaceholder")}
+            />
             <FieldError errors={[errors.notes]} />
           </Field>
 
           {selectedStage === "rejected" && (
             <Field className="animate-in fade-in slide-in-from-top-1 duration-200">
-              <FieldLabel>Reason</FieldLabel>
+              <FieldLabel>{t("logEvent.reason")}</FieldLabel>
               <Controller
                 name="reasonCode"
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select reason" />
+                      <SelectValue placeholder={t("logEvent.selectReason")} />
                     </SelectTrigger>
                     <SelectContent>
                       {REASON_CODES.map((code) => (
                         <SelectItem key={code} value={code}>
-                          {code}
+                          {t(`logEvent.reasons.${code}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -228,21 +278,24 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
 
           {selectedStage === "offer" && (
             <Field className="animate-in fade-in slide-in-from-top-1 duration-200">
-              <FieldLabel>Salary / Details</FieldLabel>
-              <Input {...register("salary")} placeholder="e.g. £50k + bonus" />
+              <FieldLabel>{t("logEvent.salary")}</FieldLabel>
+              <Input
+                {...register("salary")}
+                placeholder={t("logEvent.salaryPlaceholder")}
+              />
             </Field>
           )}
 
           <AlertDialogFooter className="pt-4">
             <AlertDialogCancel type="button" onClick={onClose}>
-              Cancel
+              {t("common:actions.cancel")}
             </AlertDialogCancel>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting
-                ? "Saving..."
+                ? t("logEvent.saving")
                 : editingEvent
-                  ? "Save Changes"
-                  : "Log Event"}
+                  ? t("logEvent.saveChanges")
+                  : t("logEvent.submit")}
             </Button>
           </AlertDialogFooter>
         </form>

@@ -20,6 +20,9 @@ import type {
 } from "@shared/types";
 import { ChevronDown, FileText, Info, Mail, Paperclip } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/client/i18n";
+import { formatNumber } from "@/client/i18n/format";
 import {
   canUseJobDocumentForTextContext,
   formatJobDocumentByteSize,
@@ -35,9 +38,6 @@ import {
 import { cn, formatDateTime } from "@/lib/utils";
 
 const APPROX_CHARS_PER_TOKEN = 4;
-const tokenCountFormatter = new Intl.NumberFormat("en", {
-  maximumFractionDigits: 1,
-});
 
 type GhostwriterContextSelectorProps = {
   notes: JobNote[];
@@ -88,7 +88,7 @@ function estimateTokensFromChars(chars: number): number {
 
 function formatTokenEstimate(tokens: number): string {
   if (tokens < 1000) return `${tokens}`;
-  return `${tokenCountFormatter.format(tokens / 1000)}k`;
+  return `${formatNumber(tokens / 1000, { maximumFractionDigits: 1 })}k`;
 }
 
 function getSelectedItems<TItem>(
@@ -135,7 +135,7 @@ function getSenderLabel(email: PostApplicationJobEmailItem): string {
   const senderName = email.message.senderName?.trim();
   if (senderName) return senderName;
   const address = email.message.fromAddress.trim();
-  return address || "Unknown sender";
+  return address || i18n.t("jobDetail:ghostwriter.context.unknownSender");
 }
 
 function getEmailMeta(email: PostApplicationJobEmailItem): string {
@@ -151,7 +151,7 @@ function canUseDocumentForGhostwriter(document: JobDocument): boolean {
 
 function getDocumentMeta(document: JobDocument): string {
   return [
-    document.mediaType || "Unknown type",
+    document.mediaType || i18n.t("jobDetail:ghostwriter.context.unknownType"),
     formatJobDocumentByteSize(document.byteSize),
   ].join(" - ");
 }
@@ -180,6 +180,7 @@ function ContextGroup<TItem>({
   getUnavailableReason,
   onChange,
 }: ContextGroupProps<TItem>) {
+  const { t } = useTranslation("jobDetail");
   const { selectedContentChars, estimatedTokens } = showTokenEstimate
     ? estimateSelectedContextTokens({
         items,
@@ -214,7 +215,9 @@ function ContextGroup<TItem>({
         <div className="flex shrink-0 items-center gap-1.5">
           {estimatedTokens > 0 && (
             <Badge variant="outline" className="text-[10px]">
-              ≈{formatTokenEstimate(estimatedTokens)} tokens
+              {t("ghostwriter.context.tokens", {
+                tokens: formatTokenEstimate(estimatedTokens),
+              })}
             </Badge>
           )}
           {selectedIds.length > 0 && (
@@ -275,7 +278,7 @@ function ContextGroup<TItem>({
                     </span>
                     {isSelected && isTrimmed && (
                       <Badge variant="outline" className="shrink-0 text-[10px]">
-                        Trimmed for AI
+                        {t("ghostwriter.context.trimmed")}
                       </Badge>
                     )}
                   </span>
@@ -327,6 +330,7 @@ export const GhostwriterContextSelector: React.FC<
   onEmailsChange,
   onDocumentsChange,
 }) => {
+  const { t } = useTranslation("jobDetail");
   const selectedCount =
     selectedNoteIds.length +
     selectedEmailIds.length +
@@ -349,7 +353,9 @@ export const GhostwriterContextSelector: React.FC<
       getContentLength: (email) => email.message.snippet.trim().length,
     }).estimatedTokens;
   const triggerLabel =
-    selectedCount > 0 ? `${selectedCount} context` : "Context";
+    selectedCount > 0
+      ? t("ghostwriter.context.selectedTrigger", { number: selectedCount })
+      : t("ghostwriter.context.trigger");
 
   return (
     <Popover>
@@ -365,23 +371,31 @@ export const GhostwriterContextSelector: React.FC<
           )}
         >
           <Paperclip className="h-3.5 w-3.5" />
-          <span>{isSaving ? "Saving..." : triggerLabel}</span>
+          <span>
+            {isSaving ? t("ghostwriter.context.saving") : triggerLabel}
+          </span>
           <ChevronDown className="h-3 w-3 text-muted-foreground" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[28rem] p-0">
         <div className="border-b px-3 py-2.5">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-medium">Ghostwriter context</div>
+            <div className="text-sm font-medium">
+              {t("ghostwriter.context.title")}
+            </div>
             <div className="flex shrink-0 items-center gap-1.5">
               {estimatedContextTokens > 0 && (
                 <Badge variant="outline" className="text-[10px]">
-                  ≈{formatTokenEstimate(estimatedContextTokens)} tokens
+                  {t("ghostwriter.context.tokens", {
+                    tokens: formatTokenEstimate(estimatedContextTokens),
+                  })}
                 </Badge>
               )}
               {selectedCount > 0 && (
                 <Badge variant="secondary" className="text-[10px]">
-                  {selectedCount} selected
+                  {t("ghostwriter.context.selectedCount", {
+                    number: selectedCount,
+                  })}
                 </Badge>
               )}
             </div>
@@ -394,14 +408,16 @@ export const GhostwriterContextSelector: React.FC<
           onTouchMoveCapture={(event) => event.stopPropagation()}
         >
           <ContextGroup
-            title="Notes"
+            title={t("ghostwriter.context.notes.title")}
             icon={FileText}
             items={notes}
             selectedIds={selectedNoteIds}
-            loadingLabel="Loading notes..."
-            emptyLabel="No job notes yet."
-            limitLabel={`${GHOSTWRITER_NOTE_CONTEXT_MAX_SELECTED} note limit`}
-            overflowLabel="Selected notes exceed the AI context budget; later notes will be trimmed."
+            loadingLabel={t("ghostwriter.context.notes.loading")}
+            emptyLabel={t("ghostwriter.context.notes.empty")}
+            limitLabel={t("ghostwriter.context.notes.limit", {
+              max: GHOSTWRITER_NOTE_CONTEXT_MAX_SELECTED,
+            })}
+            overflowLabel={t("ghostwriter.context.notes.overflow")}
             maxSelected={GHOSTWRITER_NOTE_CONTEXT_MAX_SELECTED}
             maxItemChars={GHOSTWRITER_NOTE_CONTEXT_MAX_NOTE_CHARS}
             maxTotalChars={GHOSTWRITER_NOTE_CONTEXT_MAX_TOTAL_CHARS}
@@ -411,7 +427,9 @@ export const GhostwriterContextSelector: React.FC<
             getId={(note) => note.id}
             getTitle={(note) => note.title}
             getMeta={(note) =>
-              `Updated ${formatDateTime(note.updatedAt) ?? note.updatedAt}`
+              t("ghostwriter.context.updated", {
+                date: formatDateTime(note.updatedAt) ?? note.updatedAt,
+              })
             }
             getContentLength={(note) => note.content.trim().length}
             getCheckboxId={(note) => `ghostwriter-note-context-${note.id}`}
@@ -419,14 +437,16 @@ export const GhostwriterContextSelector: React.FC<
           />
 
           <ContextGroup
-            title="Documents"
+            title={t("ghostwriter.context.documents.title")}
             icon={Paperclip}
             items={documents}
             selectedIds={selectedDocumentIds}
-            loadingLabel="Loading documents..."
-            emptyLabel="No uploaded documents yet."
-            limitLabel={`${GHOSTWRITER_DOCUMENT_CONTEXT_MAX_SELECTED} document limit`}
-            overflowLabel="Selected documents exceed the AI context budget; later document text will be trimmed."
+            loadingLabel={t("ghostwriter.context.documents.loading")}
+            emptyLabel={t("ghostwriter.context.documents.empty")}
+            limitLabel={t("ghostwriter.context.documents.limit", {
+              max: GHOSTWRITER_DOCUMENT_CONTEXT_MAX_SELECTED,
+            })}
+            overflowLabel={t("ghostwriter.context.documents.overflow")}
             maxSelected={GHOSTWRITER_DOCUMENT_CONTEXT_MAX_SELECTED}
             maxItemChars={GHOSTWRITER_DOCUMENT_CONTEXT_MAX_DOCUMENT_CHARS}
             maxTotalChars={GHOSTWRITER_DOCUMENT_CONTEXT_MAX_TOTAL_CHARS}
@@ -444,20 +464,22 @@ export const GhostwriterContextSelector: React.FC<
             getUnavailableReason={(document) =>
               canUseDocumentForGhostwriter(document)
                 ? null
-                : "PDF or text-like files only"
+                : t("ghostwriter.context.documents.unsupported")
             }
             onChange={onDocumentsChange}
           />
 
           <ContextGroup
-            title="Emails"
+            title={t("ghostwriter.context.emails.title")}
             icon={Mail}
             items={emails}
             selectedIds={selectedEmailIds}
-            loadingLabel="Loading emails..."
-            emptyLabel="No linked emails yet."
-            limitLabel={`${GHOSTWRITER_EMAIL_CONTEXT_MAX_SELECTED} email limit`}
-            overflowLabel="Selected emails exceed the AI context budget; later snippets will be trimmed."
+            loadingLabel={t("ghostwriter.context.emails.loading")}
+            emptyLabel={t("ghostwriter.context.emails.empty")}
+            limitLabel={t("ghostwriter.context.emails.limit", {
+              max: GHOSTWRITER_EMAIL_CONTEXT_MAX_SELECTED,
+            })}
+            overflowLabel={t("ghostwriter.context.emails.overflow")}
             maxSelected={GHOSTWRITER_EMAIL_CONTEXT_MAX_SELECTED}
             maxItemChars={GHOSTWRITER_EMAIL_CONTEXT_MAX_SNIPPET_CHARS}
             maxTotalChars={GHOSTWRITER_EMAIL_CONTEXT_MAX_TOTAL_CHARS}
@@ -465,7 +487,9 @@ export const GhostwriterContextSelector: React.FC<
             isLoading={areEmailsLoading}
             isSaving={isSaving}
             getId={(email) => email.message.id}
-            getTitle={(email) => email.message.subject || "No subject"}
+            getTitle={(email) =>
+              email.message.subject || t("ghostwriter.context.noSubject")
+            }
             getMeta={getEmailMeta}
             getContentLength={(email) => email.message.snippet.trim().length}
             getCheckboxId={(email) =>

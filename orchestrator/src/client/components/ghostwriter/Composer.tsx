@@ -1,4 +1,5 @@
 import { AiAssistComposer } from "@client/components/ai-assist/AiAssistComposer";
+import i18n from "@client/i18n";
 import type { JobChatImageAttachment } from "@shared/types";
 import type React from "react";
 
@@ -29,7 +30,7 @@ export const Composer: React.FC<ComposerProps> = ({
     isStreaming={isStreaming}
     canReset={canReset}
     contextSlot={noteContextSelector}
-    placeholder="Ask anything about this job..."
+    placeholder={i18n.t("jobDetail:ghostwriter.composerPlaceholder")}
     allowScreenshots
     onStop={onStop}
     onSend={onSend}
