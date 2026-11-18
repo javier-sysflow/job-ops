@@ -158,7 +158,7 @@ async function classifyWithSmartRouterImpl(args: {
   emailText: string;
   activeJobs: Array<{ id: string; company: string; title: string }>;
 }): Promise<SmartRouterResult> {
-  const model = await resolveLlmModel();
+  const model = await resolveLlmModel("scoring");
   const llmEmailText = args.emailText.slice(0, ROUTER_EMAIL_CHAR_LIMIT);
   const indexedActiveJobs = buildIndexedActiveJobs(args.activeJobs);
   const compactActiveJobsList = buildCompactActiveJobsList(indexedActiveJobs);
@@ -185,7 +185,7 @@ ${llmEmailText}`,
     },
   ];
 
-  const llm = await createConfiguredLlmService();
+  const llm = await createConfiguredLlmService("scoring");
   const result = await llm.callJson<{
     bestMatchIndex: number | null;
     confidence: number;

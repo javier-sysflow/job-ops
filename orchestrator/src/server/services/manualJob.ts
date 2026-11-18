@@ -104,10 +104,12 @@ export async function inferManualJobDetails(
 async function inferManualJobDetailsImpl(
   jobDescription: string,
 ): Promise<ManualJobInferenceResult> {
-  const model = await resolveLlmModel();
+  // Routine extraction: shares the scoring model tier (fork: Sonnet), not the
+  // default writing model.
+  const model = await resolveLlmModel("scoring");
   const prompt = buildInferencePrompt(stripHtmlTags(jobDescription));
 
-  const llm = await createConfiguredLlmService();
+  const llm = await createConfiguredLlmService("scoring");
   const result = await llm.callJson<ManualJobApiResponse>({
     model,
     messages: [{ role: "user", content: prompt }],

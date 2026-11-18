@@ -4,7 +4,86 @@ import { buildHeaders, joinUrl } from "../utils/http";
 import { getNestedValue } from "../utils/object";
 import { createProviderStrategy } from "./factory";
 
-const DEFAULT_MAX_TOKENS = 4096;
+// Current Claude models think before answering and thinking tokens count
+// toward max_tokens, so a small cap truncates long outputs (tailored CVs,
+// Japanese text) mid-JSON. 16000 stays well under non-streaming timeouts.
+const DEFAULT_MAX_TOKENS = 16000;
+
+const SERVER_SIDE_FALLBACK_BETA = "server-side-fallback-2026-07-01";
+
+// Models that accept the server-side `fallbacks` parameter, which reroutes a
+// request Claude's safety classifiers decline instead of failing it.
+const SERVER_SIDE_FALLBACK_MODELS = new Set([
+  "claude-fable-5-2",
+  "claude-fable-5-1",
+  "claude-opus-5-5",
+  "claude-opus-5",
+  "claude-sonnet-5-5",
+]);
+
+type AnthropicEffort = "low" | "medium" | "high" | "xhigh" | "max";
+const ANTHROPIC_EFFORT_VALUES = new Set<AnthropicEffort>([
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+]);
+
+function readEnv(name: string): string | undefined {
+  return typeof process !== "undefined"
+    ? process.env[name]?.trim() || undefined
+    : undefined;
+}
+
+function parseClaudeModel(
+  model: string,
+): { family: string; major: number; minor: number } | null {
+  const match = model
+    .trim()
+    .toLowerCase()
+    .match(/^claude-(opus|sonnet|haiku|fable|mythos)-(\d+)(?:-(\d+))?/);
+  if (!match) return null;
+  return {
+    family: match[1],
+    major: Number(match[2]),
+    minor: match[3] ? Number(match[3]) : 0,
+  };
+}
+
+/**
+ * Effort steers how much a model thinks. Sonnet/Haiku handle the high-volume
+ * routine work here (job scoring, email sorting), where `low` keeps cost down;
+ * Opus-class models keep their own default. Older models without effort
+ * support (e.g. Haiku 4.5, Sonnet 4.5) get no effort field at all.
+ */
+export function resolveAnthropicEffort(
+  model: string,
+): AnthropicEffort | undefined {
+  const parsed = parseClaudeModel(model);
+  if (!parsed) return undefined;
+  const supportsEffort =
+    parsed.major >= 5 ||
+    (parsed.major === 4 && parsed.minor >= 6 && parsed.family !== "haiku");
+  if (!supportsEffort) return undefined;
+  if (parsed.family !== "sonnet" && parsed.family !== "haiku") return undefined;
+
+  const configured = readEnv("ANTHROPIC_ROUTINE_EFFORT")?.toLowerCase();
+  if (
+    configured &&
+    ANTHROPIC_EFFORT_VALUES.has(configured as AnthropicEffort)
+  ) {
+    return configured as AnthropicEffort;
+  }
+  return "low";
+}
+
+export function usesServerSideFallback(model: string): boolean {
+  if (readEnv("ANTHROPIC_SERVER_FALLBACKS")?.toLowerCase() === "false") {
+    return false;
+  }
+  return SERVER_SIDE_FALLBACK_MODELS.has(model.trim().toLowerCase());
+}
 
 /**
  * Anthropic's structured output (`output_config.format.schema`) only supports a
@@ -108,32 +187,59 @@ export const anthropicStrategy = createProviderStrategy({
       body.system = system;
     }
 
+    const outputConfig: Record<string, unknown> = {};
     if (mode === "json_schema") {
-      body.output_config = {
-        format: {
-          type: "json_schema",
-          schema: sanitizeAnthropicSchema(jsonSchema.schema),
-        },
+      outputConfig.format = {
+        type: "json_schema",
+        schema: sanitizeAnthropicSchema(jsonSchema.schema),
       };
     } else if (mode === "json_object") {
-      body.output_config = {
-        format: {
-          type: "json_schema",
-          schema: {
-            type: "object",
-            additionalProperties: true,
-          },
+      outputConfig.format = {
+        type: "json_schema",
+        schema: {
+          type: "object",
+          additionalProperties: true,
         },
       };
     }
 
+    const effort = resolveAnthropicEffort(model);
+    if (effort) {
+      outputConfig.effort = effort;
+    }
+
+    if (Object.keys(outputConfig).length > 0) {
+      body.output_config = outputConfig;
+    }
+
+    const headers = buildHeaders({ apiKey, provider: "anthropic" });
+    if (usesServerSideFallback(model)) {
+      body.fallbacks = "default";
+      headers["anthropic-beta"] = SERVER_SIDE_FALLBACK_BETA;
+    }
+
     return {
       url: joinUrl(baseUrl, "/v1/messages"),
-      headers: buildHeaders({ apiKey, provider: "anthropic" }),
+      headers,
       body,
     };
   },
   extractText: (response) => {
+    const stopReason = getNestedValue(response, ["stop_reason"]);
+    if (stopReason === "refusal") {
+      const category = getNestedValue(response, ["stop_details", "category"]);
+      throw new Error(
+        `Claude declined this request${
+          typeof category === "string" ? ` (${category})` : ""
+        }.`,
+      );
+    }
+    if (stopReason === "max_tokens") {
+      throw new Error(
+        "Claude's reply hit the output token limit before finishing.",
+      );
+    }
+
     const content = getNestedValue(response, ["content"]);
     if (!Array.isArray(content)) return null;
 

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@server/repositories/settings", () => ({
   getAllSettings: vi.fn(),
@@ -137,6 +137,67 @@ describe("getEffectiveSettings", () => {
       tailoring: { provider: "openai", model: "gpt-5.4-mini" },
     });
     expect(settings.llmPurposeApiKeyHints).toEqual({ tailoring: "sk-p" });
+  });
+
+  describe("per-purpose model env defaults", () => {
+    const originalProvider = process.env.LLM_PROVIDER;
+    const envValues: Record<string, string> = {
+      MODEL: "claude-opus-5-5",
+      MODEL_SCORER: "claude-sonnet-5-5",
+      MODEL_PROJECT_SELECTION: "claude-sonnet-5-5",
+    };
+
+    beforeEach(() => {
+      process.env.LLM_PROVIDER = "anthropic";
+      vi.mocked(getOriginalEnvValue).mockImplementation(
+        (key) => envValues[key],
+      );
+    });
+
+    afterEach(() => {
+      if (originalProvider === undefined) {
+        delete process.env.LLM_PROVIDER;
+      } else {
+        process.env.LLM_PROVIDER = originalProvider;
+      }
+    });
+
+    it("uses MODEL_<PURPOSE> env values as per-purpose defaults", async () => {
+      const settings = await getEffectiveSettings();
+
+      expect(settings.model.value).toBe("claude-opus-5-5");
+      expect(settings.modelScorer).toEqual({
+        value: "claude-sonnet-5-5",
+        override: null,
+      });
+      expect(settings.modelProjectSelection.value).toBe("claude-sonnet-5-5");
+      // No MODEL_TAILORING set: tailoring inherits the default model.
+      expect(settings.modelTailoring.value).toBe("claude-opus-5-5");
+    });
+
+    it("lets a workspace override beat the env default", async () => {
+      vi.mocked(getAllSettings).mockResolvedValue({
+        modelScorer: "claude-haiku-5-5",
+      } as never);
+
+      const settings = await getEffectiveSettings();
+
+      expect(settings.modelScorer).toEqual({
+        value: "claude-haiku-5-5",
+        override: "claude-haiku-5-5",
+      });
+    });
+
+    it("ignores env defaults when the workspace uses another provider", async () => {
+      vi.mocked(getAllSettings).mockResolvedValue({
+        llmProvider: "openrouter",
+        model: "google/gemini-3-flash-preview",
+      } as never);
+
+      const settings = await getEffectiveSettings();
+
+      expect(settings.modelScorer.value).toBe("google/gemini-3-flash-preview");
+    });
   });
 
   it("ignores an inherited model that is incompatible with Claude CLI", async () => {

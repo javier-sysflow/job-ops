@@ -84,8 +84,10 @@ vi.mock("@infra/logger", () => ({
 
 vi.mock("@infra/request-context", () => ({
   getRequestId: vi.fn(() => "req-1"),
+  isSystemAdmin: vi.fn(() => true),
 }));
 
+import { isSystemAdmin } from "@infra/request-context";
 import {
   confirmOnboardingResumeAction,
   getOnboardingStatus,
@@ -177,6 +179,23 @@ describe("onboarding status engine", () => {
       primaryAction: "connect_model",
     });
     expect(mocks.applySettingsUpdates).not.toHaveBeenCalled();
+  });
+
+  it("skips the model step for non-admin users, who use the server AI setup", async () => {
+    vi.mocked(isSystemAdmin).mockReturnValueOnce(false);
+    mocks.getSetting.mockImplementation(async (key: string) => {
+      const values: Record<string, string | null> = {
+        onboardingProfileCompleted: "1",
+        onboardingLlmCompleted: null,
+        onboardingResumeConfirmedSource: "local:doc-1",
+      };
+      return values[key] ?? null;
+    });
+
+    const status = await getOnboardingStatus();
+
+    expect(status.requirements.map((item) => item.id)).not.toContain("model");
+    expect(status.nextRequirementId).not.toBe("model");
   });
 
   it("validates and persists legacy onboarding state once", async () => {

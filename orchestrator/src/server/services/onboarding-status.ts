@@ -1,6 +1,6 @@
 import { forbidden, unprocessableEntity } from "@infra/errors";
 import { logger } from "@infra/logger";
-import { getRequestId } from "@infra/request-context";
+import { getRequestId, isSystemAdmin } from "@infra/request-context";
 import { getJobOpsAppStatus } from "@server/config/app-mode";
 import { isDemoMode } from "@server/config/demo";
 import { getSetting } from "@server/repositories/settings";
@@ -628,7 +628,9 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
   const hostedMode = appStatus.appMode === "hosted";
   const userEditableLlmSettings = hostedMode
     ? (await getCurrentAccountEntitlements()).userEditableLlmSettings
-    : appStatus.capabilities.userEditableLlmSettings;
+    : // Fork: regular users use the admin's server-wide AI setup, so their
+      // onboarding skips the model step.
+      appStatus.capabilities.userEditableLlmSettings && isSystemAdmin();
 
   if (isDemoMode()) {
     const requirements: OnboardingRequirement[] = [

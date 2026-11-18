@@ -884,9 +884,12 @@ export const SettingsPage: React.FC = () => {
   const backups = backupsQuery.data?.backups ?? [];
   const nextScheduled = backupsQuery.data?.nextScheduled ?? null;
   const isLoadingBackups = backupsQuery.isLoading;
+  // Fork: in self-hosted mode only system admins manage the server-wide AI
+  // provider and key; regular users use the admin's configuration.
   const canEditLlmSettings = isHostedMode
     ? (billingQuery.data?.userEditableLlmSettings ?? false)
-    : (appStatusQuery.data?.capabilities.userEditableLlmSettings ?? true);
+    : (appStatusQuery.data?.capabilities.userEditableLlmSettings ?? true) &&
+      currentUserQuery.data?.isSystemAdmin !== false;
   useQueryErrorToast(appStatusQuery.error, "Failed to load app status");
   useQueryErrorToast(backupsQuery.error, "Failed to load backups");
   useQueryErrorToast(billingQuery.error, "Failed to load billing status");

@@ -585,6 +585,58 @@ describe.sequential("Settings API routes", () => {
     expect(protectedSettingsBody.error.code).toBe("FORBIDDEN");
   });
 
+  it("lets non-admin users save their own workspace settings but not admin-only ones", async () => {
+    await stopServer({ server, closeDb, tempDir });
+    ({ server, baseUrl, closeDb, tempDir } = await startServer({
+      env: AUTH_ENV,
+    }));
+
+    const adminToken = await login(baseUrl, "admin", "secret");
+    const createUserRes = await fetch(`${baseUrl}/api/workspaces/users`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: "friend",
+        password: "friend-secret",
+      }),
+    });
+    expect(createUserRes.status).toBe(201);
+    const friendToken = await login(baseUrl, "friend", "friend-secret");
+    const patchAsFriend = (body: Record<string, unknown>) =>
+      fetch(`${baseUrl}/api/settings`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${friendToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+    // A whole-form save: personal settings plus unchanged admin-only values.
+    const ownSettingsRes = await patchAsFriend({
+      showSponsorInfo: false,
+      chatStyleLanguageMode: "manual",
+      pipelineWebhookUrl: null,
+      backupEnabled: null,
+    });
+    const ownSettingsBody = await ownSettingsRes.json();
+    expect(ownSettingsRes.status).toBe(200);
+    expect(ownSettingsBody.data.showSponsorInfo.value).toBe(false);
+    expect(ownSettingsBody.data.chatStyleLanguageMode.value).toBe("manual");
+
+    // Changing an admin-only value is still refused.
+    const webhookRes = await patchAsFriend({
+      pipelineWebhookUrl: "https://attacker.example/hook",
+    });
+    expect(webhookRes.status).toBe(403);
+
+    const modelRes = await patchAsFriend({ model: "claude-fable-5-2" });
+    expect(modelRes.status).toBe(403);
+  });
+
   it("preserves upstream 404 from Reactive Resume project lookup", async () => {
     const { RxResumeRequestError } = await import("@server/services/rxresume");
     vi.mocked(getResume).mockRejectedValue(

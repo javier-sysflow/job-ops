@@ -70,29 +70,20 @@ const LLM_SETTING_KEYS: Array<keyof UpdateSettingsInput> = [
 ];
 const CLI_PROVIDERS = new Set(["codex", "gemini_cli", "claude_cli"]);
 
-// These settings describe an individual search run. They are persisted in the
-// settings repository for extractor compatibility, but are not server-level
-// maintenance settings and must remain editable by authenticated non-admins.
-const NON_ADMIN_SEARCH_SETTING_KEYS = new Set<keyof UpdateSettingsInput>([
-  "searchTerms",
-  "workplaceTypes",
-  "locationSearchScope",
-  "locationMatchStrictness",
-  "locationSearchMode",
-  "locationLatitude",
-  "locationLongitude",
-  "locationRadiusMiles",
-  "jobspyResultsWanted",
-  "gradcrackerMaxJobsPerTerm",
-  "ukvisajobsMaxJobs",
-  "adzunaMaxJobsPerTerm",
-  "startupjobsMaxJobsPerTerm",
-  "jobindexMaxJobsPerTerm",
-  "seekMaxJobsPerTerm",
-  "naukriMaxJobsPerTerm",
-  "jobspyCountryIndeed",
-  "searchCities",
-  "jobspyLocation",
+// Fork change: regular (non-admin) users may edit their own workspace
+// settings (onboarding, PDF renderer, writing style, display, search...).
+// Only keys that control server-wide AI cost and credentials, backups, or
+// outbound requests stay admin-only. The Settings form re-sends unchanged
+// values, so an admin-only key is accepted when it matches what is stored.
+const ADMIN_ONLY_SETTING_KEYS = new Set<keyof UpdateSettingsInput>([
+  ...LLM_SETTING_KEYS,
+  "backupEnabled",
+  "backupHour",
+  "backupMaxCount",
+  "pipelineWebhookUrl",
+  "jobCompleteWebhookUrl",
+  "webhookSecret",
+  "rxresumeUrl",
 ]);
 
 function requireSystemAdmin(res: Response): boolean {
@@ -101,22 +92,58 @@ function requireSystemAdmin(res: Response): boolean {
   return false;
 }
 
-function requireSystemAdminOrSearchSettings(
+function normalizeSettingForCompare(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value === "string") return value.trim() || null;
+  if (typeof value === "object") {
+    const json = JSON.stringify(value);
+    return json === "{}" || json === "[]" ? null : json;
+  }
+  return String(value);
+}
+
+async function readStoredSettingForCompare(
+  key: keyof UpdateSettingsInput,
+): Promise<string | null> {
+  const raw = await getSetting(key as Parameters<typeof getSetting>[0]);
+  const def = (settingsRegistry as Record<string, unknown>)[key as string] as
+    | { parse?: (raw: string | undefined) => unknown }
+    | undefined;
+  const parsed =
+    typeof def?.parse === "function" ? def.parse(raw ?? undefined) : raw;
+  return normalizeSettingForCompare(parsed);
+}
+
+/**
+ * Returns the input a caller may apply, or null after sending a 403.
+ * Admins (and hosted mode, which has its own entitlement checks) get the
+ * input unchanged. Regular users get it minus unchanged admin-only keys.
+ */
+async function authorizeSettingsUpdate(
   res: Response,
   input: UpdateSettingsInput,
-): boolean {
-  if (
-    getJobOpsAppConfig().appMode === "hosted" ||
-    isSystemAdmin() ||
-    Object.keys(input).every((key) =>
-      NON_ADMIN_SEARCH_SETTING_KEYS.has(key as keyof UpdateSettingsInput),
-    )
-  ) {
-    return true;
+): Promise<UpdateSettingsInput | null> {
+  if (getJobOpsAppConfig().appMode === "hosted" || isSystemAdmin()) {
+    return input;
   }
 
-  fail(res, forbidden("System admin access is required"));
-  return false;
+  const allowed: UpdateSettingsInput = { ...input };
+  for (const key of Object.keys(input) as Array<keyof UpdateSettingsInput>) {
+    if (!ADMIN_ONLY_SETTING_KEYS.has(key)) continue;
+    const incoming = normalizeSettingForCompare(input[key]);
+    const stored = await readStoredSettingForCompare(key);
+    if (incoming !== stored) {
+      fail(
+        res,
+        forbidden(
+          "System admin access is required to change AI provider, backup, webhook or Reactive Resume URL settings",
+        ),
+      );
+      return null;
+    }
+    delete allowed[key];
+  }
+  return allowed;
 }
 
 function hasInputKey<K extends keyof UpdateSettingsInput>(
@@ -437,8 +464,11 @@ settingsRouter.patch(
       );
     }
 
-    const input = updateSettingsSchema.parse(req.body);
-    if (!requireSystemAdminOrSearchSettings(res, input)) return;
+    const input = await authorizeSettingsUpdate(
+      res,
+      updateSettingsSchema.parse(req.body),
+    );
+    if (!input) return;
     if (LLM_SETTING_KEYS.some((key) => hasInputKey(input, key))) {
       await assertLlmSettingsEditable();
       assertHostedLlmInputAllowed(input);

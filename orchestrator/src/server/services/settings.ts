@@ -166,6 +166,15 @@ const MODEL_KEY_BY_PURPOSE: Record<
   projectSelection: "modelProjectSelection",
 };
 
+// Server-wide per-purpose model defaults, e.g. MODEL_SCORER=claude-sonnet-5-5.
+// Settings are stored per workspace, so without these every new workspace
+// would start with one model for every purpose until someone edits it.
+const PURPOSE_MODEL_ENV_KEY: Record<LlmPurpose, string> = {
+  scoring: "MODEL_SCORER",
+  tailoring: "MODEL_TAILORING",
+  projectSelection: "MODEL_PROJECT_SELECTION",
+};
+
 /**
  * Get the effective app settings, combining environment variables and database overrides.
  */
@@ -327,9 +336,21 @@ export async function getEffectiveSettings(): Promise<AppSettings> {
       ).find(([, modelKey]) => modelKey === key)?.[0];
       const purposeOverride = purpose ? purposeOverrides[purpose] : undefined;
       const purposeProvider = purposeOverride?.provider ?? effectiveLlmProvider;
+      // Env per-purpose defaults only apply while the workspace still uses the
+      // server's own provider, so a workspace on another provider never gets
+      // a model name its provider does not serve.
+      const envPurposeModel =
+        purpose &&
+        allowPlatformLlm &&
+        purposeProvider === settingsRegistry.llmProvider.default()
+          ? normalizeModelForProviderCompatibility(
+              purposeProvider,
+              getOriginalEnvValue(PURPOSE_MODEL_ENV_KEY[purpose]),
+            )
+          : null;
       const purposeModelDefault =
         purposeProvider === effectiveLlmProvider
-          ? modelValue
+          ? (envPurposeModel ?? modelValue)
           : getDefaultModelForProvider(purposeProvider);
       const override =
         normalizeModelForProviderCompatibility(

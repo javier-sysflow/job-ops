@@ -478,7 +478,7 @@ describe("provider adapters", () => {
     expect(request.headers).not.toHaveProperty("Authorization");
     expect(request.body).toMatchObject({
       model: "claude-sonnet-4-6",
-      max_tokens: 4096,
+      max_tokens: 16000,
       system: "You are concise.",
       messages: [
         {
@@ -503,6 +503,92 @@ describe("provider adapters", () => {
         },
       },
     });
+  });
+
+  it("sets low effort for Sonnet/Haiku and leaves Opus on its default", () => {
+    const buildFor = (model: string) =>
+      anthropicStrategy.buildRequest({
+        mode: "json_schema",
+        baseUrl: "https://api.anthropic.com",
+        apiKey: "sk-ant",
+        model,
+        messages: [{ role: "user", content: "hi" }],
+        jsonSchema: schema,
+      }).body as { output_config: Record<string, unknown> };
+
+    expect(buildFor("claude-sonnet-5-5").output_config.effort).toBe("low");
+    expect(buildFor("claude-haiku-5-5").output_config.effort).toBe("low");
+    expect(buildFor("claude-opus-5-5").output_config).not.toHaveProperty(
+      "effort",
+    );
+    // Haiku 4.5 rejects the effort parameter, so it must never be sent.
+    expect(buildFor("claude-haiku-4-5").output_config).not.toHaveProperty(
+      "effort",
+    );
+    // The structured output format stays alongside effort.
+    expect(buildFor("claude-sonnet-5-5").output_config.format).toMatchObject({
+      type: "json_schema",
+    });
+  });
+
+  it("omits output_config entirely in text mode for Opus", () => {
+    const request = anthropicStrategy.buildRequest({
+      mode: "none",
+      baseUrl: "https://api.anthropic.com",
+      apiKey: "sk-ant",
+      model: "claude-opus-5-5",
+      messages: [{ role: "user", content: "hi" }],
+      jsonSchema: schema,
+    });
+    expect(request.body).not.toHaveProperty("output_config");
+  });
+
+  it("enables server-side refusal fallbacks only for supported models", () => {
+    const opus = anthropicStrategy.buildRequest({
+      mode: "json_schema",
+      baseUrl: "https://api.anthropic.com",
+      apiKey: "sk-ant",
+      model: "claude-opus-5-5",
+      messages: [{ role: "user", content: "hi" }],
+      jsonSchema: schema,
+    });
+    expect(opus.body).toMatchObject({ fallbacks: "default" });
+    expect(opus.headers["anthropic-beta"]).toBe(
+      "server-side-fallback-2026-07-01",
+    );
+
+    const haiku = anthropicStrategy.buildRequest({
+      mode: "json_schema",
+      baseUrl: "https://api.anthropic.com",
+      apiKey: "sk-ant",
+      model: "claude-haiku-5-5",
+      messages: [{ role: "user", content: "hi" }],
+      jsonSchema: schema,
+    });
+    expect(haiku.body).not.toHaveProperty("fallbacks");
+    expect(haiku.headers).not.toHaveProperty("anthropic-beta");
+  });
+
+  it("reports refusals and truncated replies instead of returning partial text", () => {
+    expect(() =>
+      anthropicStrategy.extractText({
+        stop_reason: "refusal",
+        stop_details: { type: "refusal", category: "cyber" },
+        content: [],
+      }),
+    ).toThrow("Claude declined this request (cyber).");
+    expect(() =>
+      anthropicStrategy.extractText({
+        stop_reason: "max_tokens",
+        content: [{ type: "text", text: '{"partial":' }],
+      }),
+    ).toThrow("output token limit");
+    expect(
+      anthropicStrategy.extractText({
+        stop_reason: "end_turn",
+        content: [{ type: "text", text: "done" }],
+      }),
+    ).toBe("done");
   });
 
   it("strips JSON Schema keywords Anthropic does not support", () => {
