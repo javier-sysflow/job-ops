@@ -38,6 +38,11 @@ describe("orchestrator utils", () => {
     expect(enabled).toEqual(expect.arrayContaining(credentialFree));
   });
 
+  it("never offers Hiring Cafe as a search source", () => {
+    expect(getEnabledSources(createAppSettings())).not.toContain("hiringcafe");
+    expect(getEnabledSources(null)).not.toContain("hiringcafe");
+  });
+
   it("enables seek only when apify token is configured", () => {
     const withToken = createAppSettings({ apifyTokenHint: "sk-" });
     const withoutToken = createAppSettings({ apifyTokenHint: null });

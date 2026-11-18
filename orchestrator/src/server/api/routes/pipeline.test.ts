@@ -703,6 +703,21 @@ describe.sequential("Pipeline API routes", () => {
     expect(body.meta.requestId).toBeTruthy();
   });
 
+  it("rejects runs that ask for Hiring Cafe", async () => {
+    const { runPipeline } = await import("@server/pipeline/index");
+    vi.mocked(runPipeline).mockClear();
+    const res = await fetch(`${baseUrl}/api/pipeline/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        searchTerms: ["backend engineer"],
+        sources: ["hiringcafe"],
+      }),
+    });
+    expect(res.status).toBe(400);
+    expect(runPipeline).not.toHaveBeenCalled();
+  });
+
   it("validates pipeline run payloads", async () => {
     const { trackCanonicalActivationEvent } = await import(
       "@server/services/activation-funnel"

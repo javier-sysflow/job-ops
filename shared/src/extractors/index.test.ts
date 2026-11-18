@@ -4,6 +4,8 @@ import {
   EXTRACTOR_SOURCE_METADATA,
   extractorSourceEnum,
   isExtractorSourceId,
+  PIPELINE_EXTRACTOR_SOURCE_IDS,
+  sourceLabel,
 } from "./index";
 
 describe("extractor source catalog", () => {
@@ -24,6 +26,12 @@ describe("extractor source catalog", () => {
       expect(EXTRACTOR_SOURCE_METADATA[source]).toBeDefined();
       expect(EXTRACTOR_SOURCE_METADATA[source].label.length).toBeGreaterThan(0);
     }
+  });
+
+  it("keeps Hiring Cafe out of search runs but labels its existing jobs", () => {
+    expect(PIPELINE_EXTRACTOR_SOURCE_IDS).not.toContain("hiringcafe");
+    expect(isExtractorSourceId("hiringcafe")).toBe(true);
+    expect(sourceLabel("hiringcafe")).toBe("Hiring Cafe");
   });
 
   it("includes naukri as a pipeline source", () => {

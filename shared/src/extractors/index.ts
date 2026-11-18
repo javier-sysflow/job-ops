@@ -94,8 +94,20 @@ export const EXTRACTOR_SOURCE_METADATA: Record<
   manual: { label: "Manual", order: 120, category: "manual" },
 };
 
+/**
+ * Fork: sources nobody can pick for a search run. Hiring Cafe asks for a
+ * browser check on nearly every search from the hosted server, and it adds
+ * little for jobs in Japan. The id stays in EXTRACTOR_SOURCE_IDS so jobs
+ * already found there keep their label and filter.
+ */
+export const DISABLED_PIPELINE_SOURCE_IDS: readonly ExtractorSourceId[] = [
+  "hiringcafe",
+];
+
 export const PIPELINE_EXTRACTOR_SOURCE_IDS = EXTRACTOR_SOURCE_IDS.filter(
-  (source) => EXTRACTOR_SOURCE_METADATA[source].category === "pipeline",
+  (source) =>
+    EXTRACTOR_SOURCE_METADATA[source].category === "pipeline" &&
+    !DISABLED_PIPELINE_SOURCE_IDS.includes(source),
 );
 
 const extractorSourceTuple = EXTRACTOR_SOURCE_IDS as unknown as [
