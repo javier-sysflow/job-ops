@@ -1,6 +1,6 @@
-import { ExternalLink } from "lucide-react";
 import type React from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { ExternalLink } from "@/components/icons";
 
 const AUTH_DOC =
   "https://google-gemini.github.io/gemini-cli/docs/get-started/authentication.html";

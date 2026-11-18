@@ -1,10 +1,10 @@
 import type { Job, JobBrief } from "@shared/types.js";
 import { motion, useReducedMotion } from "framer-motion";
-import { Sparkles } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/client/i18n";
+import { Sparkles } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 type JobBriefPaneProps = {

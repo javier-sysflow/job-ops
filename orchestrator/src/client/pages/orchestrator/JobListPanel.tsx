@@ -1,5 +1,4 @@
 import type { JobListItem } from "@shared/types.js";
-import { Loader2 } from "lucide-react";
 import { forwardRef, useImperativeHandle } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -7,6 +6,7 @@ import {
   useWindowScrollMargin,
   type VirtualListHandle,
 } from "@/client/lib/virtual-list";
+import { Loader2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";

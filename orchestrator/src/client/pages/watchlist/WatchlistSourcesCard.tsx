@@ -6,9 +6,9 @@ import {
   type WatchlistSource,
   type WatchlistSourceTypeDescriptor,
 } from "@shared/types.js";
-import { Loader2, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Loader2, Plus, X } from "@/components/icons";
 import {
   Accordion,
   AccordionContent,

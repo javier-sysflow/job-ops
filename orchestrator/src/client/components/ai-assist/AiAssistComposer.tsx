@@ -1,11 +1,11 @@
 import { getMetaShortcutLabel, isMetaKeyPressed } from "@client/lib/meta-key";
 import { createId } from "@paralleldrive/cuid2";
 import type { JobChatImageAttachment } from "@shared/types";
-import { Eraser, ImagePlus, Send, Square } from "lucide-react";
 import type React from "react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Eraser, ImagePlus, Send, Square } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScreenshotAttachmentPreview } from "./ScreenshotAttachmentPreview";

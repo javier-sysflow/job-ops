@@ -6,9 +6,9 @@ import type {
   DesignResumeJson,
 } from "@shared/types";
 import type { ParseKeys } from "i18next";
-import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Plus, Trash2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

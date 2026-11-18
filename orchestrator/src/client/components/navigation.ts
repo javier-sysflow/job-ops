@@ -8,7 +8,7 @@ import {
   Link2,
   Settings,
   Shield,
-} from "lucide-react";
+} from "@/components/icons";
 import type shell from "../i18n/locales/en/shell";
 
 /** Key under `shell:nav`; render with `t(\`nav.${labelKey}\`)`. */

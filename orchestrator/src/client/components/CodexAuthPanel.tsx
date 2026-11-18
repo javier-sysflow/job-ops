@@ -1,8 +1,8 @@
 import * as api from "@client/api";
-import { CheckCircle2, Copy, ExternalLink, Loader2 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { CheckCircle2, Copy, ExternalLink, Loader2 } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

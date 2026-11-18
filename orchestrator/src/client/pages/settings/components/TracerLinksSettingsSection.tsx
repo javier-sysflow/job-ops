@@ -2,9 +2,14 @@ import { formatDateTime, isJapaneseUi } from "@client/i18n/format";
 import { SettingsSectionFrame } from "@client/pages/settings/components/SettingsSectionFrame";
 import type { TracerReadinessResponse } from "@shared/types";
 import type { TFunction } from "i18next";
-import { AlertCircle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  RefreshCw,
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

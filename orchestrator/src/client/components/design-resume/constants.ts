@@ -21,7 +21,7 @@ import {
   Trophy,
   UserRound,
   Wrench,
-} from "lucide-react";
+} from "@/components/icons";
 import { bucketCount } from "@/lib/analytics";
 import {
   getItemDefinitionDescription,

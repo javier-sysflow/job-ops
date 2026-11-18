@@ -1,5 +1,5 @@
-import { Check, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Check, Loader2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

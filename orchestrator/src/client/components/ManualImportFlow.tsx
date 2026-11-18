@@ -2,6 +2,11 @@ import * as api from "@client/api";
 import { useSettings } from "@client/hooks/useSettings";
 import type { ManualJobDraft } from "@shared/types.js";
 import type { ParseKeys } from "i18next";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { showErrorToast } from "@/client/lib/error-toast";
 import {
   ArrowDown,
   ArrowLeft,
@@ -22,12 +27,7 @@ import {
   Sparkles,
   Tag,
   Users,
-} from "lucide-react";
-import type React from "react";
-import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
-import { showErrorToast } from "@/client/lib/error-toast";
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";

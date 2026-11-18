@@ -1,11 +1,10 @@
 import { SettingsSectionFrame } from "@client/pages/settings/components/SettingsSectionFrame";
 import { ALL_JOB_STATUSES } from "@client/pages/settings/constants";
 import type { JobStatus } from "@shared/types";
-import { AlertTriangle, Trash2 } from "lucide-react";
-
 import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AlertTriangle, Trash2 } from "@/components/icons";
 
 import {
   AlertDialog,

@@ -1,5 +1,5 @@
-import { Loader2, Sparkles } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
+import { Loader2, Sparkles } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

@@ -203,8 +203,13 @@ export function SignInPage() {
       <div className="absolute right-4 top-4">
         <LanguageToggle />
       </div>
-      <div className="mx-auto flex min-h-[70vh] max-w-md items-center">
-        <Card className="w-full border-border/60 bg-background/95 shadow-xl">
+      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center gap-6">
+        <img
+          src="/favicon.png"
+          alt=""
+          className="size-11 self-center rounded-xl shadow-md"
+        />
+        <Card className="w-full border-border bg-card shadow-xl">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl tracking-tight">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>

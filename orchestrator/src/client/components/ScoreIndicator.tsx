@@ -1,6 +1,6 @@
-import { XCircle } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
+import { XCircle } from "@/components/icons";
 
 import { Progress } from "@/components/ui/progress";
 

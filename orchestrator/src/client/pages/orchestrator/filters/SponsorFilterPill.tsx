@@ -1,6 +1,6 @@
 import i18n from "@client/i18n";
-import { BadgeCheck } from "lucide-react";
 import type React from "react";
+import { BadgeCheck } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { FilterPill } from "./FilterPill";
 import { sponsorOptions } from "./filterOptions";

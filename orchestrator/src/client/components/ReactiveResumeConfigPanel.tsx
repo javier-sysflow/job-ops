@@ -16,9 +16,9 @@ import {
   type TypstTheme,
 } from "@shared/types.js";
 import type { TFunction } from "i18next";
-import { AlertCircle, AlertTriangle } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
+import { AlertCircle, AlertTriangle } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";

@@ -1,9 +1,9 @@
 import { outcomeLabel, stageLabel } from "@client/i18n/labels";
 import type { ApplicationStage, JobListItem } from "@shared/types.js";
-import { ExternalLink, MoreVertical, PlusCircle } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { ExternalLink, MoreVertical, PlusCircle } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

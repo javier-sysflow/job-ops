@@ -1,9 +1,9 @@
 import { getDesignResumeAssetContentBlob } from "@client/api/settings-profile";
 import { createId } from "@paralleldrive/cuid2";
 import type { DesignResumeJson } from "@shared/types";
-import { FileImage, ImagePlus, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { FileImage, ImagePlus, Plus, Trash2 } from "@/components/icons";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

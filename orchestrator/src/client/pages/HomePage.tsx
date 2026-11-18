@@ -9,12 +9,12 @@ import {
 import { PageHeader, PageMain } from "@client/components/layout";
 import type { JobSource, StageEvent } from "@shared/types.js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChartColumn } from "lucide-react";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { queryKeys } from "@/client/lib/queryKeys";
+import { ChartColumn } from "@/components/icons";
 import { OverviewPipelineRunsSection } from "./overview/OverviewPipelineRunsSection";
 
 type JobWithEvents = {

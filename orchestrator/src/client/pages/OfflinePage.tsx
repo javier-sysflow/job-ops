@@ -1,7 +1,7 @@
-import { WifiOff } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { WifiOff } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 export function OfflinePage() {

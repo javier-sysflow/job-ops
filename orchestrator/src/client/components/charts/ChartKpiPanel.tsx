@@ -3,7 +3,7 @@
  * Reusable stat block used in card headers: label, bold rate, trend icon, subtext.
  */
 
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { TrendingDown, TrendingUp } from "@/components/icons";
 
 interface ChartKpiPanelProps {
   label: string;

@@ -4,8 +4,8 @@ import type {
   LocationSearchScope,
 } from "@shared/location-preferences.js";
 import type { LocationProximity } from "@shared/types";
-import { Info } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
+import { Info } from "@/components/icons";
 import {
   Accordion,
   AccordionContent,

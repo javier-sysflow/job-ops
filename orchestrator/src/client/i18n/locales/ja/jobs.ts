@@ -4,7 +4,8 @@ import type en from "../en/jobs";
 
 const jobs: typeof en = {
   header: {
-    subtitle: "求人管理",
+    title: "求人",
+    subtitle: "求人を探して、確認し、応募する",
     cancelling: "キャンセル中（{{sourceCount}}）",
     cancelRun: "検索を中止",
     closeSearch: "検索を閉じる",

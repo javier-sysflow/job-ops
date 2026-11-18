@@ -6,9 +6,9 @@ import type {
   WatchlistSourceTypeDescriptor,
   WatchlistWorkspaceJobReference,
 } from "@shared/types.js";
-import { CircleAlert, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatUserFacingError } from "@/client/lib/error-format";
+import { CircleAlert, Loader2 } from "@/components/icons";
 import {
   AccordionContent,
   AccordionItem,

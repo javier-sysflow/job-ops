@@ -1,6 +1,8 @@
 import { CollapsibleSection } from "@client/components/discovered-panel/CollapsibleSection";
 import { stageLabel } from "@client/i18n/labels";
 import type { ApplicationStage, StageEvent } from "@shared/types.js";
+import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   CheckCircle2,
   ClipboardList,
@@ -13,9 +15,7 @@ import {
   Trash2,
   UserRound,
   Video,
-} from "lucide-react";
-import React from "react";
-import { useTranslation } from "react-i18next";
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatTimestamp, formatTimestampWithTime } from "@/lib/utils";
 

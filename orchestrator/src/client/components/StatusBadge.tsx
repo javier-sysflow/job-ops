@@ -3,8 +3,8 @@
  */
 
 import type { JobStatus } from "@shared/types.js";
-import { Loader2 } from "lucide-react";
 import type React from "react";
+import { Loader2 } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { jobStatusLabel } from "../i18n/labels";

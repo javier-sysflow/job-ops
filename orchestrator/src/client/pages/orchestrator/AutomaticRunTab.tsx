@@ -23,11 +23,11 @@ import {
   type UpdatePipelineSearchPresetInput,
   type WatchlistSelectedSource,
 } from "@shared/types";
-import { ArrowLeft } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { showErrorToast } from "@/client/lib/error-toast";
+import { ArrowLeft } from "@/components/icons";
 import {
   Accordion,
   AccordionContent,

@@ -2,10 +2,10 @@ import i18n from "@client/i18n";
 import NumberFlow from "@number-flow/react";
 import type { Job } from "@shared/types.js";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Loader2 } from "@/components/icons";
 import {
   Popover,
   PopoverContent,

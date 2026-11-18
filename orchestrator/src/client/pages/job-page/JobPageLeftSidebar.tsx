@@ -1,5 +1,9 @@
 import { isAwaitingAiScore, ScoreRing } from "@client/components";
 import type { Job } from "@shared/types.js";
+import type React from "react";
+import { Link } from "react-router-dom";
+import i18n from "@/client/i18n";
+import { formatPostingAgeLabel } from "@/client/lib/job-posting-age";
 import {
   ClipboardList,
   FileText,
@@ -7,11 +11,7 @@ import {
   Mail,
   MessageSquareText,
   Sparkles,
-} from "lucide-react";
-import type React from "react";
-import { Link } from "react-router-dom";
-import i18n from "@/client/i18n";
-import { formatPostingAgeLabel } from "@/client/lib/job-posting-age";
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { cn, formatDateTime } from "@/lib/utils";
 

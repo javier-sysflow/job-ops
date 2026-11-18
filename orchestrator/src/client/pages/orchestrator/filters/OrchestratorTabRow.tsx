@@ -1,9 +1,9 @@
 import { KbdHint } from "@client/components/KbdHint";
 import { Tip } from "@client/components/Tip";
 import { getDisplayKey, SHORTCUTS } from "@client/lib/shortcut-map";
-import { Filter, RotateCcw, Search } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
+import { Filter, RotateCcw, Search } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";

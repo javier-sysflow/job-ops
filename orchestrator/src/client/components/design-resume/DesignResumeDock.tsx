@@ -6,11 +6,11 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
-import { GripVertical } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Tip } from "@/client/components/Tip";
+import { GripVertical } from "@/components/icons";
 import { trackProductEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import {

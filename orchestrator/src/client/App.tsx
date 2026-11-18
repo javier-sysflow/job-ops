@@ -2,7 +2,6 @@
  * Main App component.
  */
 
-import { X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -13,10 +12,11 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
+import { X } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import { AppModeContext } from "./components/layout";
+import { AppModeContext, AppShell } from "./components/layout";
 import { OnboardingGate } from "./components/OnboardingGate";
 import { TimeZoneSync } from "./components/TimeZoneSync";
 import { useAnalyticsIdentity } from "./hooks/useAnalyticsIdentity";
@@ -67,6 +67,12 @@ export const App: React.FC = () => {
   const isAuthRoute =
     location.pathname === "/sign-in" ||
     location.pathname.startsWith("/sso/callback/");
+  // Screens that stand alone, without the navigation sidebar.
+  const isStandaloneRoute =
+    isAuthRoute ||
+    location.pathname === "/onboarding" ||
+    location.pathname === "/offline" ||
+    location.pathname.startsWith("/oauth/");
   const demoInfo = useDemoInfo({ enabled: !isAuthRoute });
   const showDemoBanners = !isAuthRoute && demoInfo?.demoMode;
   const [demoWaitlistBannerDismissed, setDemoWaitlistBannerDismissed] =
@@ -158,7 +164,7 @@ export const App: React.FC = () => {
           </div>
         </div>
       )}
-      <div>
+      <AppShell enabled={!isStandaloneRoute}>
         <SwitchTransition mode="out-in">
           <CSSTransition
             key={pageKey}
@@ -219,7 +225,7 @@ export const App: React.FC = () => {
             </div>
           </CSSTransition>
         </SwitchTransition>
-      </div>
+      </AppShell>
 
       <Toaster position="bottom-right" richColors closeButton />
     </>

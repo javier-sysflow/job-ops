@@ -1,6 +1,6 @@
-import { FlaskConical, ShieldBan } from "lucide-react";
 import type React from "react";
 import { toast } from "sonner";
+import { FlaskConical, ShieldBan } from "@/components/icons";
 
 function DemoToastCard({
   title,

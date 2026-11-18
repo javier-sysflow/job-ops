@@ -4,10 +4,10 @@
  */
 
 import { formatDate } from "@client/i18n/format";
-import { TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { TrendingDown, TrendingUp } from "@/components/icons";
 
 import {
   Card,

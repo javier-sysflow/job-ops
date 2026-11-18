@@ -1,4 +1,4 @@
-import { Loader2, ShieldAlert } from "lucide-react";
+import { Loader2, ShieldAlert } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 

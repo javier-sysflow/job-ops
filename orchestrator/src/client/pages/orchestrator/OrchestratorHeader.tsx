@@ -1,8 +1,15 @@
 import { PageHeader, StatusIndicator } from "@client/components/layout";
 import type { JobSource } from "@shared/types.js";
-import { FileText, Loader2, Search, Square, X } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
+import {
+  FileText,
+  LayoutDashboard,
+  Loader2,
+  Search,
+  Square,
+  X,
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 interface OrchestratorHeaderProps {
@@ -85,10 +92,8 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
 
   return (
     <PageHeader
-      icon={() => (
-        <img src="/favicon.png" alt="" className="size-8 rounded-lg" />
-      )}
-      title="Job Ops" // i18n-ignore
+      icon={LayoutDashboard}
+      title={t("header.title")}
       subtitle={t("header.subtitle")}
       navOpen={navOpen}
       onNavOpenChange={onNavOpenChange}

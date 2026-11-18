@@ -11,11 +11,11 @@ import type {
   WatchlistSourceTypeDescriptor,
 } from "@shared/types.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { Eye } from "@/components/icons";
 import { Accordion } from "@/components/ui/accordion";
 import { bucketQueryLength, trackProductEvent } from "@/lib/analytics";
 import {

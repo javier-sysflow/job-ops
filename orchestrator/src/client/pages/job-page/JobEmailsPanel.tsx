@@ -3,19 +3,19 @@ import type {
   PostApplicationProcessingStatus,
 } from "@shared/types.js";
 import { useQuery } from "@tanstack/react-query";
-import {
-  CircleUserRound,
-  ExternalLink,
-  Inbox,
-  Mail,
-  MailWarning,
-} from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import * as api from "@/client/api";
 import { useQueryErrorToast } from "@/client/hooks/useQueryErrorToast";
 import i18n from "@/client/i18n";
 import { queryKeys } from "@/client/lib/queryKeys";
+import {
+  CircleUserRound,
+  ExternalLink,
+  Inbox,
+  Mail,
+  MailWarning,
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatDateTime } from "@/lib/utils";

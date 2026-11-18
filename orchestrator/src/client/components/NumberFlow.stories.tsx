@@ -1,7 +1,7 @@
 import type { Story } from "@ladle/react";
 import NumberFlow from "@number-flow/react";
-import { Minus, Pause, Play, Plus, RotateCcw } from "lucide-react";
 import React from "react";
+import { Minus, Pause, Play, Plus, RotateCcw } from "@/components/icons";
 
 const CYCLE_VALUES = [92, 93, 99, 100, 8, 0, 42, 78, 122, 5, 87, 90];
 

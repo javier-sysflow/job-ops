@@ -9,6 +9,9 @@ const shell = {
     version: "Version {{version}}",
     updateAvailable: "Update available",
     documentation: "Documentation",
+    mainNavigation: "Main navigation",
+    expandSidebar: "Expand sidebar",
+    collapseSidebar: "Collapse sidebar",
   },
   nav: {
     overview: "Overview",

@@ -6,10 +6,10 @@ import {
   type PromptTemplateSettingKey,
 } from "@shared/prompt-template-definitions.js";
 import type { UpdateSettingsInput } from "@shared/settings-schema.js";
-import { AlertTriangle, RotateCcw } from "lucide-react";
 import type React from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { AlertTriangle, RotateCcw } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

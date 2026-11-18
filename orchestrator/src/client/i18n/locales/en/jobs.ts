@@ -1,7 +1,8 @@
 // English strings: job list, filters, command bar, keyboard shortcuts.
 const jobs = {
   header: {
-    subtitle: "Orchestrator",
+    title: "Jobs",
+    subtitle: "Find, review and apply to roles",
     cancelling: "Cancelling ({{sourceCount}})",
     cancelRun: "Cancel run",
     closeSearch: "Close search",

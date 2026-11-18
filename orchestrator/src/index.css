@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Lora:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap");
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -33,6 +33,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-seal: var(--seal);
+  --color-seal-foreground: var(--seal-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -46,12 +48,12 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* One family for Latin and Japanese, so mixed text shares one rhythm. */
   --font-sans:
-    Geist, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
-    "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
-  --font-mono: IBM Plex Mono, monospace;
-  --font-serif: Lora, serif;
-  --radius: 0.5rem;
+    "IBM Plex Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius: 0.625rem;
   --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
   --tracking-tight: calc(var(--tracking-normal) - 0.025em);
   --tracking-wide: calc(var(--tracking-normal) + 0.025em);
@@ -68,138 +70,184 @@
   --shadow-2xs: var(--shadow-2xs);
   --spacing: var(--spacing);
   --letter-spacing: var(--letter-spacing);
-  --shadow-offset-y: var(--shadow-offset-y);
-  --shadow-offset-x: var(--shadow-offset-x);
-  --shadow-spread: var(--shadow-spread);
-  --shadow-blur: var(--shadow-blur);
-  --shadow-opacity: var(--shadow-opacity);
-  --color-shadow-color: var(--shadow-color);
   --color-destructive-foreground: var(--destructive-foreground);
 }
 
+/*
+ * Palette: indigo ink (藍) on cool paper, with vermilion (朱) kept for the
+ * seal-style brand mark. Contrast (WCAG): foreground 15.5:1 on the page,
+ * muted text 5.5:1, primary buttons 7.7:1.
+ */
 :root {
-  --radius: 0.5rem;
-  /* Light theme (fork): warm off-white page, lighter cards. */
-  --background: oklch(0.9663 0.008 98.8792);
-  --foreground: oklch(28.815% 0.01599 96.892);
-  --card: oklch(0.9818 0.0054 95.0986);
-  --card-foreground: oklch(0.1908 0.002 106.5859);
+  --radius: 0.625rem;
+  --background: oklch(0.975 0.004 264);
+  --foreground: oklch(0.235 0.032 264);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.235 0.032 264);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2671 0.0196 98.939);
-  --primary: oklch(0.6916 0.1719 40.93);
+  --popover-foreground: oklch(0.235 0.032 264);
+  --primary: oklch(0.45 0.15 266);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.9245 0.0138 92.9892);
-  --secondary-foreground: oklch(0.4334 0.0177 98.6048);
-  --muted: oklch(0.9341 0.0153 90.239);
-  --muted-foreground: oklch(0.6059 0.0075 97.4233);
-  --accent: oklch(0.9245 0.0138 92.9892);
-  --accent-foreground: oklch(0.2671 0.0196 98.939);
-  --destructive: oklch(0.5771 0.2152 27.325);
-  --border: oklch(0.8847 0.0069 97.3627);
-  --input: oklch(0.7621 0.0156 98.3528);
-  --ring: oklch(0.6171 0.1375 39.0427);
-  --chart-1: oklch(0.5583 0.1276 42.9956);
-  --chart-2: oklch(0.6898 0.1581 290.4107);
-  --chart-3: oklch(0.8816 0.0276 93.128);
-  --chart-4: oklch(0.8822 0.0403 298.1792);
-  --chart-5: oklch(0.5608 0.1348 42.0584);
-  --sidebar: oklch(0.9663 0.008 98.8792);
-  --sidebar-foreground: oklch(0.359 0.0051 106.6524);
-  --sidebar-primary: oklch(0.6171 0.1375 39.0427);
-  --sidebar-primary-foreground: oklch(0.9881 0 0);
-  --sidebar-accent: oklch(0.9245 0.0138 92.9892);
-  --sidebar-accent-foreground: oklch(0.325 0 0);
-  --sidebar-border: oklch(0.9401 0 0);
-  --sidebar-ring: oklch(0.7731 0 0);
+  --secondary: oklch(0.95 0.01 264);
+  --secondary-foreground: oklch(0.32 0.05 264);
+  --muted: oklch(0.955 0.007 264);
+  --muted-foreground: oklch(0.505 0.022 264);
+  --accent: oklch(0.945 0.016 266);
+  --accent-foreground: oklch(0.3 0.09 266);
+  --destructive: oklch(0.54 0.2 27);
   --destructive-foreground: oklch(1 0 0);
-  --shadow-color: oklch(0 0 0);
-  --shadow-opacity: 0.1;
-  --shadow-blur: 3px;
-  --shadow-spread: 0px;
-  --shadow-offset-x: 0;
-  --shadow-offset-y: 1px;
+  --seal: oklch(0.585 0.2 33);
+  --seal-foreground: oklch(1 0 0);
+  --border: oklch(0.905 0.01 264);
+  --input: oklch(0.84 0.014 264);
+  --ring: oklch(0.55 0.16 266);
+  --chart-1: oklch(0.5 0.15 266);
+  --chart-2: oklch(0.64 0.19 35);
+  --chart-3: oklch(0.62 0.11 190);
+  --chart-4: oklch(0.76 0.14 80);
+  --chart-5: oklch(0.55 0.13 320);
+  --sidebar: oklch(0.958 0.008 264);
+  --sidebar-foreground: oklch(0.32 0.03 264);
+  --sidebar-primary: oklch(0.45 0.15 266);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.93 0.02 266);
+  --sidebar-accent-foreground: oklch(0.28 0.1 266);
+  --sidebar-border: oklch(0.905 0.01 264);
+  --sidebar-ring: oklch(0.55 0.16 266);
+  --scrollbar: oklch(0.82 0.012 264);
   --letter-spacing: 0em;
   --spacing: 0.25rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-2xs: 0 1px 1px oklch(0.235 0.032 264 / 0.04);
+  --shadow-xs: 0 1px 2px oklch(0.235 0.032 264 / 0.06);
   --shadow-sm:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    0 1px 2px oklch(0.235 0.032 264 / 0.06),
+    0 1px 3px oklch(0.235 0.032 264 / 0.06);
+  --shadow:
+    0 1px 2px oklch(0.235 0.032 264 / 0.06),
+    0 2px 4px oklch(0.235 0.032 264 / 0.05);
   --shadow-md:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    0 2px 4px -1px oklch(0.235 0.032 264 / 0.06),
+    0 4px 10px -2px oklch(0.235 0.032 264 / 0.08);
   --shadow-lg:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    0 4px 6px -2px oklch(0.235 0.032 264 / 0.05),
+    0 12px 24px -4px oklch(0.235 0.032 264 / 0.1);
   --shadow-xl:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    0 8px 12px -4px oklch(0.235 0.032 264 / 0.06),
+    0 20px 40px -8px oklch(0.235 0.032 264 / 0.14);
+  --shadow-2xl: 0 28px 56px -12px oklch(0.235 0.032 264 / 0.22);
   --tracking-normal: 0em;
 }
 
 .dark {
-  --background: #20201e;
-  --foreground: oklch(0.8074 0.0142 93.0137);
-  --card: oklch(0.2679 0.0036 106.6427);
-  --card-foreground: oklch(0.9818 0.0054 95.0986);
-  --popover: oklch(0.3085 0.0035 106.6039);
-  --popover-foreground: oklch(0.9211 0.004 106.4781);
-  --primary: oklch(0.6916 0.1719 40.93);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.9818 0.0054 95.0986);
-  --secondary-foreground: oklch(0.3085 0.0035 106.6039);
-  --muted: oklch(0.2213 0.0038 106.707);
-  --muted-foreground: oklch(0.7713 0.0169 99.0657);
-  --accent: oklch(0.213 0.0078 95.4245);
-  --accent-foreground: oklch(0.9663 0.008 98.8792);
-  --destructive: oklch(0.6368 0.2078 25.3313);
-  --border: oklch(0.3618 0.0101 106.8928);
-  --input: oklch(0.4336 0.0113 100.2195);
-  --ring: oklch(0.6724 0.1308 38.7559);
-  --chart-1: oklch(0.6916 0.1719 40.93);
-  --chart-2: oklch(0.6898 0.1581 290.4107);
-  --chart-3: oklch(0.213 0.0078 95.4245);
-  --chart-4: oklch(0.3074 0.0516 289.323);
-  --chart-5: oklch(0.5608 0.1348 42.0584);
-  --sidebar: oklch(0.2357 0.0024 67.7077);
-  --sidebar-foreground: oklch(0.8074 0.0142 93.0137);
-  --sidebar-primary: oklch(0.325 0 0);
-  --sidebar-primary-foreground: oklch(0.9881 0 0);
-  --sidebar-accent: oklch(0.168 0.002 106.6177);
-  --sidebar-accent-foreground: oklch(0.8074 0.0142 93.0137);
-  --sidebar-border: oklch(0.9401 0 0);
-  --sidebar-ring: oklch(0.7731 0 0);
-  --destructive-foreground: oklch(1 0 0);
-  --radius: 0.5rem;
-  --shadow-color: oklch(0 0 0);
-  --shadow-opacity: 0.1;
-  --shadow-blur: 3px;
-  --shadow-spread: 0px;
-  --shadow-offset-x: 0;
-  --shadow-offset-y: 1px;
-  --letter-spacing: 0em;
-  --spacing: 0.25rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --background: oklch(0.185 0.014 264);
+  --foreground: oklch(0.935 0.008 264);
+  --card: oklch(0.215 0.016 264);
+  --card-foreground: oklch(0.935 0.008 264);
+  --popover: oklch(0.235 0.018 264);
+  --popover-foreground: oklch(0.935 0.008 264);
+  --primary: oklch(0.76 0.115 266);
+  --primary-foreground: oklch(0.2 0.04 266);
+  --secondary: oklch(0.27 0.02 264);
+  --secondary-foreground: oklch(0.92 0.01 264);
+  --muted: oklch(0.25 0.016 264);
+  --muted-foreground: oklch(0.72 0.018 264);
+  --accent: oklch(0.28 0.03 266);
+  --accent-foreground: oklch(0.9 0.05 266);
+  --destructive: oklch(0.68 0.18 25);
+  --destructive-foreground: oklch(0.2 0.04 25);
+  --seal: oklch(0.585 0.2 33);
+  --seal-foreground: oklch(1 0 0);
+  --border: oklch(0.3 0.018 264);
+  --input: oklch(0.37 0.02 264);
+  --ring: oklch(0.7 0.13 266);
+  --chart-1: oklch(0.72 0.13 266);
+  --chart-2: oklch(0.7 0.17 38);
+  --chart-3: oklch(0.72 0.11 190);
+  --chart-4: oklch(0.8 0.13 80);
+  --chart-5: oklch(0.7 0.12 320);
+  --sidebar: oklch(0.2 0.015 264);
+  --sidebar-foreground: oklch(0.85 0.012 264);
+  --sidebar-primary: oklch(0.76 0.115 266);
+  --sidebar-primary-foreground: oklch(0.2 0.04 266);
+  --sidebar-accent: oklch(0.28 0.035 266);
+  --sidebar-accent-foreground: oklch(0.93 0.04 266);
+  --sidebar-border: oklch(0.29 0.018 264);
+  --sidebar-ring: oklch(0.7 0.13 266);
+  --scrollbar: oklch(0.38 0.02 264);
+  --shadow-2xs: 0 1px 1px oklch(0 0 0 / 0.2);
+  --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.25);
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.25), 0 1px 3px oklch(0 0 0 / 0.2);
+  --shadow: 0 1px 2px oklch(0 0 0 / 0.25), 0 2px 4px oklch(0 0 0 / 0.2);
   --shadow-md:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    0 2px 4px -1px oklch(0 0 0 / 0.3), 0 4px 10px -2px oklch(0 0 0 / 0.3);
   --shadow-lg:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    0 4px 6px -2px oklch(0 0 0 / 0.3), 0 12px 24px -4px oklch(0 0 0 / 0.4);
   --shadow-xl:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    0 8px 12px -4px oklch(0 0 0 / 0.35), 0 20px 40px -8px oklch(0 0 0 / 0.5);
+  --shadow-2xl: 0 28px 56px -12px oklch(0 0 0 / 0.6);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar) transparent;
   }
 
   body {
     font-family: var(--font-sans);
     @apply bg-background text-foreground antialiased;
     letter-spacing: var(--tracking-normal);
+    font-feature-settings: "kern";
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 24%, transparent);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  kbd {
+    font-family: var(--font-mono);
+  }
+}
+
+/*
+ * Japanese text needs more leading than Latin, and should break between
+ * phrases rather than mid-word. Applies when the page language is Japanese.
+ */
+html:lang(ja) {
+  --text-xs--line-height: 1.6;
+  --text-sm--line-height: 1.65;
+  --text-base--line-height: 1.75;
+  line-break: strict;
+}
+
+html:lang(ja) body {
+  word-break: auto-phrase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    /* biome-ignore lint/complexity/noImportantStyles: user motion preference must win */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: user motion preference must win */
+    animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: user motion preference must win */
+    transition-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: user motion preference must win */
+    scroll-behavior: auto !important;
   }
 }
 

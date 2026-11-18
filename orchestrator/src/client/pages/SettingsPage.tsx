@@ -50,7 +50,6 @@ import type {
 } from "@shared/types.js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TFunction } from "i18next";
-import { Settings } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -66,6 +65,7 @@ import { useQueryErrorToast } from "@/client/hooks/useQueryErrorToast";
 import { formatUserFacingError } from "@/client/lib/error-format";
 import { showErrorToast } from "@/client/lib/error-toast";
 import { queryKeys } from "@/client/lib/queryKeys";
+import { Settings } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 const DEFAULT_FORM_VALUES: UpdateSettingsInput = {

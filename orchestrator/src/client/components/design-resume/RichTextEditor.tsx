@@ -1,9 +1,16 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Bold, Italic, Link2, List, ListOrdered, Unlink } from "lucide-react";
 import type React from "react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  Bold,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
+  Unlink,
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

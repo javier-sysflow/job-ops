@@ -1,7 +1,7 @@
 import type { BranchInfo } from "@shared/types";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
+import { ChevronLeft, ChevronRight } from "@/components/icons";
 
 type BranchNavigatorProps = {
   branchInfo: BranchInfo;

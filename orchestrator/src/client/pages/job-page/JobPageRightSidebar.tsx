@@ -1,4 +1,7 @@
 import type { ApplicationTask, Job } from "@shared/types.js";
+import type React from "react";
+import { TooltipWhenDisabled } from "@/client/components/TooltipWhenDisabled";
+import i18n from "@/client/i18n";
 import {
   CalendarClock,
   CheckCircle2,
@@ -13,10 +16,7 @@ import {
   Sparkles,
   Upload,
   XCircle,
-} from "lucide-react";
-import type React from "react";
-import { TooltipWhenDisabled } from "@/client/components/TooltipWhenDisabled";
-import i18n from "@/client/i18n";
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

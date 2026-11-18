@@ -1,6 +1,6 @@
 import i18n from "@client/i18n";
-import { Briefcase } from "lucide-react";
 import type React from "react";
+import { Briefcase } from "@/components/icons";
 import { Checkbox } from "@/components/ui/checkbox";
 import { employmentTypeOptions } from "../constants";
 import { FilterPill } from "./FilterPill";

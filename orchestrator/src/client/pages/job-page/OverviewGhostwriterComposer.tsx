@@ -1,9 +1,9 @@
 import type { Job } from "@shared/types.js";
 import type { TFunction } from "i18next";
-import { Send, Sparkles } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { Send, Sparkles } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 

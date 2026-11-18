@@ -12,6 +12,9 @@ const shell: typeof en = {
     version: "バージョン {{version}}",
     updateAvailable: "アップデートがあります",
     documentation: "ドキュメント",
+    mainNavigation: "メインナビゲーション",
+    expandSidebar: "サイドバーを開く",
+    collapseSidebar: "サイドバーを閉じる",
   },
   nav: {
     overview: "概要",

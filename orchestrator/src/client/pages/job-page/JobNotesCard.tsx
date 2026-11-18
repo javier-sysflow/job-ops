@@ -1,6 +1,5 @@
 import type { JobNote } from "@shared/types.js";
 import { useQuery } from "@tanstack/react-query";
-import { Edit2, FileText, PlusCircle, Trash2 } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -21,6 +20,7 @@ import {
   editorHtmlToMarkdown as tipTapHtmlToMarkdown,
 } from "@/client/lib/jobNoteContent";
 import { queryKeys } from "@/client/lib/queryKeys";
+import { Edit2, FileText, PlusCircle, Trash2 } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

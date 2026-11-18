@@ -6,6 +6,9 @@ import { queryKeys } from "@client/lib/queryKeys";
 import { sourceLabel } from "@shared/extractors";
 import type { PipelineRun, PipelineRunInsights } from "@shared/types";
 import { useQuery } from "@tanstack/react-query";
+import type React from "react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Activity,
   AlertCircle,
@@ -13,10 +16,7 @@ import {
   GitCompareArrows,
   History,
   Loader2,
-} from "lucide-react";
-import type React from "react";
-import { useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+} from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
