@@ -6,6 +6,7 @@ import type { UpdateSettingsInput } from "@shared/settings-schema.js";
 import type React from "react";
 import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 
@@ -29,6 +30,13 @@ export const ScoringSettingsSection: React.FC<ScoringSettingsSectionProps> = ({
   isSaving,
   layoutMode,
 }) => {
+  const { t } = useTranslation("settings");
+  const yesNo = (value: boolean) => (value ? t("shared.yes") : t("shared.no"));
+  const disabledLabel = t("shared.disabled");
+  const keywordList = (keywords: string[]) =>
+    keywords.length > 0
+      ? keywords.join(t("shared.listSeparator"))
+      : t("shared.none");
   const {
     penalizeMissingSalary,
     missingSalaryPenalty,
@@ -51,7 +59,7 @@ export const ScoringSettingsSection: React.FC<ScoringSettingsSectionProps> = ({
   return (
     <SettingsSectionFrame
       mode={layoutMode}
-      title="Scoring Settings"
+      title={t("scoring.title")}
       value="scoring"
     >
       <div className="space-y-4">
@@ -78,12 +86,10 @@ export const ScoringSettingsSection: React.FC<ScoringSettingsSectionProps> = ({
               htmlFor="penalizeMissingSalary"
               className="text-sm font-medium leading-none cursor-pointer"
             >
-              Penalize Missing Salary
+              {t("scoring.penalizeLabel")}
             </label>
             <p className="text-xs text-muted-foreground">
-              Reduce suitability scores for jobs that do not include salary
-              information. Jobs with any salary text (including "Competitive")
-              are not penalized.
+              {t("scoring.penalizeHelp")}
             </p>
           </div>
         </div>
@@ -96,7 +102,7 @@ export const ScoringSettingsSection: React.FC<ScoringSettingsSectionProps> = ({
               control={control}
               render={({ field }) => (
                 <SettingsInput
-                  label="Penalty Amount"
+                  label={t("scoring.penaltyLabel")}
                   type="number"
                   inputProps={{
                     ...field,
@@ -115,8 +121,13 @@ export const ScoringSettingsSection: React.FC<ScoringSettingsSectionProps> = ({
                     },
                   }}
                   disabled={isLoading || isSaving}
-                  helper={`Points to subtract from suitability score (0-100). Default: ${missingSalaryPenalty.default}.`}
-                  current={`Effective: ${missingSalaryPenalty.effective} | Default: ${missingSalaryPenalty.default}`}
+                  helper={t("scoring.penaltyHelper", {
+                    value: missingSalaryPenalty.default,
+                  })}
+                  current={t("shared.effectiveDefault", {
+                    effective: missingSalaryPenalty.effective,
+                    default: missingSalaryPenalty.default,
+                  })}
                 />
               )}
             />
@@ -132,7 +143,7 @@ export const ScoringSettingsSection: React.FC<ScoringSettingsSectionProps> = ({
             control={control}
             render={({ field }) => (
               <SettingsInput
-                label="Auto-skip Score Threshold"
+                label={t("scoring.autoSkipLabel")}
                 type="number"
                 inputProps={{
                   ...field,
@@ -154,11 +165,18 @@ export const ScoringSettingsSection: React.FC<ScoringSettingsSectionProps> = ({
                       }
                     }
                   },
-                  placeholder: "Disabled",
+                  placeholder: disabledLabel,
                 }}
                 disabled={isLoading || isSaving}
-                helper="Jobs scoring below this threshold will be automatically skipped during scoring. Leave empty to disable auto-skip. (0-100)"
-                current={`Effective: ${currentAutoSkipThreshold === null || currentAutoSkipThreshold === undefined ? "Disabled" : currentAutoSkipThreshold} | Default: ${autoSkipScoreThreshold.default ?? "Disabled"}`}
+                helper={t("scoring.autoSkipHelp")}
+                current={t("shared.effectiveDefault", {
+                  effective:
+                    currentAutoSkipThreshold === null ||
+                    currentAutoSkipThreshold === undefined
+                      ? disabledLabel
+                      : currentAutoSkipThreshold,
+                  default: autoSkipScoreThreshold.default ?? disabledLabel,
+                })}
               />
             )}
           />
@@ -169,7 +187,7 @@ export const ScoringSettingsSection: React.FC<ScoringSettingsSectionProps> = ({
             htmlFor="blocked-company-keywords"
             className="text-sm font-medium leading-none"
           >
-            Blocked Company Keywords
+            {t("scoring.blockedLabel")}
           </label>
           <TokenizedInput
             id="blocked-company-keywords"
@@ -180,20 +198,16 @@ export const ScoringSettingsSection: React.FC<ScoringSettingsSectionProps> = ({
             onValuesChange={(value) =>
               setValue("blockedCompanyKeywords", value, { shouldDirty: true })
             }
-            placeholder='e.g. "recruitment", "staffing"'
-            helperText="Jobs whose company name contains one of these keywords will be dropped during discovery."
-            removeLabelPrefix="Remove blocked keyword"
+            placeholder={t("scoring.blockedPlaceholder")}
+            helperText={t("scoring.blockedHelp")}
+            removeLabelPrefix={t("scoring.blockedRemove")}
             disabled={isLoading || isSaving}
           />
           <div className="break-words font-mono text-xs text-muted-foreground">
-            Effective:{" "}
-            {blockedCompanyKeywordValues.length > 0
-              ? blockedCompanyKeywordValues.join(", ")
-              : "None"}{" "}
-            | Default:{" "}
-            {blockedCompanyKeywords.default.length > 0
-              ? blockedCompanyKeywords.default.join(", ")
-              : "None"}
+            {t("shared.effectiveDefault", {
+              effective: keywordList(blockedCompanyKeywordValues),
+              default: keywordList(blockedCompanyKeywords.default),
+            })}
           </div>
         </div>
 
@@ -202,26 +216,36 @@ export const ScoringSettingsSection: React.FC<ScoringSettingsSectionProps> = ({
         {/* Effective/Default values display */}
         <div className="grid gap-2 text-sm sm:grid-cols-2">
           <div>
-            <div className="text-xs text-muted-foreground">Penalty Enabled</div>
-            <div className="break-words font-mono text-xs">
-              Effective: {penalizeMissingSalary.effective ? "Yes" : "No"} |
-              Default: {penalizeMissingSalary.default ? "Yes" : "No"}
+            <div className="text-xs text-muted-foreground">
+              {t("scoring.penaltyEnabled")}
             </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground">Penalty Amount</div>
             <div className="break-words font-mono text-xs">
-              Effective: {missingSalaryPenalty.effective} | Default:{" "}
-              {missingSalaryPenalty.default}
+              {t("shared.effectiveDefault", {
+                effective: yesNo(penalizeMissingSalary.effective),
+                default: yesNo(penalizeMissingSalary.default),
+              })}
             </div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">
-              Auto-skip Threshold
+              {t("scoring.penaltyLabel")}
             </div>
             <div className="break-words font-mono text-xs">
-              Effective: {autoSkipScoreThreshold.effective ?? "Disabled"} |
-              Default: {autoSkipScoreThreshold.default ?? "Disabled"}
+              {t("shared.effectiveDefault", {
+                effective: missingSalaryPenalty.effective,
+                default: missingSalaryPenalty.default,
+              })}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">
+              {t("scoring.autoSkipThreshold")}
+            </div>
+            <div className="break-words font-mono text-xs">
+              {t("shared.effectiveDefault", {
+                effective: autoSkipScoreThreshold.effective ?? disabledLabel,
+                default: autoSkipScoreThreshold.default ?? disabledLabel,
+              })}
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import type { DisplayValues } from "@client/pages/settings/types";
 import type { UpdateSettingsInput } from "@shared/settings-schema.js";
 import type React from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 
@@ -19,6 +20,9 @@ export const DisplaySettingsSection: React.FC<DisplaySettingsSectionProps> = ({
   isSaving,
   layoutMode,
 }) => {
+  const { t } = useTranslation("settings");
+  const enabledLabel = (value: boolean) =>
+    value ? t("shared.enabled") : t("shared.disabled");
   const {
     showSponsorInfo,
     renderMarkdownInJobDescriptions,
@@ -29,7 +33,7 @@ export const DisplaySettingsSection: React.FC<DisplaySettingsSectionProps> = ({
   return (
     <SettingsSectionFrame
       mode={layoutMode}
-      title="Display Settings"
+      title={t("display.title")}
       value="display"
     >
       <div className="space-y-4">
@@ -55,12 +59,10 @@ export const DisplaySettingsSection: React.FC<DisplaySettingsSectionProps> = ({
               htmlFor="showSponsorInfo"
               className="text-sm font-medium leading-none cursor-pointer"
             >
-              Show visa sponsor information
+              {t("display.sponsorLabel")}
             </label>
             <p className="text-xs text-muted-foreground">
-              Display a badge next to the employer name showing the match
-              percentage with the UK visa sponsor list. This helps identify
-              employers that are licensed to sponsor work visas.
+              {t("display.sponsorHelp")}
             </p>
           </div>
         </div>
@@ -89,12 +91,10 @@ export const DisplaySettingsSection: React.FC<DisplaySettingsSectionProps> = ({
               htmlFor="renderMarkdownInJobDescriptions"
               className="text-sm font-medium leading-none cursor-pointer"
             >
-              Render Markdown in job descriptions
+              {t("display.markdownLabel")}
             </label>
             <p className="text-xs text-muted-foreground">
-              Show headings, bold text, lists, and code blocks as formatted
-              content when you expand a full job description. Turn this off if
-              you prefer the raw source text.
+              {t("display.markdownHelp")}
             </p>
           </div>
         </div>
@@ -123,13 +123,10 @@ export const DisplaySettingsSection: React.FC<DisplaySettingsSectionProps> = ({
               htmlFor="autoTailorOnManualImport"
               className="text-sm font-medium leading-none cursor-pointer"
             >
-              Auto-tailor manually imported jobs
+              {t("display.autoTailorLabel")}
             </label>
             <p className="text-xs text-muted-foreground">
-              When enabled, jobs added via Manual Import are immediately scored
-              and have a tailored resume PDF generated. Turn off to save LLM
-              tokens and tailor later from the job detail view. You can override
-              this per import in the review step.
+              {t("display.autoTailorHelp")}
             </p>
           </div>
         </div>
@@ -139,52 +136,50 @@ export const DisplaySettingsSection: React.FC<DisplaySettingsSectionProps> = ({
         <div className="grid gap-3 text-sm sm:grid-cols-2">
           <div>
             <div className="text-xs text-muted-foreground">
-              Sponsor info effective
+              {t("display.sponsorEffective")}
             </div>
             <div className="break-words font-mono text-xs">
-              {showSponsorInfo.effective ? "Enabled" : "Disabled"}
+              {enabledLabel(showSponsorInfo.effective)}
             </div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">
-              Sponsor info default
+              {t("display.sponsorDefault")}
             </div>
             <div className="break-words font-mono text-xs font-semibold">
-              {showSponsorInfo.default ? "Enabled" : "Disabled"}
+              {enabledLabel(showSponsorInfo.default)}
             </div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">
-              Markdown rendering effective
+              {t("display.markdownEffective")}
             </div>
             <div className="break-words font-mono text-xs">
-              {renderMarkdownInJobDescriptions.effective
-                ? "Enabled"
-                : "Disabled"}
+              {enabledLabel(renderMarkdownInJobDescriptions.effective)}
             </div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">
-              Markdown rendering default
+              {t("display.markdownDefault")}
             </div>
             <div className="break-words font-mono text-xs font-semibold">
-              {renderMarkdownInJobDescriptions.default ? "Enabled" : "Disabled"}
+              {enabledLabel(renderMarkdownInJobDescriptions.default)}
             </div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">
-              Auto-tailor on import effective
+              {t("display.autoTailorEffective")}
             </div>
             <div className="break-words font-mono text-xs">
-              {autoTailorOnManualImport.effective ? "Enabled" : "Disabled"}
+              {enabledLabel(autoTailorOnManualImport.effective)}
             </div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">
-              Auto-tailor on import default
+              {t("display.autoTailorDefault")}
             </div>
             <div className="break-words font-mono text-xs font-semibold">
-              {autoTailorOnManualImport.default ? "Enabled" : "Disabled"}
+              {enabledLabel(autoTailorOnManualImport.default)}
             </div>
           </div>
         </div>

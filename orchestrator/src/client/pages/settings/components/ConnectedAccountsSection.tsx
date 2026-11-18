@@ -1,8 +1,10 @@
 import * as clientApi from "@client/api";
+import { formatDate, isJapaneseUi } from "@client/i18n/format";
 import type { SsoIdentitySummary, SsoProviderInfo } from "@shared/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { showErrorToast } from "@/client/lib/error-toast";
 import { queryKeys } from "@/client/lib/queryKeys";
@@ -48,14 +50,16 @@ const defaultConnectedAccountsApi: ConnectedAccountsApi = {
 
 function formatConnectedAt(createdAt: string): string {
   const connectedAt = new Date(createdAt);
-  return Number.isNaN(connectedAt.getTime())
-    ? createdAt
+  if (Number.isNaN(connectedAt.getTime())) return createdAt;
+  return isJapaneseUi()
+    ? formatDate(connectedAt)
     : connectedAt.toLocaleDateString();
 }
 
 export const ConnectedAccountsSection: React.FC<
   ConnectedAccountsSectionProps
 > = ({ api = defaultConnectedAccountsApi }) => {
+  const { t } = useTranslation(["settings", "common"]);
   const queryClient = useQueryClient();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -89,10 +93,10 @@ export const ConnectedAccountsSection: React.FC<
       await queryClient.invalidateQueries({
         queryKey: queryKeys.auth.ssoIdentities(),
       });
-      toast.success("Connected account removed");
+      toast.success(t("connected.removed"));
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to remove connected account");
+      showErrorToast(error, t("connected.removeFailed"));
     },
   });
 
@@ -105,10 +109,10 @@ export const ConnectedAccountsSection: React.FC<
       await queryClient.invalidateQueries({
         queryKey: queryKeys.auth.currentUser(),
       });
-      toast.success("Password updated");
+      toast.success(t("connected.passwordUpdated"));
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to update password");
+      showErrorToast(error, t("connected.passwordUpdateFailed"));
     },
   });
 
@@ -134,19 +138,22 @@ export const ConnectedAccountsSection: React.FC<
       });
       window.location.assign(start.authorizationUrl);
     } catch (error) {
-      showErrorToast(error, `Failed to connect ${provider.displayName}`);
+      showErrorToast(
+        error,
+        t("connected.connectFailed", { provider: provider.displayName }),
+      );
     }
   };
 
   const handleChangePassword = () => {
     if (newPassword.length < MIN_PASSWORD_LENGTH) {
       setPasswordError(
-        `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+        t("connected.passwordTooShort", { min: MIN_PASSWORD_LENGTH }),
       );
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError("New passwords do not match.");
+      setPasswordError(t("connected.passwordMismatch"));
       return;
     }
 
@@ -163,9 +170,9 @@ export const ConnectedAccountsSection: React.FC<
       {providers.length > 0 || identities.length > 0 ? (
         <div className="space-y-3">
           <div className="space-y-1">
-            <div className="text-sm font-semibold">Connected accounts</div>
+            <div className="text-sm font-semibold">{t("connected.title")}</div>
             <p className="text-sm text-muted-foreground">
-              Sign in with an identity provider instead of your JobOps password.
+              {t("connected.intro")}
             </p>
           </div>
 
@@ -186,8 +193,13 @@ export const ConnectedAccountsSection: React.FC<
                         {displayName}
                       </div>
                       <div className="mt-1 text-xs text-muted-foreground">
-                        {identity.email ?? identity.displayName ?? "No email"} ·
-                        connected {formatConnectedAt(identity.createdAt)}
+                        {t("connected.identityMeta", {
+                          account:
+                            identity.email ??
+                            identity.displayName ??
+                            t("connected.noEmail"),
+                          date: formatConnectedAt(identity.createdAt),
+                        })}
                       </div>
                     </div>
                     <AlertDialog>
@@ -198,25 +210,30 @@ export const ConnectedAccountsSection: React.FC<
                           variant="outline"
                           disabled={unlinkMutation.isPending}
                         >
-                          Unlink
+                          {t("connected.unlink")}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>
-                            Unlink {displayName}?
+                            {t("connected.unlinkTitle", {
+                              provider: displayName,
+                            })}
                           </AlertDialogTitle>
                           <AlertDialogDescription>
-                            You will no longer be able to sign in to JobOps with
-                            this {displayName} account.
+                            {t("connected.unlinkDescription", {
+                              provider: displayName,
+                            })}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel>
+                            {t("common:actions.cancel")}
+                          </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => unlinkMutation.mutate(identity)}
                           >
-                            Unlink account
+                            {t("connected.unlinkConfirm")}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -227,7 +244,7 @@ export const ConnectedAccountsSection: React.FC<
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No accounts are connected yet.
+              {t("connected.none")}
             </p>
           )}
 
@@ -244,7 +261,9 @@ export const ConnectedAccountsSection: React.FC<
                     onClick={() => void handleConnect(provider)}
                   >
                     <ProviderIcon className="mr-2 h-4 w-4" />
-                    Connect {provider.displayName}
+                    {t("connected.connect", {
+                      provider: provider.displayName,
+                    })}
                   </Button>
                 );
               })}
@@ -255,11 +274,12 @@ export const ConnectedAccountsSection: React.FC<
 
       <div className="space-y-3">
         <div className="space-y-1">
-          <div className="text-sm font-semibold">Account password</div>
+          <div className="text-sm font-semibold">
+            {t("connected.passwordTitle")}
+          </div>
           {hasPassword ? null : (
             <p className="text-sm text-muted-foreground">
-              This account has no password yet. Set one to keep a fallback
-              sign-in method.
+              {t("connected.noPassword")}
             </p>
           )}
         </div>
@@ -271,13 +291,13 @@ export const ConnectedAccountsSection: React.FC<
                 className="text-sm font-medium"
                 htmlFor="account-current-password"
               >
-                Current password
+                {t("connected.currentPassword")}
               </label>
               <Input
                 id="account-current-password"
                 type="password"
                 autoComplete="current-password"
-                placeholder="Enter current password"
+                placeholder={t("connected.currentPasswordPlaceholder")}
                 value={currentPassword}
                 onChange={(event) =>
                   setCurrentPassword(event.currentTarget.value)
@@ -290,13 +310,13 @@ export const ConnectedAccountsSection: React.FC<
               className="text-sm font-medium"
               htmlFor="account-new-password"
             >
-              New password
+              {t("connected.newPassword")}
             </label>
             <Input
               id="account-new-password"
               type="password"
               autoComplete="new-password"
-              placeholder="Enter a new password"
+              placeholder={t("connected.newPasswordPlaceholder")}
               value={newPassword}
               onChange={(event) => setNewPassword(event.currentTarget.value)}
             />
@@ -306,13 +326,13 @@ export const ConnectedAccountsSection: React.FC<
               className="text-sm font-medium"
               htmlFor="account-confirm-password"
             >
-              Confirm new password
+              {t("connected.confirmPassword")}
             </label>
             <Input
               id="account-confirm-password"
               type="password"
               autoComplete="new-password"
-              placeholder="Re-enter the new password"
+              placeholder={t("connected.confirmPasswordPlaceholder")}
               value={confirmPassword}
               onChange={(event) =>
                 setConfirmPassword(event.currentTarget.value)
@@ -332,7 +352,9 @@ export const ConnectedAccountsSection: React.FC<
           onClick={handleChangePassword}
           disabled={changePasswordMutation.isPending}
         >
-          {hasPassword ? "Change password" : "Set password"}
+          {hasPassword
+            ? t("connected.changePassword")
+            : t("connected.setPassword")}
         </Button>
       </div>
     </div>

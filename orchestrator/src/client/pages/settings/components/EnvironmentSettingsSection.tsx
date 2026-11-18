@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { showErrorToast } from "@/client/lib/error-toast";
 import { queryKeys } from "@/client/lib/queryKeys";
@@ -27,6 +28,7 @@ type EnvironmentSettingsSectionProps = {
 const workspaceUsersQueryKey = ["workspaces", "users"] as const;
 
 function AccountManagementSection() {
+  const { t } = useTranslation(["settings", "common"]);
   const queryClient = useQueryClient();
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -53,10 +55,10 @@ function AccountManagementSection() {
       setDisplayName("");
       setPassword("");
       await queryClient.invalidateQueries({ queryKey: workspaceUsersQueryKey });
-      toast.success("User created");
+      toast.success(t("environment.userCreated"));
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to create user");
+      showErrorToast(error, t("environment.userCreateFailed"));
     },
   });
 
@@ -65,10 +67,10 @@ function AccountManagementSection() {
       api.setWorkspaceUserDisabled(input.userId, input.isDisabled),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: workspaceUsersQueryKey });
-      toast.success("User updated");
+      toast.success(t("environment.userUpdated"));
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to update user");
+      showErrorToast(error, t("environment.userUpdateFailed"));
     },
   });
 
@@ -80,19 +82,23 @@ function AccountManagementSection() {
         ...current,
         [variables.userId]: "",
       }));
-      toast.success("Password reset");
+      toast.success(t("environment.passwordReset"));
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to reset password");
+      showErrorToast(error, t("environment.passwordResetFailed"));
     },
   });
 
   if (!meQuery.data?.isSystemAdmin) {
     return (
       <div className="space-y-2">
-        <div className="text-sm font-semibold">Workspace</div>
+        <div className="text-sm font-semibold">
+          {t("environment.workspace")}
+        </div>
         <p className="text-sm text-muted-foreground">
-          Signed in as {meQuery.data?.username ?? "a workspace user"}.
+          {t("environment.signedInAs", {
+            user: meQuery.data?.username ?? t("environment.aWorkspaceUser"),
+          })}
         </p>
       </div>
     );
@@ -103,9 +109,11 @@ function AccountManagementSection() {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <div className="text-sm font-semibold">Workspace Users</div>
+        <div className="text-sm font-semibold">
+          {t("environment.usersTitle")}
+        </div>
         <p className="text-sm text-muted-foreground">
-          Each user gets a private workspace with isolated jobs and settings.
+          {t("environment.usersIntro")}
         </p>
       </div>
 
@@ -113,18 +121,18 @@ function AccountManagementSection() {
         <Input
           value={displayName}
           onChange={(event) => setDisplayName(event.currentTarget.value)}
-          placeholder="Name"
+          placeholder={t("environment.namePlaceholder")}
         />
         <Input
           value={username}
           onChange={(event) => setUsername(event.currentTarget.value)}
-          placeholder="Username"
+          placeholder={t("environment.usernamePlaceholder")}
           autoComplete="off"
         />
         <Input
           value={password}
           onChange={(event) => setPassword(event.currentTarget.value)}
-          placeholder="Temporary password"
+          placeholder={t("environment.tempPasswordPlaceholder")}
           type="password"
           autoComplete="new-password"
         />
@@ -143,7 +151,7 @@ function AccountManagementSection() {
             password.length < 8
           }
         >
-          Create
+          {t("environment.create")}
         </Button>
       </div>
 
@@ -162,10 +170,12 @@ function AccountManagementSection() {
                   </span>
                   <Badge variant="outline">{user.username}</Badge>
                   {user.isSystemAdmin ? (
-                    <Badge variant="secondary">System admin</Badge>
+                    <Badge variant="secondary">
+                      {t("environment.systemAdmin")}
+                    </Badge>
                   ) : null}
                   {user.isDisabled ? (
-                    <Badge variant="destructive">Disabled</Badge>
+                    <Badge variant="destructive">{t("shared.disabled")}</Badge>
                   ) : null}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
@@ -182,7 +192,7 @@ function AccountManagementSection() {
                       [user.id]: value,
                     }));
                   }}
-                  placeholder="New password"
+                  placeholder={t("environment.newPasswordPlaceholder")}
                   type="password"
                   autoComplete="new-password"
                   className="h-8 w-40"
@@ -201,7 +211,7 @@ function AccountManagementSection() {
                     })
                   }
                 >
-                  Reset
+                  {t("common:actions.reset")}
                 </Button>
               </div>
               <Button
@@ -218,14 +228,16 @@ function AccountManagementSection() {
                   })
                 }
               >
-                {user.isDisabled ? "Enable" : "Disable"}
+                {user.isDisabled
+                  ? t("environment.enable")
+                  : t("environment.disable")}
               </Button>
             </div>
           );
         })}
         {users.length === 0 ? (
           <div className="p-3 text-sm text-muted-foreground">
-            No users found.
+            {t("environment.noUsers")}
           </div>
         ) : null}
       </div>
@@ -236,6 +248,7 @@ function AccountManagementSection() {
 export const EnvironmentSettingsSection: React.FC<
   EnvironmentSettingsSectionProps
 > = ({ values, isLoading, isSaving, layoutMode }) => {
+  const { t } = useTranslation(["settings", "common"]);
   const {
     register,
     formState: { errors },
@@ -245,30 +258,32 @@ export const EnvironmentSettingsSection: React.FC<
   return (
     <SettingsSectionFrame
       mode={layoutMode}
-      title="Environment & Workspaces"
+      title={t("environment.title")}
       value="environment"
     >
       <div className="space-y-8">
         <div className="space-y-6">
           <div className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Service Accounts
+            {t("environment.serviceAccounts")}
           </div>
 
           <div className="space-y-4">
-            <div className="text-sm font-semibold">UKVisaJobs</div>
+            <div className="text-sm font-semibold">
+              UKVisaJobs{/* i18n-ignore */}
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <SettingsInput
-                label="Email"
+                label={t("environment.email")}
                 inputProps={register("ukvisajobsEmail")}
-                placeholder="you@example.com"
+                placeholder="you@example.com" // i18n-ignore
                 disabled={isLoading || isSaving}
                 error={errors.ukvisajobsEmail?.message as string | undefined}
               />
               <SettingsInput
-                label="Password"
+                label={t("environment.password")}
                 inputProps={register("ukvisajobsPassword")}
                 type="password"
-                placeholder="Enter new password"
+                placeholder={t("environment.passwordPlaceholder")}
                 disabled={isLoading || isSaving}
                 error={errors.ukvisajobsPassword?.message as string | undefined}
                 current={formatSecretHint(privateValues.ukvisajobsPasswordHint)}
@@ -277,20 +292,22 @@ export const EnvironmentSettingsSection: React.FC<
           </div>
 
           <div className="space-y-4">
-            <div className="text-sm font-semibold">Adzuna</div>
+            <div className="text-sm font-semibold">
+              Adzuna{/* i18n-ignore */}
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <SettingsInput
-                label="App ID"
+                label={t("environment.appId")}
                 inputProps={register("adzunaAppId")}
-                placeholder="your-app-id"
+                placeholder="your-app-id" // i18n-ignore
                 disabled={isLoading || isSaving}
                 error={errors.adzunaAppId?.message as string | undefined}
               />
               <SettingsInput
-                label="App Key"
+                label={t("environment.appKey")}
                 inputProps={register("adzunaAppKey")}
                 type="password"
-                placeholder="Enter new app key"
+                placeholder={t("environment.appKeyPlaceholder")}
                 disabled={isLoading || isSaving}
                 error={errors.adzunaAppKey?.message as string | undefined}
                 current={formatSecretHint(privateValues.adzunaAppKeyHint)}
@@ -303,7 +320,7 @@ export const EnvironmentSettingsSection: React.FC<
 
         <div className="space-y-4">
           <div className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Security
+            {t("environment.security")}
           </div>
           <AccountManagementSection />
           <Separator />

@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import type { UpdateSettingsInput } from "@shared/settings-schema.js";
 import type { ValidationResult } from "@shared/types.js";
 import { formatUserFacingError } from "@/client/lib/error-format";
@@ -11,9 +12,12 @@ export type RxResumeSettingsLike =
   | null
   | undefined;
 
+// Getters so the message follows the UI language at the time it is read.
 export const RXRESUME_PRECHECK_MESSAGES = {
-  "missing-v5-api-key": "Add an API key, then test again.",
-} as const;
+  get "missing-v5-api-key"(): string {
+    return i18n.t("settings:rxresume.precheckMissingApiKey");
+  },
+};
 
 export const getStoredRxResumeCredentialAvailability = (
   settings: RxResumeSettingsLike,
@@ -60,7 +64,10 @@ export type RxResumeCredentialPrecheckFailure = ReturnType<
 export const getRxResumeMissingCredentialLabels = (input: {
   stored: RxResumeStoredCredentialAvailability;
   draft: RxResumeCredentialDrafts;
-}) => (input.stored.apiKey || input.draft.apiKey ? [] : ["RxResume API key"]);
+}) =>
+  input.stored.apiKey || input.draft.apiKey
+    ? []
+    : [i18n.t("settings:rxresume.missingApiKeyLabel")];
 
 export const toRxResumeValidationPayload = (
   draft: RxResumeCredentialDrafts,
@@ -142,9 +149,12 @@ export const validateAndMaybePersistRxResumeMode = async <TSettings>(
     skipPrecheck = false,
     getPrecheckMessage = (failure) => RXRESUME_PRECHECK_MESSAGES[failure],
     getValidationErrorMessage = (error) =>
-      formatUserFacingError(error, "RxResume validation failed"),
+      formatUserFacingError(
+        error,
+        i18n.t("settings:rxresume.validationFailed"),
+      ),
     getPersistErrorMessage = (error) =>
-      formatUserFacingError(error, "Failed to save RxResume settings"),
+      formatUserFacingError(error, i18n.t("settings:rxresume.saveFailed")),
   } = input;
 
   const precheckFailure = skipPrecheck

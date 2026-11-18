@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import type { LlmPurpose } from "@shared/types";
 
 function buildModelOptions(input: {
@@ -53,31 +54,16 @@ function renderKeyHelper(
       ) : (
         helperText
       )}
-      {keepSavedKey ? ". Leave blank to keep the saved key." : null}
+      {keepSavedKey ? i18n.t("settings:llm.keepSavedKey") : null}
     </>
   );
 }
 
-const LLM_PURPOSES: Array<{
-  id: LlmPurpose;
-  label: string;
-  description: string;
-}> = [
-  {
-    id: "scoring",
-    label: "Scoring",
-    description: "Job fit, brief extraction, and ranking decisions.",
-  },
-  {
-    id: "tailoring",
-    label: "Tailoring",
-    description: "Ghostwriter and resume content tailoring.",
-  },
-  {
-    id: "projectSelection",
-    label: "Project selection",
-    description: "Choosing resume projects for a job.",
-  },
+/** Labels and descriptions: settings:llm.purposes.<id>.label/description. */
+const LLM_PURPOSES: Array<{ id: LlmPurpose }> = [
+  { id: "scoring" },
+  { id: "tailoring" },
+  { id: "projectSelection" },
 ];
 
 export { buildModelOptions, renderKeyHelper, LLM_PURPOSES };
