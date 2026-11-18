@@ -64,20 +64,20 @@
 #let cjk-pattern = regex("[\p{Han}\p{Hiragana}\p{Katakana}]")
 #let has-cjk(value) = type(value) == str and value.contains(cjk-pattern)
 
-// Summary and bullets are pre-escaped markup. The renderer escapes the
-// characters that start code, math, labels and emphasis; also neutralise the
-// few constructs it leaves alone so user text can never turn into a comment
-// (`//`), a non-breaking space (`~`) or a list/heading/enum marker.
+// Summary and bullets are pre-escaped markup: the renderer escapes code,
+// math, label, emphasis, comment (`//`) and non-breaking-space (`~`)
+// characters plus leading list/heading/enum markers. Escaping again here
+// would print stray backslashes; only guard the leading marker in case a
+// caller hands over unescaped text.
 #let safe-markup(value) = {
   let source-text = text-of(value)
   if source-text == "" {
     return none
   }
-  let escaped = source-text.replace("~", "\\~").replace("/", "\\/")
-  if escaped.starts-with(regex("[-+=]\\s|\\d+\\.\\s")) {
-    escaped = "\\" + escaped
+  if source-text.starts-with(regex("([-+=/]|\\d+\\.)(\\s|$)")) {
+    source-text = "\\" + source-text
   }
-  eval(escaped, mode: "markup")
+  eval(source-text, mode: "markup")
 }
 
 #let link-or-text(label, url) = {
@@ -102,6 +102,11 @@
 #let period-text(value) = {
   set par(justify: false)
   set text(size: 9.5pt)
+  // A typed ASCII tilde in a Japanese range ("2021年4月~現在") reads as the
+  // full-width wave the theme already uses when it breaks the range.
+  if value.contains(regex("[\p{Han}\p{Hiragana}\p{Katakana}]")) {
+    value = value.replace(regex("\\s*~\\s*"), "～")
+  }
   let found = value.match(period-separator)
   if found == none or found.start == 0 or found.end >= value.len() {
     value
@@ -134,11 +139,18 @@
 #let name = text-of(source.at("name", default: none))
 #let summary = text-of(source.at("summary", default: none))
 #let experience = visible(source.at("experience", default: ()))
+#let projects = visible(source.at("projects", default: ()))
 #let skill-groups = visible(source.at("skillGroups", default: ()))
 #let certifications = visible(source.at("certifications", default: ()))
+#let awards = visible(source.at("awards", default: ()))
 #let languages = visible(source.at("languages", default: ()))
 #let education = visible(source.at("education", default: ()))
+#let publications = visible(source.at("publications", default: ()))
+#let volunteer = visible(source.at("volunteer", default: ()))
+#let profiles = list-of(source.at("profileItems", default: ())).filter(item => type(item) == dictionary)
 #let custom-fields = visible(source.at("customFieldItems", default: ()))
+// Interests and references are left out on purpose: a 職務経歴書 carries
+// neither (hobbies belong on the 履歴書, referees are not a Japanese norm).
 
 // Japanese content gets Japanese punctuation and bullets; English content
 // keeps Latin ones so the document still reads naturally.
@@ -179,6 +191,13 @@
   found
 }
 
+#let is-self-pr-field(item) = {
+  let title = field(item, "title")
+  let body = field(item, "text")
+  is-self-pr-title(title) or ((title == "" or title == body) and body.match(self-pr-prefix) != none)
+}
+#let other-fields = custom-fields.filter(item => not is-self-pr-field(item))
+
 // ---------------------------------------------------------------------------
 // Style
 // ---------------------------------------------------------------------------
@@ -191,11 +210,15 @@
 #let table-stroke = 0.5pt + luma(110)
 #let header-fill = luma(237)
 #let label-width = 32mm
+#let margin-x = 20mm
+// A company block shorter than this moves to the next page whole instead of
+// splitting; taller ones still break (their header row repeats).
+#let keep-together-height = 100mm
 
 #set document(title: if name == "" { "職務経歴書" } else { "職務経歴書 " + name }, author: name)
 #set page(
   paper: __PAGE_PAPER__,
-  margin: (x: 20mm, top: 18mm, bottom: 20mm),
+  margin: (x: margin-x, top: 18mm, bottom: 20mm),
   footer: context {
     if counter(page).final().first() > 1 {
       align(center, text(size: 8.5pt, fill: muted, counter(page).display("1 / 1", both: true)))
@@ -259,7 +282,7 @@
     }
   }
 
-  block(above: 0.9em, below: 0.9em, table(
+  let entry-table = table(
     columns: (label-width, 1fr),
     align: left + top,
     table.header(table.cell(colspan: 2, fill: header-fill, label-text(grid(
@@ -274,26 +297,60 @@
     } else {
       (period-text(period), details)
     },
-  ))
+  )
+
+  // A page break inside a short block strands the header, period and role
+  // line at the foot of one page and the duties on the next.
+  context {
+    let height = measure(entry-table, width: page.width - 2 * margin-x).height
+    block(above: 0.9em, below: 0.9em, breakable: height > keep-together-height, entry-table)
+  }
 }
 
-#let skill-rows = skill-groups.map(group => {
-  let keywords = strings-of(group, "keywords")
-  (
-    table.cell(fill: header-fill, label-text(text(weight: "bold", field(group, "name")))),
-    if keywords.len() > 0 { keywords.join(list-separator) } else { [] },
-  )
-})
+// Skills listed by name only (no keywords) would leave an empty right-hand
+// cell each; gather them into one closing row instead. An empty catch-all
+// group ("その他" with nothing in it) would only repeat the row label.
+#let other-label = if is-japanese { "その他" } else { "Other" }
+#let keyword-skill-groups = skill-groups.filter(group => strings-of(group, "keywords").len() > 0)
+#let bare-skills = (
+  skill-groups
+    .filter(group => strings-of(group, "keywords").len() == 0)
+    .map(group => field(group, "name"))
+    .filter(value => value != "" and lower(value) not in ("その他", "other", "others"))
+)
 
-#let certification-rows = certifications.map(entry => {
-  let issuer = field(entry, "subtitle")
+#let skill-label-cell(body) = table.cell(fill: header-fill, label-text(text(weight: "bold", body)))
+#let skill-rows = keyword-skill-groups.map(group => (
+  skill-label-cell(field(group, "name")),
+  strings-of(group, "keywords").join(list-separator),
+)) + (
+  if keyword-skill-groups.len() > 0 and bare-skills.len() > 0 {
+    ((skill-label-cell(other-label), bare-skills.join(list-separator)),)
+  } else {
+    ()
+  }
+)
+
+// Dated entries (certifications, projects, awards, ...): period on the left,
+// title with its issuer/keywords in parentheses, then any description bullets.
+#let entry-rows(entries) = entries.map(entry => {
+  let subtitle = field(entry, "subtitle")
+  let bullets = strings-of(entry, "bullets")
   (
     period-text(field(entry, "date")),
-    [#link-or-text(field(entry, "title"), field(entry, "url"))#if issuer != "" {
-        text(size: 9pt, fill: muted, paren(issuer))
+    [#link-or-text(field(entry, "title"), field(entry, "url"))#if subtitle != "" {
+        text(size: 9pt, fill: muted, paren(subtitle))
+      }#if bullets.len() > 0 {
+        block(above: 0.5em, list(..bullets.map(safe-markup)))
       }],
   )
 })
+
+#let certification-rows = entry-rows(certifications)
+#let project-rows = entry-rows(projects)
+#let award-rows = entry-rows(awards)
+#let publication-rows = entry-rows(publications)
+#let volunteer-rows = entry-rows(volunteer)
 
 #let language-rows = languages.map(item => {
   let fluency = field(item, "fluency")
@@ -303,11 +360,28 @@
     if fluency != "" {
       fluency
     } else if type(level) in (int, float) and level > 0 {
-      "Level " + str(level)
+      (if is-japanese { "レベル " } else { "Level " }) + str(level)
     } else {
       []
     },
   )
+})
+
+// Profiles (GitHub, LinkedIn, ...) and custom fields other than 自己PR.
+#let other-rows = profiles.map(item => {
+  let network = field(item, "network")
+  let url = field(item, "url")
+  let shown = if field(item, "username") != "" { field(item, "username") } else if url != "" { url } else { network }
+  (label-text(text(weight: "bold", network)), link-or-text(shown, url))
+}) + other-fields.map(item => {
+  let title = field(item, "title")
+  let body = field(item, "text")
+  let value = link-or-text(body, field(item, "url"))
+  if title == "" or title == body {
+    (grid.cell(colspan: 2, value),)
+  } else {
+    (label-text(text(weight: "bold", title)), value)
+  }
 })
 
 #let education-rows = education.map(entry => {
@@ -316,9 +390,12 @@
   if has-cjk(degree) {
     degree = degree.replace(", ", " ")
   }
+  let bullets = strings-of(entry, "bullets")
   (
     period-text(field(entry, "date")),
-    [#link-or-text(field(entry, "title"), field(entry, "url"))#if degree != "" [#h(1em)#degree]],
+    [#link-or-text(field(entry, "title"), field(entry, "url"))#if degree != "" [#h(1em)#degree]#if bullets.len() > 0 {
+        block(above: 0.5em, list(..bullets.map(safe-markup)))
+      }],
   )
 })
 
@@ -345,14 +422,27 @@
   }
 ]
 
+#if project-rows.len() > 0 [
+  = 主なプロジェクト
+  #label-grid(project-rows)
+]
+
 #if skill-rows.len() > 0 [
   = 活かせる経験・知識・技術
   #table(columns: (label-width + 10mm, 1fr), align: left + horizon, ..skill-rows.flatten())
+] else if bare-skills.len() > 0 [
+  = 活かせる経験・知識・技術
+  #bare-skills.join(list-separator)
 ]
 
 #if certification-rows.len() > 0 [
   = 資格
   #label-grid(certification-rows)
+]
+
+#if award-rows.len() > 0 [
+  = 受賞歴
+  #label-grid(award-rows)
 ]
 
 #if language-rows.len() > 0 [
@@ -363,6 +453,21 @@
 #if education-rows.len() > 0 [
   = 学歴
   #label-grid(education-rows)
+]
+
+#if publication-rows.len() > 0 [
+  = 著作・発表
+  #label-grid(publication-rows)
+]
+
+#if volunteer-rows.len() > 0 [
+  = ボランティア活動
+  #label-grid(volunteer-rows)
+]
+
+#if other-rows.len() > 0 [
+  = その他
+  #label-grid(other-rows)
 ]
 
 #if self-pr != "" [

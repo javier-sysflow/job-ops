@@ -297,7 +297,8 @@ describe("typst resume renderer", () => {
     expect(template).toContain("profile-label-matching(is-linkedin-profile)");
     expect(template).toContain("profile-label-matching(is-github-profile)");
     expect(template).toContain("linked-entry-label(entry");
-    expect(template).toContain('link(text-of-item(entry, "url"))');
+    // Projects show the URL as a link when they have no period to display.
+    expect(template).toContain("link(url)[#url]");
   });
 
   it("renders award-style sections as Typst bullet lists in clean-print-cv", async () => {
@@ -426,6 +427,92 @@ describe("typst resume renderer", () => {
 
     expect(typst).toContain("Jane \\#1 \\[Platform\\]");
     expect(typst).toContain("\\#hashes, \\*stars\\*, and \\[brackets\\]");
+  });
+
+  it("keeps tildes, comment slashes and leading list markers literal", async () => {
+    const tokens = await readNativeThemeTokens("classic");
+    const typst = buildTypstDocument(
+      {
+        ...baseDocument,
+        summary: "- Starts like a list item",
+        experience: [
+          {
+            title: "Acme",
+            date: "2021年4月~現在",
+            bullets: [
+              "Steps 1 ~ 3 // see the wiki",
+              "1. Numbered start",
+              "= Heading-like start",
+              "Docs at https://example.com/runbooks",
+            ],
+          },
+        ],
+      },
+      "__BODY__",
+      tokens,
+    );
+
+    expect(typst).toContain("2021年4月\\~現在");
+    expect(typst).toContain("- Steps 1 \\~ 3 \\/\\/ see the wiki");
+    expect(typst).toContain("- \\1. Numbered start");
+    expect(typst).toContain("- \\= Heading-like start");
+    // URL schemes stay intact so the link still autolinks.
+    expect(typst).toContain("Docs at https://example.com/runbooks");
+    expect(typst).toContain("\\- Starts like a list item");
+  });
+
+  it("joins Japanese lines without leaving a stray space", () => {
+    const converted = convertDocFieldsToTypst({
+      ...baseDocument,
+      summary: "一貫して担当できます。\n【強み２】障害対応 is my\nspecialty",
+    });
+
+    expect(converted.summary).toBe(
+      "一貫して担当できます。【強み２】障害対応 is my specialty",
+    );
+  });
+
+  it("uses Japanese list punctuation and labels for Japanese resumes", async () => {
+    const tokens = await readNativeThemeTokens("classic");
+    const typst = buildTypstDocument(
+      {
+        ...baseDocument,
+        name: "山田 太郎",
+        language: "japanese",
+        skillGroups: [
+          { name: "言語", keywords: ["Go（5年）", "Java"] },
+          { name: "その他", keywords: [] },
+        ],
+        languages: [{ language: "ベトナム語", fluency: null, level: 2 }],
+      },
+      "__NAME__\n__BODY__",
+      tokens,
+    );
+
+    expect(typst).toContain("山田 太郎");
+    expect(typst).toContain("*言語:* Go（5年）、Java");
+    expect(typst).toContain("*その他*");
+    expect(typst).not.toContain("*その他:*");
+    expect(typst).toContain("*ベトナム語:* レベル 2");
+  });
+
+  it("leaves undated entries blank and keeps entry titles with their bullets", async () => {
+    const tokens = await readNativeThemeTokens("classic");
+    const typst = buildTypstDocument(
+      {
+        ...baseDocument,
+        experience: [{ title: "Acme", bullets: ["Shipped it"] }],
+        references: [{ title: "Alex Manager", bullets: [] }],
+      },
+      "__BODY__",
+      tokens,
+    );
+
+    // "[]" used to be printed literally in the date column.
+    expect(typst).not.toContain("[[]]");
+    expect(typst).toContain(
+      `#block(sticky: true, below: ${tokens.parLeading})[`,
+    );
   });
 
   it("compiles HTML formatting tags into Typst macros and escapes special characters", async () => {
@@ -663,6 +750,108 @@ describe("typst resume renderer", () => {
       ]) {
         expect(sparse).not.toContain(heading);
       }
+    },
+  );
+
+  it.skipIf(!typstAvailable() || !typstHasJapaneseFonts())(
+    "renders the remaining shokumu-keirekisho sections and literal markup",
+    async () => {
+      const tempDir = await createTempDir();
+      tempDirs.push(tempDir);
+      const outputPath = join(tempDir, "shokumu-extra.pdf");
+      const document = buildResumeRenderDocument(shokumuFixture, {
+        language: "japanese",
+      });
+
+      await renderTypstPdf({
+        document: {
+          ...document,
+          experience: [
+            {
+              ...document.experience[0],
+              title: "株式会社サクラペイメンツ",
+              bullets: ["手順 1 ~ 3 // 社内Wiki参照", "1. 番号で始まる行"],
+            },
+          ],
+          projects: [
+            {
+              title: "OSS: kube-cost-reporter",
+              subtitle: "Go, Kubernetes",
+              date: "2022年～",
+              bullets: ["スター 1,200 超"],
+            },
+          ],
+          awards: [
+            {
+              title: "社長賞",
+              subtitle: "サクラ",
+              date: "2023年3月",
+              bullets: [],
+            },
+          ],
+          skillGroups: [
+            { name: "言語", keywords: ["Go", "Java"] },
+            { name: "Kubernetes", keywords: [] },
+            { name: "要件定義", keywords: [] },
+          ],
+          languages: [{ language: "ベトナム語", fluency: null, level: 2 }],
+        },
+        outputPath,
+        jobId: "job-render-shokumu-extra",
+        typstTheme: "shokumu-keirekisho",
+      });
+      const text = await readCompactPdfText(outputPath);
+
+      // The renderer escapes once; the theme must not escape again.
+      expect(text).toContain("手順1~3//社内Wiki参照");
+      expect(text).toContain("1.番号で始まる行");
+      expect(text).not.toContain("\\");
+      expect(text).toContain("■主なプロジェクト");
+      expect(text).toContain("OSS:kube-cost-reporter（Go,Kubernetes）");
+      expect(text).toContain("■受賞歴");
+      expect(text).toContain("社長賞（サクラ）");
+      // Name-only skills share one closing row instead of empty rows.
+      expect(text).toContain("その他Kubernetes、要件定義");
+      expect(text).toContain("レベル2");
+      // Profiles and non-自己PR custom fields land under その他.
+      expect(text).toContain("■その他");
+      expect(text).toContain("LinkedInkenta-miller");
+      expect(text).toContain("GitHubgithub.com/kenta-miller");
+    },
+  );
+
+  it.skipIf(!typstAvailable() || !typstHasJapaneseFonts())(
+    "localizes clean-print-cv headings for Japanese resumes only",
+    async () => {
+      const tempDir = await createTempDir();
+      tempDirs.push(tempDir);
+      const japanesePath = join(tempDir, "clean-ja.pdf");
+      const englishPath = join(tempDir, "clean-en.pdf");
+
+      await renderTypstPdf({
+        document: buildResumeRenderDocument(shokumuFixture, {
+          language: "japanese",
+        }),
+        outputPath: japanesePath,
+        jobId: "job-render-clean-ja",
+        typstTheme: "clean-print-cv",
+      });
+      await renderTypstPdf({
+        document: baseDocument,
+        outputPath: englishPath,
+        jobId: "job-render-clean-en",
+        typstTheme: "clean-print-cv",
+      });
+      const japanese = await readCompactPdfText(japanesePath);
+      const english = await readCompactPdfText(englishPath);
+
+      for (const heading of ["職務要約", "職務経歴", "スキル", "学歴"]) {
+        expect(japanese).toContain(heading);
+      }
+      expect(japanese).not.toMatch(/PROFESSIONAL|TECHNICAL|EDUCATION/);
+      // No empty slot (" |  | ") for a missing GitHub profile.
+      expect(japanese).not.toMatch(/\|\|/);
+      expect(english).toContain("PROFESSIONALEXPERIENCE");
     },
   );
 

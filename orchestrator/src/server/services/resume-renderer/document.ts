@@ -196,6 +196,14 @@ function extractTextLines(value: string): string[] {
     .filter(Boolean);
 }
 
+// A bullet glyph typed by hand ("・担当", "• Led", "- Did") would print next
+// to the renderer's own marker ("・・担当"). "※" notes and "1." numbering stay.
+const MANUAL_BULLET_PATTERN = /^(?:[・•●○◦◆◇■□▪▫‣⁃]\s*|[-–—*]\s+)/;
+
+function stripManualBullet(value: string): string {
+  return value.replace(MANUAL_BULLET_PATTERN, "").trim();
+}
+
 function extractBullets(value: unknown): string[] {
   if (typeof value !== "string" || !value.trim()) return [];
 
@@ -206,16 +214,19 @@ function extractBullets(value: unknown): string[] {
   for (const segment of segments) {
     if (/^<(?:ul|ol)\b/i.test(segment)) {
       bullets.push(
-        ...[...segment.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
-          .map((match) => stripHtml(match[1] ?? ""))
-          .filter(Boolean),
+        ...[...segment.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((match) =>
+          stripHtml(match[1] ?? ""),
+        ),
       );
     } else {
       bullets.push(...extractTextLines(segment));
     }
   }
-  return bullets;
+  return bullets.map(stripManualBullet).filter(Boolean);
 }
+
+const CJK_TEXT_PATTERN =
+  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
 
 /**
  * Reactive Resume v5 experience items can list several roles held at the
@@ -229,8 +240,14 @@ function extractRoleBullets(item: RecordLike): string[] {
     if (toBoolean(role.hidden, false)) continue;
     const position = toText(role.position).trim();
     const period = toText(role.period).trim();
+    const japanese = CJK_TEXT_PATTERN.test(`${position}${period}`);
+    const periodSuffix = period
+      ? japanese
+        ? `（${period}）`
+        : ` (${period})`
+      : "";
     const heading = position
-      ? `<strong>${position}</strong>${period ? ` (${period})` : ""}`
+      ? `<strong>${position}</strong>${periodSuffix}`
       : period;
     if (heading) bullets.push(stripHtml(heading));
     bullets.push(...extractBullets(role.description));

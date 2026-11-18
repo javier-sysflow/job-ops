@@ -190,19 +190,47 @@ export function getTypstTemplatePath(theme: TypstTheme = "classic"): string {
   return join(getTypstThemeDir(theme), manifest.entrypoint);
 }
 
+const CJK_CHAR = String.raw`[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\u3000-\u303f\uff00-\uffef]`;
+// A line break between two Japanese characters is a paragraph or soft wrap
+// boundary, not a word space; collapsing it to " " leaves a visible gap
+// ("できます。 【強み"). Spaces typed on one line (e.g. "山田 太郎") stay.
+const CJK_LINE_BREAK_PATTERN = new RegExp(
+  `(${CJK_CHAR})[^\\S\\n]*\\n\\s*(?=${CJK_CHAR})`,
+  "gu",
+);
+
 function normalizeText(value: string): string {
   return value
     .replace(/\u2010|\u2011|\u2012|\u2013|\u2014/g, "-")
     .replace(/\u2022/g, "-")
+    .replace(CJK_LINE_BREAK_PATTERN, "$1")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 function escapeRawTypst(value: string): string {
-  return value.replace(/([\\#*$@_[\]{}<>`])/g, "\\$1");
+  return (
+    value
+      // `~` is a non-breaking space in markup, so it would vanish.
+      .replace(/([\\#*$@_[\]{}<>`~])/g, "\\$1")
+      // `//` starts a comment and drops the rest of the line. URL schemes
+      // stay unescaped so links in the text still autolink.
+      .replace(/(https?:)?(\/{2,})/g, (match, scheme, slashes: string) =>
+        scheme ? match : slashes.replace(/\//g, "\\/"),
+      )
+  );
 }
 
+// At the start of a line these open a list, enum, heading or term list
+// ("- did X" would render as a nested list inside the resume bullet).
+const LEADING_BLOCK_MARKER_PATTERN = /^(?:[-+=/]|\d+\.)(?=\s|$)/;
+
 function escapeTypstText(value: string): string {
+  const escaped = escapeInlineTypstText(value);
+  return LEADING_BLOCK_MARKER_PATTERN.test(escaped) ? `\\${escaped}` : escaped;
+}
+
+function escapeInlineTypstText(value: string): string {
   const normalized = normalizeText(value);
   const parts = normalized.split(/(<\/?(?:strong|b|em|i)\b[^>]*>)/gi);
   const result: string[] = [];
@@ -265,17 +293,28 @@ function renderBullets(items: string[]): string {
   return items.map((item) => `- ${escapeTypstText(item)}`).join("\n");
 }
 
+interface EntryStyle {
+  metaSize: string;
+  /** Gap between an entry's title lines and its bullets (the theme's leading). */
+  leading: string;
+}
+
+function renderEntryDate(entry: LatexResumeEntry, metaSize: string): string {
+  // An undated entry gets an empty cell; "[]" here was printed literally.
+  return entry.date
+    ? `#text(size: ${metaSize})[${escapeTypstText(entry.date)}]`
+    : "";
+}
+
 function renderEntryHeader(entry: LatexResumeEntry, metaSize: string): string {
   const title = renderLink(entry.title, entry.url);
-  const date = entry.date
-    ? `#text(size: ${metaSize})[${escapeTypstText(entry.date)}]`
-    : "[]";
+  const date = renderEntryDate(entry, metaSize);
   return `#grid(columns: (1fr, auto), column-gutter: 1em, [*${title}*], [${date}])`;
 }
 
 function renderSubheadingEntry(
   entry: LatexResumeEntry,
-  metaSize: string,
+  style: EntryStyle,
 ): string {
   const subtitle = entry.subtitle ? escapeTypstText(entry.subtitle) : "";
   const secondaryTitle = entry.secondaryTitle
@@ -288,29 +327,44 @@ function renderSubheadingEntry(
     .filter(Boolean)
     .join(" / ");
   const bullets = renderBullets(entry.bullets);
-
-  return [
-    renderEntryHeader(entry, metaSize),
+  const header = [
+    renderEntryHeader(entry, style.metaSize),
     subline ? `#emph[${subline}]` : "",
-    bullets,
   ]
+    .filter(Boolean)
+    .join("\n");
+
+  return [stickToBullets(header, bullets, style), bullets]
     .filter(Boolean)
     .join("\n");
 }
 
-function renderProjectEntry(entry: LatexResumeEntry, metaSize: string): string {
+/**
+ * Keep an entry's title lines on the same page as its first bullet, so a
+ * page break never leaves "Company / Role / Dates" alone at the bottom.
+ */
+function stickToBullets(
+  header: string,
+  bullets: string,
+  style: EntryStyle,
+): string {
+  return bullets
+    ? `#block(sticky: true, below: ${style.leading})[\n${header}\n]`
+    : header;
+}
+
+function renderProjectEntry(
+  entry: LatexResumeEntry,
+  style: EntryStyle,
+): string {
   const title = renderLink(entry.title, entry.url);
   const subtitle = entry.subtitle
     ? ` #emph[${escapeTypstText(entry.subtitle)}]`
     : "";
-  const date = entry.date
-    ? `#text(size: ${metaSize})[${escapeTypstText(entry.date)}]`
-    : "[]";
+  const date = renderEntryDate(entry, style.metaSize);
   const bullets = renderBullets(entry.bullets);
-  return [
-    `#grid(columns: (1fr, auto), column-gutter: 1em, [*${title}*${subtitle}], [${date}])`,
-    bullets,
-  ]
+  const header = `#grid(columns: (1fr, auto), column-gutter: 1em, [*${title}*${subtitle}], [${date}])`;
+  return [stickToBullets(header, bullets, style), bullets]
     .filter(Boolean)
     .join("\n");
 }
@@ -328,28 +382,36 @@ function renderEntrySection(args: {
   title: string;
   entries: LatexResumeEntry[];
   kind: "subheading" | "project";
-  metaSize: string;
+  style: EntryStyle;
 }): string {
   if (args.entries.length === 0) return "";
   const body = args.entries
     .map((entry) =>
       args.kind === "project"
-        ? renderProjectEntry(entry, args.metaSize)
-        : renderSubheadingEntry(entry, args.metaSize),
+        ? renderProjectEntry(entry, args.style)
+        : renderSubheadingEntry(entry, args.style),
     )
     .join("\n\n");
   return [`= ${escapeTypstText(args.title)}`, body].join("\n\n");
 }
 
+/** Japanese lists read "Go、Java" ("Go（5年）, Java" leaves a wide gap). */
+function getListSeparator(document: LatexResumeDocument): string {
+  return getTypstTextLang(document) === "ja" ? "、" : ", ";
+}
+
 function renderSkillsSection(document: LatexResumeDocument): string {
   if (document.skillGroups.length === 0) return "";
   const titles = document.sectionTitles ?? getLatexResumeSectionTitles();
+  const separator = getListSeparator(document);
   const items = document.skillGroups
     .map((group) => {
       const keywords = group.keywords.map((keyword) =>
         escapeTypstText(keyword),
       );
-      return `*${escapeTypstText(group.name)}:* ${keywords.join(", ")}`;
+      return keywords.length > 0
+        ? `*${escapeTypstText(group.name)}:* ${keywords.join(separator)}`
+        : `*${escapeTypstText(group.name)}*`;
     })
     .join(" \\\n");
   return [`= ${escapeTypstText(titles.skills)}`, items].join("\n\n");
@@ -398,8 +460,12 @@ function renderCustomFieldsSection(document: LatexResumeDocument): string {
 function renderLanguagesSection(document: LatexResumeDocument): string {
   if (document.languages.length === 0) return "";
   const titles = document.sectionTitles ?? getLatexResumeSectionTitles();
+  const levelLabel = getTypstTextLang(document) === "ja" ? "レベル" : "Level";
   const lines = document.languages.map((item: LatexResumeLanguageItem) => {
-    const detail = [item.fluency, item.level ? `Level ${item.level}` : ""]
+    const detail = [
+      item.fluency,
+      item.level ? `${levelLabel} ${item.level}` : "",
+    ]
       .filter(Boolean)
       .map((part) => escapeTypstText(String(part)))
       .join(" | ");
@@ -413,10 +479,11 @@ function renderLanguagesSection(document: LatexResumeDocument): string {
 function renderInterestsSection(document: LatexResumeDocument): string {
   if (document.interests.length === 0) return "";
   const titles = document.sectionTitles ?? getLatexResumeSectionTitles();
+  const separator = getListSeparator(document);
   const lines = document.interests.map((item: LatexResumeInterestItem) => {
     const keywords = item.keywords.map((keyword) => escapeTypstText(keyword));
     return keywords.length > 0
-      ? `*${escapeTypstText(item.name)}:* ${keywords.join(", ")}`
+      ? `*${escapeTypstText(item.name)}:* ${keywords.join(separator)}`
       : `*${escapeTypstText(item.name)}*`;
   });
   return renderLineSection(titles.interests, lines);
@@ -443,7 +510,7 @@ function renderLocationBlock(document: LatexResumeDocument): string {
 function renderOrderedCoreSections(
   document: LatexResumeDocument,
   titles: ReturnType<typeof getLatexResumeSectionTitles>,
-  metaSize: string,
+  style: EntryStyle,
 ): string[] {
   const sectionOrder = document.sectionOrder ?? [
     "profiles",
@@ -466,21 +533,21 @@ function renderOrderedCoreSections(
         title: titles.experience,
         entries: document.experience,
         kind: "subheading",
-        metaSize,
+        style,
       }),
     education: () =>
       renderEntrySection({
         title: titles.education,
         entries: document.education,
         kind: "subheading",
-        metaSize,
+        style,
       }),
     projects: () =>
       renderEntrySection({
         title: titles.projects,
         entries: document.projects,
         kind: "project",
-        metaSize,
+        style,
       }),
     skills: () => renderSkillsSection(document),
     languages: () => renderLanguagesSection(document),
@@ -490,35 +557,35 @@ function renderOrderedCoreSections(
         title: titles.awards,
         entries: document.awards,
         kind: "subheading",
-        metaSize,
+        style,
       }),
     certifications: () =>
       renderEntrySection({
         title: titles.certifications,
         entries: document.certifications,
         kind: "subheading",
-        metaSize,
+        style,
       }),
     publications: () =>
       renderEntrySection({
         title: titles.publications,
         entries: document.publications,
         kind: "subheading",
-        metaSize,
+        style,
       }),
     volunteer: () =>
       renderEntrySection({
         title: titles.volunteer,
         entries: document.volunteer,
         kind: "subheading",
-        metaSize,
+        style,
       }),
     references: () =>
       renderEntrySection({
         title: titles.references,
         entries: document.references,
         kind: "subheading",
-        metaSize,
+        style,
       }),
   };
 
@@ -587,7 +654,10 @@ export function buildTypstDocument(
   const body = [
     renderSummarySection(document),
     renderCustomFieldsSection(document),
-    ...renderOrderedCoreSections(document, titles, tokens.entryMetaSize),
+    ...renderOrderedCoreSections(document, titles, {
+      metaSize: tokens.entryMetaSize,
+      leading: tokens.parLeading,
+    }),
   ]
     .filter(Boolean)
     .join("\n\n");
