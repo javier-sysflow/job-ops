@@ -95,13 +95,16 @@ export const EXTRACTOR_SOURCE_METADATA: Record<
 };
 
 /**
- * Fork: sources nobody can pick for a search run. Hiring Cafe asks for a
- * browser check on nearly every search from the hosted server, and it adds
- * little for jobs in Japan. The id stays in EXTRACTOR_SOURCE_IDS so jobs
- * already found there keep their label and filter.
+ * Fork: sources nobody can pick for a search run. The ids stay in
+ * EXTRACTOR_SOURCE_IDS so jobs already found there keep their label and filter.
+ * - hiringcafe: asks for a browser check on nearly every search from the
+ *   hosted server, and adds little for jobs in Japan.
+ * - golangjobs: Go programming jobs only; this instance serves a non-IT
+ *   job search.
  */
 export const DISABLED_PIPELINE_SOURCE_IDS: readonly ExtractorSourceId[] = [
   "hiringcafe",
+  "golangjobs",
 ];
 
 export const PIPELINE_EXTRACTOR_SOURCE_IDS = EXTRACTOR_SOURCE_IDS.filter(

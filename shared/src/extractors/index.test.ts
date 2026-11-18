@@ -34,6 +34,11 @@ describe("extractor source catalog", () => {
     expect(sourceLabel("hiringcafe")).toBe("Hiring Cafe");
   });
 
+  it("keeps Golang Jobs out of search runs", () => {
+    expect(PIPELINE_EXTRACTOR_SOURCE_IDS).not.toContain("golangjobs");
+    expect(sourceLabel("golangjobs")).toBe("Golang Jobs");
+  });
+
   it("includes naukri as a pipeline source", () => {
     expect(isExtractorSourceId("naukri")).toBe(true);
     expect(EXTRACTOR_SOURCE_METADATA.naukri).toMatchObject({

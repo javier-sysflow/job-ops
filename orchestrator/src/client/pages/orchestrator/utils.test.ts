@@ -38,9 +38,11 @@ describe("orchestrator utils", () => {
     expect(enabled).toEqual(expect.arrayContaining(credentialFree));
   });
 
-  it("never offers Hiring Cafe as a search source", () => {
-    expect(getEnabledSources(createAppSettings())).not.toContain("hiringcafe");
-    expect(getEnabledSources(null)).not.toContain("hiringcafe");
+  it("never offers Hiring Cafe or Golang Jobs as search sources", () => {
+    for (const source of ["hiringcafe", "golangjobs"] as const) {
+      expect(getEnabledSources(createAppSettings())).not.toContain(source);
+      expect(getEnabledSources(null)).not.toContain(source);
+    }
   });
 
   it("enables seek only when apify token is configured", () => {
