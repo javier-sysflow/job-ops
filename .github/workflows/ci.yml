@@ -56,6 +56,8 @@ jobs:
           - gradcracker-extractor
           - startupjobs-extractor
           - workingnomads-extractor
+          - himalayas-extractor
+          - japandev-extractor
           - ukvisajobs-extractor
     steps:
       - uses: actions/checkout@v4

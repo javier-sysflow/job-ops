@@ -66,6 +66,28 @@ describe("extractor deployment config", () => {
     );
   });
 
+  it.each([
+    "himalayas",
+    "japandev",
+  ])("ships and syncs the %s extractor", async (name) => {
+    const dockerfile = await readFile(resolve(process.cwd(), "../Dockerfile"), {
+      encoding: "utf8",
+    });
+    const composeFile = await readFile(
+      resolve(process.cwd(), "../docker-compose.yml"),
+      { encoding: "utf8" },
+    );
+
+    expect(dockerfile).toContain(
+      `COPY extractors/${name}/package*.json ./extractors/${name}/`,
+    );
+    expect(dockerfile).toContain(
+      `COPY extractors/${name} ./extractors/${name}`,
+    );
+    expect(composeFile).toContain(`path: ./extractors/${name}/src`);
+    expect(composeFile).toContain(`target: /app/extractors/${name}/src`);
+  });
+
   it("does not install a vanilla Node Playwright Firefox binary", async () => {
     // Camoufox is the only supported browser in production. The vanilla Firefox
     // fallback was removed so that a missing Camoufox binary surfaces as a hard

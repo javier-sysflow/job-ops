@@ -1,0 +1,13 @@
+{
+  "name": "japandev-extractor",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Japan Dev extractor (bilingual tech jobs in Japan) from the public sitemap and JobPosting data",
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "~5.9.0"
+  },
+  "scripts": {
+    "check:types": "tsc --noEmit"
+  }
+}
