@@ -19,7 +19,6 @@ import {
   asRecord,
   fileToDataUrl,
   getDesignResumeDialogItem,
-  makeDownload,
   toText,
 } from "@client/components/design-resume/utils";
 import type { SectionWorkspaceBadge } from "@client/components/section-workspace/SectionWorkspace";
@@ -39,7 +38,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import i18n from "@/client/i18n";
 import { showErrorToast } from "@/client/lib/error-toast";
-import { downloadDesignResumePdf } from "@/client/lib/private-pdf";
+import {
+  downloadDesignResumeDocx,
+  downloadDesignResumePdf,
+} from "@/client/lib/private-pdf";
 import { trackProductEvent } from "@/lib/analytics";
 import { queryKeys } from "../lib/queryKeys";
 
@@ -80,6 +82,7 @@ export function useDesignResumeStudio() {
   const [mobileWorkspaceView, setMobileWorkspaceView] =
     useState<DesignResumeMobileView>(() => (sectionParam ? "edit" : "preview"));
   const [pdfDownloading, setPdfDownloading] = useState(false);
+  const [docxDownloading, setDocxDownloading] = useState(false);
   const [rendererUpdating, setRendererUpdating] = useState(false);
   const [dirty, setDirty] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +102,7 @@ export function useDesignResumeStudio() {
   const pdfRenderer = settings?.pdfRenderer?.value ?? "rxresume";
   const typstTheme = settings?.typstTheme?.value ?? "classic";
   const canDownloadPdf = status?.exists && !pdfDownloading;
+  const canDownloadDocx = Boolean(status?.exists) && !docxDownloading;
   const pictureEnabled = Boolean(tracerReadiness?.isPubliclyAvailable);
   const pictureDisabledReason =
     tracerReadiness?.reason ??
@@ -428,20 +432,22 @@ export function useDesignResumeStudio() {
     }
   };
 
-  const handleExport = async () => {
+  const handleDownloadDocx = async () => {
     try {
-      const exported = await api.exportDesignResume();
-      makeDownload(exported.fileName, exported.document);
+      setDocxDownloading(true);
+      await downloadDesignResumeDocx();
       trackProductEvent("resume_studio_export_completed", {
         result: "success",
       });
-      toast.success(i18n.t("shell:hooks.resumeStudio.exported"));
+      toast.success(i18n.t("shell:hooks.resumeStudio.docxReady"));
     } catch (exportError) {
       trackProductEvent("resume_studio_export_completed", { result: "error" });
       showErrorToast(
         exportError,
-        i18n.t("shell:hooks.resumeStudio.exportFailed"),
+        i18n.t("shell:hooks.resumeStudio.docxFailed"),
       );
+    } finally {
+      setDocxDownloading(false);
     }
   };
 
@@ -732,6 +738,8 @@ export function useDesignResumeStudio() {
     pdfRenderer,
     typstTheme,
     canDownloadPdf,
+    canDownloadDocx,
+    docxDownloading,
     pictureEnabled,
     pictureDisabledReason,
     fileInputRef,
@@ -747,7 +755,7 @@ export function useDesignResumeStudio() {
     handleImport,
     handleImportWithConfirm,
     handleImportFile,
-    handleExport,
+    handleDownloadDocx,
     handleDownloadPdf,
     handleUploadPicture,
     handleDeletePicture,

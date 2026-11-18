@@ -16,8 +16,8 @@ const resumeStudio: typeof en = {
       importingRxResume: "RxResumeからインポート中",
       downloadPdf: "PDFをダウンロード",
       preparingPdf: "PDFを準備中",
-      export: "エクスポート",
-      exportJson: "JSONをエクスポート",
+      downloadDocx: "Wordをダウンロード",
+      preparingDocx: "Wordファイルを準備中",
       openMenu: "レジュメの操作メニューを開く",
     },
     empty: {

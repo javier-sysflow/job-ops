@@ -24,6 +24,7 @@ import {
   ApiClientError,
   fetchApi,
   fetchBlobApi,
+  fetchDownloadApi,
   streamSseEvents,
   withQuery,
 } from "./core";
@@ -216,6 +217,15 @@ export async function getJobPdfBlob(id: string): Promise<Blob> {
       cache: "no-store",
     },
   );
+}
+
+/** The job's tailored resume as an editable Word (.docx) file. */
+export async function getJobDocx(
+  id: string,
+): Promise<{ blob: Blob; fileName: string | null }> {
+  return fetchDownloadApi(`/jobs/${encodeURIComponent(id)}/docx`, {
+    cache: "no-store",
+  });
 }
 
 export async function getTracerAnalytics(options?: {

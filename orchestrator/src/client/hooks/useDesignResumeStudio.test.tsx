@@ -48,6 +48,7 @@ vi.mock("@/client/lib/error-toast", () => ({
 }));
 
 vi.mock("@/client/lib/private-pdf", () => ({
+  downloadDesignResumeDocx: vi.fn(),
   downloadDesignResumePdf: vi.fn(),
 }));
 

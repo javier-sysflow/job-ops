@@ -59,6 +59,8 @@ type JobDocumentsPanelProps = {
   onUploadPdf: () => void;
   onViewPdf: () => void;
   onDownloadPdf: () => void;
+  /** Download the tailored resume as an editable Word file. */
+  onDownloadDocx?: () => void;
   onRegeneratePdf: () => void;
 };
 
@@ -212,6 +214,7 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
   onUploadPdf,
   onViewPdf,
   onDownloadPdf,
+  onDownloadDocx,
   onRegeneratePdf,
 }) => {
   const queryClient = useQueryClient();
@@ -361,6 +364,22 @@ export const JobDocumentsPanel: React.FC<JobDocumentsPanelProps> = ({
                         {pdfDownloadLabel}
                       </Button>
                     </TooltipWhenDisabled>
+                    {onDownloadDocx && (
+                      <TooltipWhenDisabled
+                        reason={pdfRegeneratingReason}
+                        className="w-auto"
+                      >
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={onDownloadDocx}
+                          disabled={pdfActionsDisabled}
+                        >
+                          <FileText className="mr-1.5 h-3.5 w-3.5" />
+                          {t("documents.downloadWord")}
+                        </Button>
+                      </TooltipWhenDisabled>
+                    )}
                     <Button
                       size="sm"
                       variant="ghost"

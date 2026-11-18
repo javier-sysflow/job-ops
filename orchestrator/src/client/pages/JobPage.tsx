@@ -46,7 +46,11 @@ import {
   isPdfRegenerating,
   isPdfStale,
 } from "@/client/lib/pdf-freshness";
-import { downloadJobPdf, openJobPdf } from "@/client/lib/private-pdf";
+import {
+  downloadJobDocx,
+  downloadJobPdf,
+  openJobPdf,
+} from "@/client/lib/private-pdf";
 import { queryKeys } from "@/client/lib/queryKeys";
 import {
   ArrowLeft,
@@ -501,6 +505,18 @@ export const JobPage: React.FC = () => {
     });
   };
 
+  const handleDownloadDocx = async () => {
+    if (!job || !job.pdfPath || pdfActionsDisabled) return;
+    const filename = `${safeFilenamePart(job.employer, {
+      language: filenameLanguage,
+    })}-${safeFilenamePart(job.title, {
+      language: filenameLanguage,
+    })}-resume.docx`;
+    await downloadJobDocx(job.id, filename).catch((error) => {
+      showErrorToast(error, t("toasts.downloadDocxFailed"));
+    });
+  };
+
   const handleViewJobDescription = () => {
     if (!job) return;
     navigate(`${baseJobPath}/documents`, { state: jobPageNavigationState });
@@ -831,6 +847,7 @@ export const JobPage: React.FC = () => {
                     });
                   }}
                   onDownloadPdf={() => void handleDownloadPdf()}
+                  onDownloadDocx={() => void handleDownloadDocx()}
                   onRegeneratePdf={() => void handleRegeneratePdf()}
                 />
 
@@ -957,6 +974,7 @@ export const JobPage: React.FC = () => {
                 });
               }}
               onDownloadPdf={() => void handleDownloadPdf()}
+              onDownloadDocx={() => void handleDownloadDocx()}
               onUploadPdf={() => uploadPdfInputRef.current?.click()}
               onRegeneratePdf={() => void handleRegeneratePdf()}
               onSkip={() => void handleSkip()}

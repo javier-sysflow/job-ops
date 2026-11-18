@@ -58,20 +58,6 @@ export function fieldId(...parts: string[]): string {
   return `design-resume-${parts.join("-").replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
 }
 
-export function makeDownload(fileName: string, payload: unknown) {
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = fileName;
-  anchor.click();
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 0);
-}
-
 export async function fileToDataUrl(file: File): Promise<string> {
   return await new Promise((resolve, reject) => {
     const reader = new FileReader();

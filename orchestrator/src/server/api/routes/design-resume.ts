@@ -20,6 +20,11 @@ import { importDesignResumeFromFile } from "@server/services/design-resume/impor
 import { generateDesignResumePdf } from "@server/services/pdf";
 import { getTenantDesignResumePdfPath } from "@server/services/pdf-storage";
 import { clearProfileCache } from "@server/services/profile";
+import {
+  DOCX_MIME_TYPE,
+  docxContentDisposition,
+  generateDesignResumeDocx,
+} from "@server/services/resume-docx";
 import { parseV5ResumeData } from "@server/services/rxresume/schema/v5";
 import { getJobOpsPublicAvailability } from "@server/services/tracer-links";
 import type { DesignResumeJson, DesignResumePatchRequest } from "@shared/types";
@@ -434,6 +439,18 @@ designResumeRouter.get(
   "/export",
   asyncRoute(async (_req: Request, res: Response) => {
     ok(res, await exportDesignResume());
+  }),
+);
+
+/** The Resume Studio resume as an editable Word file. */
+designResumeRouter.get(
+  "/docx",
+  asyncRoute(async (_req: Request, res: Response) => {
+    const file = await generateDesignResumeDocx();
+    res.setHeader("Content-Type", DOCX_MIME_TYPE);
+    res.setHeader("Content-Disposition", docxContentDisposition(file.fileName));
+    res.setHeader("Cache-Control", "no-store");
+    res.send(file.content);
   }),
 );
 

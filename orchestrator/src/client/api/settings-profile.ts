@@ -4,7 +4,6 @@ import type {
   DesignResumeAiFieldSuggestionRequest,
   DesignResumeAiFieldSuggestionResponse,
   DesignResumeDocument,
-  DesignResumeExportResponse,
   DesignResumeJson,
   DesignResumePatchRequest,
   DesignResumePdfResponse,
@@ -17,7 +16,12 @@ import type {
   ValidationResult,
 } from "@shared/types";
 import type { CodexAuthStatusResponse } from "./auth";
-import { fetchApi, fetchBlobApi, normalizeApiPath } from "./core";
+import {
+  fetchApi,
+  fetchBlobApi,
+  fetchDownloadApi,
+  normalizeApiPath,
+} from "./core";
 
 let settingsPromise: Promise<AppSettings> | null = null;
 
@@ -128,8 +132,12 @@ export async function getDesignResumeAssetContentBlob(
   return fetchBlobApi(normalizeApiPath(assetUrl), { cache: "no-store" });
 }
 
-export async function exportDesignResume(): Promise<DesignResumeExportResponse> {
-  return fetchApi<DesignResumeExportResponse>("/design-resume/export");
+/** The Resume Studio resume as an editable Word (.docx) file. */
+export async function getDesignResumeDocx(): Promise<{
+  blob: Blob;
+  fileName: string | null;
+}> {
+  return fetchDownloadApi("/design-resume/docx", { cache: "no-store" });
 }
 
 export async function generateDesignResumePdf(): Promise<DesignResumePdfResponse> {

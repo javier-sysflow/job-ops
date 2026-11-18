@@ -49,6 +49,8 @@ type JobPageRightSidebarProps = {
   onEditTailoring: () => void;
   onViewPdf: () => void;
   onDownloadPdf: () => void;
+  /** Download the tailored resume as an editable Word file. */
+  onDownloadDocx?: () => void;
   onUploadPdf: () => void;
   onRegeneratePdf: () => void;
   onSkip: () => void;
@@ -80,6 +82,7 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
   onEditTailoring,
   onViewPdf,
   onDownloadPdf,
+  onDownloadDocx,
   onUploadPdf,
   onRegeneratePdf,
   onSkip,
@@ -275,6 +278,15 @@ export const JobPageRightSidebar: React.FC<JobPageRightSidebarProps> = ({
                   <Download className="mr-2 h-4 w-4" />
                   {pdfDownloadLabel}
                 </DropdownMenuItem>
+                {onDownloadDocx && (
+                  <DropdownMenuItem
+                    onSelect={onDownloadDocx}
+                    disabled={pdfActionsDisabled}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    {i18n.t("jobDetail:documents.downloadWord")}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
               </>
             )}

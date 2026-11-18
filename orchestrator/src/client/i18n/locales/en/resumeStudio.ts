@@ -13,8 +13,8 @@ const resumeStudio = {
       importingRxResume: "Importing RxResume",
       downloadPdf: "Download PDF",
       preparingPdf: "Preparing PDF",
-      export: "Export",
-      exportJson: "Export JSON",
+      downloadDocx: "Download Word",
+      preparingDocx: "Preparing Word file",
       openMenu: "Open resume actions",
     },
     empty: {

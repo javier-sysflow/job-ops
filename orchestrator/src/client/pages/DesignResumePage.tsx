@@ -76,6 +76,7 @@ export const DesignResumePage: React.FC = () => {
     mobileSectionPickerOpen,
     mobileWorkspaceView,
     pdfDownloading,
+    docxDownloading,
     rendererUpdating,
     settingsLoading,
     isLoading,
@@ -89,6 +90,7 @@ export const DesignResumePage: React.FC = () => {
     pdfRenderer,
     typstTheme,
     canDownloadPdf,
+    canDownloadDocx,
     pictureEnabled,
     pictureDisabledReason,
     fileInputRef,
@@ -101,7 +103,7 @@ export const DesignResumePage: React.FC = () => {
     handleImport,
     handleImportWithConfirm,
     handleImportFile,
-    handleExport,
+    handleDownloadDocx,
     handleDownloadPdf,
     handleUploadPicture,
     handleDeletePicture,
@@ -231,11 +233,13 @@ export const DesignResumePage: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleExport}
-                disabled={!status?.exists}
+                onClick={handleDownloadDocx}
+                disabled={!canDownloadDocx}
               >
                 <Download className="mr-2 h-4 w-4" />
-                {t("page.actions.export")}
+                {docxDownloading
+                  ? t("page.actions.preparingDocx")
+                  : t("page.actions.downloadDocx")}
               </Button>
             </div>
 
@@ -282,11 +286,13 @@ export const DesignResumePage: React.FC = () => {
                     : t("page.actions.downloadPdf")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => handleExport()}
-                  disabled={!status?.exists}
+                  onSelect={() => handleDownloadDocx()}
+                  disabled={!canDownloadDocx}
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  {t("page.actions.exportJson")}
+                  {docxDownloading
+                    ? t("page.actions.preparingDocx")
+                    : t("page.actions.downloadDocx")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

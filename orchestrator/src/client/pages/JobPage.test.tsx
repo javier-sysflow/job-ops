@@ -100,6 +100,7 @@ vi.mock("../api", () => ({
 
 vi.mock("@/client/lib/private-pdf", () => ({
   createJobPdfObjectUrl: vi.fn().mockResolvedValue("blob:job-pdf"),
+  downloadJobDocx: vi.fn().mockResolvedValue(undefined),
   downloadJobPdf: vi.fn().mockResolvedValue(undefined),
   openJobPdf: vi.fn().mockResolvedValue(undefined),
 }));
@@ -644,6 +645,31 @@ describe("JobPage PDF filenames", () => {
       expect(privatePdf.downloadJobPdf).toHaveBeenCalledWith(
         "job-1",
         "Mueller_Buero-Strasse_Plattform-resume.pdf",
+      ),
+    );
+  });
+
+  it("downloads the tailored resume as an editable Word file", async () => {
+    vi.mocked(api.getJob).mockResolvedValue(
+      createJob({
+        id: "job-1",
+        employer: "Acme",
+        title: "Backend Engineer",
+        pdfPath: "data/pdfs/job-1.pdf",
+        status: "ready",
+      }) as Job,
+    );
+
+    renderJobPage("/job/job-1/documents");
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /download word/i }),
+    );
+
+    await waitFor(() =>
+      expect(privatePdf.downloadJobDocx).toHaveBeenCalledWith(
+        "job-1",
+        "Acme-Backend_Engineer-resume.docx",
       ),
     );
   });

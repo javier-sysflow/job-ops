@@ -75,6 +75,23 @@ export async function createDesignResumePdfObjectUrl(
   return createObjectUrlFromBlob(() => api.getDesignResumePdfBlob(pdfUrl));
 }
 
+/** Download the Resume Studio resume as Word; resolves to the file name. */
+export async function downloadDesignResumeDocx(): Promise<string> {
+  const { blob, fileName } = await api.getDesignResumeDocx();
+  const name = fileName ?? "resume.docx";
+  openBlob(blob, name);
+  return name;
+}
+
+/** Download a job's tailored resume as Word under the given file name. */
+export async function downloadJobDocx(
+  jobId: string,
+  filename: string,
+): Promise<void> {
+  const { blob } = await api.getJobDocx(jobId);
+  openBlob(blob, filename);
+}
+
 export async function downloadDesignResumePdf(
   filename: string,
   pdfUrl?: string,

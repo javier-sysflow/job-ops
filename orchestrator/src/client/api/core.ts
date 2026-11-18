@@ -378,6 +378,46 @@ export async function fetchBlobApi(
   endpoint: string,
   options?: RequestInit,
 ): Promise<Blob> {
+  return (await fetchBlobResponse(endpoint, options)).blob();
+}
+
+/**
+ * A file download plus the name the server gave it (`Content-Disposition`,
+ * preferring the UTF-8 `filename*` so Japanese names survive).
+ */
+export async function fetchDownloadApi(
+  endpoint: string,
+  options?: RequestInit,
+): Promise<{ blob: Blob; fileName: string | null }> {
+  const response = await fetchBlobResponse(endpoint, options);
+  return {
+    blob: await response.blob(),
+    fileName: parseContentDispositionFileName(
+      response.headers.get("Content-Disposition"),
+    ),
+  };
+}
+
+export function parseContentDispositionFileName(
+  header: string | null,
+): string | null {
+  if (!header) return null;
+  const encoded = /filename\*\s*=\s*utf-8''([^;]+)/i.exec(header)?.[1];
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded.trim());
+    } catch {
+      // Fall through to the plain filename.
+    }
+  }
+  const plain = /filename\s*=\s*"?([^";]+)"?/i.exec(header)?.[1]?.trim();
+  return plain || null;
+}
+
+async function fetchBlobResponse(
+  endpoint: string,
+  options?: RequestInit,
+): Promise<Response> {
   let authHeader = getCachedAuthHeader();
   let authAttempt = 0;
 
@@ -406,7 +446,7 @@ export async function fetchBlobApi(
       throw toApiError(response, parsed);
     }
 
-    return response.blob();
+    return response;
   }
 }
 

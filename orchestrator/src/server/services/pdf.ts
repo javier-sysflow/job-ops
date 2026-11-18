@@ -69,7 +69,7 @@ async function ensureOutputDir(): Promise<void> {
   }
 }
 
-async function resolvePdfRenderer(): Promise<PdfRenderer> {
+export async function resolvePdfRenderer(): Promise<PdfRenderer> {
   const storedValue = await getSetting("pdfRenderer");
   return (
     settingsRegistry.pdfRenderer.parse(storedValue ?? undefined) ??
@@ -77,7 +77,7 @@ async function resolvePdfRenderer(): Promise<PdfRenderer> {
   );
 }
 
-async function resolvePdfPaperSize(): Promise<PdfPaperSize> {
+export async function resolvePdfPaperSize(): Promise<PdfPaperSize> {
   const storedValue = await getSetting("pdfPaperSize");
   return (
     settingsRegistry.pdfPaperSize.parse(storedValue ?? undefined) ??
@@ -86,12 +86,12 @@ async function resolvePdfPaperSize(): Promise<PdfPaperSize> {
 }
 
 /** The user's browser time zone (saved by the client), for document dates. */
-async function resolveUserTimeZone(): Promise<string | null> {
+export async function resolveUserTimeZone(): Promise<string | null> {
   const storedValue = (await getSetting("timeZone"))?.trim();
   return storedValue && isValidTimeZone(storedValue) ? storedValue : null;
 }
 
-async function resolveTypstTheme() {
+export async function resolveTypstTheme() {
   const storedValue = await getSetting("typstTheme");
   return (
     settingsRegistry.typstTheme.parse(storedValue ?? undefined) ??
@@ -99,7 +99,7 @@ async function resolveTypstTheme() {
   );
 }
 
-async function resolveLocalResumeLanguage(
+export async function resolveLocalResumeLanguage(
   resumeJson: Record<string, unknown>,
   jobDescription?: string | null,
 ) {
@@ -300,7 +300,7 @@ async function resolveDesignResumeForRenderer(args: {
   }
 }
 
-async function loadBaseResumeSource(args: {
+export async function loadBaseResumeSource(args: {
   renderer: PdfRenderer;
   requestOrigin?: string | null;
 }): Promise<{

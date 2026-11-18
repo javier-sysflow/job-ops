@@ -1,6 +1,7 @@
 import { badRequest, notFound } from "@infra/errors";
 import { fail, ok } from "@infra/http";
 import { logger } from "@infra/logger";
+import { resolveRequestOrigin } from "@server/infra/request-origin";
 import * as jobsRepo from "@server/repositories/jobs";
 import { attachAppliedDuplicateMatches } from "@server/services/applied-duplicate-matching";
 import { getPdfPath, pdfExists } from "@server/services/pdf";
@@ -13,6 +14,11 @@ import {
   listJobPostApplicationEmails,
   MAX_JOB_EMAIL_LIMIT,
 } from "@server/services/post-application/job-emails";
+import {
+  DOCX_MIME_TYPE,
+  docxContentDisposition,
+  generateJobResumeDocx,
+} from "@server/services/resume-docx";
 import { type Request, type Response, Router } from "express";
 import { z } from "zod";
 import {
@@ -224,6 +230,28 @@ jobsReadRouter.get("/:id/emails", async (req: Request, res: Response) => {
       status: err.status,
       code: err.code,
       details: err.details,
+      errorMessage: error instanceof Error ? error.message : undefined,
+    });
+    fail(res, err);
+  }
+});
+
+/** The job's tailored resume as an editable Word file, built on request. */
+jobsReadRouter.get("/:id/docx", async (req: Request, res: Response) => {
+  try {
+    const file = await generateJobResumeDocx(req.params.id, {
+      requestOrigin: resolveRequestOrigin(req),
+    });
+    res.setHeader("Content-Type", DOCX_MIME_TYPE);
+    res.setHeader("Content-Disposition", docxContentDisposition(file.fileName));
+    res.setHeader("Cache-Control", "no-store");
+    res.send(file.content);
+  } catch (error) {
+    const err = toJobsRouteError(error);
+    logger[err.status === 404 ? "warn" : "error"]("Job resume DOCX failed", {
+      jobId: req.params.id,
+      status: err.status,
+      code: err.code,
       errorMessage: error instanceof Error ? error.message : undefined,
     });
     fail(res, err);
