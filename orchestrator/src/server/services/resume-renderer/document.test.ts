@@ -301,4 +301,39 @@ describe("normalizeResumeJsonToLatexDocument", () => {
       "Worked with <b>bold text</b> and <i>italic text</i>. Strip this div",
     ]);
   });
+
+  it("keeps intro paragraphs around bullet lists and renders extra roles", () => {
+    const document = normalizeResumeJsonToLatexDocument({
+      sections: {
+        experience: {
+          items: [
+            {
+              company: "Acme",
+              position: "Engineer",
+              period: "2020 - 2024",
+              description:
+                "<p>Led the payments team.</p><ul><li>Built APIs</li><li>Cut costs</li></ul><p>Mentored juniors.</p>",
+              roles: [
+                {
+                  id: "r1",
+                  position: "Senior Engineer",
+                  period: "2023 - 2024",
+                  description: "<ul><li>Owned the roadmap</li></ul>",
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(document.experience[0]?.bullets).toEqual([
+      "Led the payments team.",
+      "Built APIs",
+      "Cut costs",
+      "Mentored juniors.",
+      "<strong>Senior Engineer</strong> (2023 - 2024)",
+      "Owned the roadmap",
+    ]);
+  });
 });
