@@ -158,4 +158,47 @@ describe("validateAndApplyJobPatches", () => {
     expect(duplicate.rejected).toHaveLength(2);
     expect(range.updates).toEqual({});
   });
+
+  it("accepts Japanese salary evidence in 万円 and 円", () => {
+    const job = createJob({
+      jobDescription: "<p>年収800万円〜1,200万円（月給制）。勤務地：東京</p>",
+      salaryMinAmount: null,
+      salaryMaxAmount: null,
+      salaryCurrency: null,
+      salaryInterval: null,
+    });
+    const result = validateAndApplyJobPatches(job, [
+      {
+        field: "salaryMinAmount",
+        value: 8_000_000,
+        confidence: "medium",
+        evidence: "年収800万円〜1,200万円",
+      },
+      {
+        field: "salaryMaxAmount",
+        value: 12_000_000,
+        confidence: "medium",
+        evidence: "年収800万円〜1,200万円",
+      },
+      {
+        field: "salaryCurrency",
+        value: "JPY",
+        confidence: "medium",
+        evidence: "年収800万円〜1,200万円",
+      },
+      {
+        field: "salaryInterval",
+        value: "yearly",
+        confidence: "medium",
+        evidence: "年収800万円〜1,200万円",
+      },
+    ]);
+
+    expect(result.updates).toMatchObject({
+      salaryMinAmount: 8_000_000,
+      salaryMaxAmount: 12_000_000,
+      salaryCurrency: "JPY",
+      salaryInterval: "yearly",
+    });
+  });
 });

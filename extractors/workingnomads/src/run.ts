@@ -155,7 +155,7 @@ function matchesSearchTerm(
 ): boolean {
   const normalizedTerm = searchTerm
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
   if (!normalizedTerm) return true;
@@ -190,7 +190,7 @@ function matchesSearchTerm(
   ]
     .join(" ")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
 

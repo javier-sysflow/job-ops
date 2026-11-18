@@ -11,6 +11,7 @@ import {
   matchesEmploymentType,
   matchesLocation,
   matchesPostedWithin,
+  parseSalaryBounds,
 } from "./utils";
 
 describe("orchestrator utils", () => {
@@ -138,6 +139,32 @@ describe("orchestrator utils", () => {
       expect(matchesPostedWithin(relative, 7, now)).toBe(true);
       expect(matchesPostedWithin(old, 7, now)).toBe(false);
       expect(matchesPostedWithin(unknown, 7, now)).toBe(false);
+    });
+  });
+
+  describe("Japanese salaries and locations", () => {
+    const salaryJob = (salary: string) =>
+      createJob({ salary, salaryMinAmount: null, salaryMaxAmount: null });
+
+    it("reads 万円 ranges, full-width digits and plain yen amounts", () => {
+      expect(parseSalaryBounds(salaryJob("年収800万円〜1,200万円"))).toEqual({
+        min: 8_000_000,
+        max: 12_000_000,
+      });
+      expect(parseSalaryBounds(salaryJob("年収８００万円〜"))).toEqual({
+        min: 8_000_000,
+        max: 8_000_000,
+      });
+      expect(parseSalaryBounds(salaryJob("¥5,000,000 - ¥7,500,000"))).toEqual({
+        min: 5_000_000,
+        max: 7_500_000,
+      });
+    });
+
+    it("matches Japanese location text", () => {
+      const job = createJob({ location: "東京都渋谷区" });
+      expect(matchesLocation(job, "東京")).toBe(true);
+      expect(matchesLocation(job, "大阪")).toBe(false);
     });
   });
 });

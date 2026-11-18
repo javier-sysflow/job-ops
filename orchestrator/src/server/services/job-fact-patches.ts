@@ -90,7 +90,8 @@ function normalizeEvidence(value: string): string {
 }
 
 function includesNumber(evidence: string, value: number): boolean {
-  const compact = evidence.toLowerCase().replace(/,/g, "");
+  // NFKC folds full-width digits and commas used in Japanese listings.
+  const compact = evidence.normalize("NFKC").toLowerCase().replace(/,/g, "");
   if (
     new RegExp(`(^|\\D)${String(value).replace(".", "\\.")}($|\\D)`).test(
       compact,
@@ -98,7 +99,10 @@ function includesNumber(evidence: string, value: number): boolean {
   ) {
     return true;
   }
-  return value >= 1_000 && compact.includes(`${value / 1_000}k`);
+  if (value >= 1_000 && compact.includes(`${value / 1_000}k`)) return true;
+  // Japanese units: 800万 = 8,000,000 and 1.2億 = 120,000,000.
+  if (value >= 10_000 && compact.includes(`${value / 10_000}万`)) return true;
+  return value >= 100_000_000 && compact.includes(`${value / 100_000_000}億`);
 }
 
 function evidenceSupportsValue(
@@ -117,21 +121,24 @@ function evidenceSupportsValue(
       if (currency === "GBP") return /£|\bgbp\b|\bpounds?\b/i.test(evidence);
       if (currency === "USD") return /\busd\b|\bus dollars?\b/i.test(evidence);
       if (currency === "EUR") return /€|\beur\b|\beuros?\b/i.test(evidence);
+      if (currency === "JPY") return /¥|￥|円|\bjpy\b|\byen\b/i.test(evidence);
       return normalized.includes(currency.toLowerCase());
     }
     case "salaryInterval":
       return (
         {
-          hourly: /\b(hour|hourly|hr)\b/i,
-          daily: /\b(day|daily)\b/i,
-          weekly: /\b(week|weekly)\b/i,
-          monthly: /\b(month|monthly)\b/i,
-          yearly: /\b(year|yearly|annual|annually|annum)\b/i,
+          // Japanese: 時給 hourly, 日給 daily, 週給 weekly, 月給/月収 monthly,
+          // 年収/年俸 yearly.
+          hourly: /\b(hour|hourly|hr)\b|時給/i,
+          daily: /\b(day|daily)\b|日給/i,
+          weekly: /\b(week|weekly)\b|週給/i,
+          monthly: /\b(month|monthly)\b|月給|月収/i,
+          yearly: /\b(year|yearly|annual|annually|annum)\b|年収|年俸/i,
         }[value as string]?.test(evidence) === true
       );
     case "isRemote":
       return value === true
-        ? /\bremote\b/i.test(evidence)
+        ? /\bremote\b|リモート|在宅勤務/i.test(evidence)
         : /\b(onsite|on-site|office-based|work(?:ing)? (?:from|in) (?:the )?office)\b|(?:five|5).{0,20}(?:days?|week).{0,30}(?:in (?:the )?)?office/i.test(
             evidence,
           );

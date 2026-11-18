@@ -49,15 +49,25 @@ export const parseSalaryBounds = (
   }
   if (!job.salary) return null;
 
-  const normalized = job.salary.toLowerCase().replace(/,/g, "");
+  // NFKC folds full-width digits/commas (８００万円) into ASCII.
+  let normalized = job.salary.normalize("NFKC").toLowerCase().replace(/,/g, "");
   const values: number[] = [];
+
+  // Japanese units: 万 = 10,000 and 億 = 100,000,000 (e.g. 年収800万円〜1200万円).
+  const japaneseUnitPattern = /(\d+(?:\.\d+)?)\s*(万|億)/g;
+  for (const match of normalized.matchAll(japaneseUnitPattern)) {
+    const multiplier = match[2] === "億" ? 100_000_000 : 10_000;
+    values.push(Math.round(Number.parseFloat(match[1]) * multiplier));
+  }
+  normalized = normalized.replace(japaneseUnitPattern, " ");
 
   const kPattern = /(\d+(?:\.\d+)?)\s*k\b/g;
   for (const match of normalized.matchAll(kPattern)) {
     values.push(Math.round(Number.parseFloat(match[1]) * 1000));
   }
 
-  const plainPattern = /(\d{4,6}(?:\.\d+)?)/g;
+  // Up to 9 digits so yen amounts such as ¥5000000 are read in full.
+  const plainPattern = /(\d{4,9}(?:\.\d+)?)/g;
   for (const match of normalized.matchAll(plainPattern)) {
     values.push(Math.round(Number.parseFloat(match[1])));
   }
@@ -179,8 +189,8 @@ const normalizeText = (value: string): string =>
   value
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
 
 /**
