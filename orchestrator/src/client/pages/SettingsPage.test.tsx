@@ -201,6 +201,7 @@ const mockNonAdminUser = () => {
     displayName: null,
     isSystemAdmin: false,
     isDisabled: false,
+    hasPassword: true,
     workspaceId: "tenant_default",
     workspaceName: "JobOps",
     createdAt: "2026-04-27T00:00:00.000Z",

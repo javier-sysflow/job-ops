@@ -88,6 +88,7 @@ vi.mock("@infra/request-context", () => ({
 }));
 
 import { isSystemAdmin } from "@infra/request-context";
+import { getOriginalEnvValue } from "@server/services/envSettings";
 import {
   confirmOnboardingResumeAction,
   getOnboardingStatus,
@@ -196,6 +197,31 @@ describe("onboarding status engine", () => {
 
     expect(status.requirements.map((item) => item.id)).not.toContain("model");
     expect(status.nextRequirementId).not.toBe("model");
+  });
+
+  it("skips the model step for admins when the server configures the AI provider", async () => {
+    vi.mocked(getOriginalEnvValue).mockImplementation((key: string) =>
+      key === "LLM_PROVIDER"
+        ? "anthropic"
+        : key === "LLM_API_KEY"
+          ? "sk-ant-test"
+          : undefined,
+    );
+    mocks.getSetting.mockImplementation(async (key: string) => {
+      const values: Record<string, string | null> = {
+        onboardingProfileCompleted: "1",
+        onboardingLlmCompleted: null,
+        onboardingResumeConfirmedSource: "local:doc-1",
+      };
+      return values[key] ?? null;
+    });
+
+    try {
+      const status = await getOnboardingStatus();
+      expect(status.requirements.map((item) => item.id)).not.toContain("model");
+    } finally {
+      vi.mocked(getOriginalEnvValue).mockImplementation(() => undefined);
+    }
   });
 
   it("validates and persists legacy onboarding state once", async () => {

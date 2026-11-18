@@ -623,6 +623,18 @@ async function migrateLegacyOnboardingState(args: {
   });
 }
 
+/**
+ * Fork: when the operator configured the AI provider and key through
+ * environment variables (LLM_PROVIDER + LLM_API_KEY), nobody has to choose an
+ * AI connection during onboarding. Admins can still change it in Settings.
+ */
+function isServerLlmPreconfigured(): boolean {
+  return Boolean(
+    getOriginalEnvValue("LLM_PROVIDER")?.trim() &&
+      getOriginalEnvValue("LLM_API_KEY")?.trim(),
+  );
+}
+
 export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
   const appStatus = getJobOpsAppStatus();
   const hostedMode = appStatus.appMode === "hosted";
@@ -682,7 +694,9 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
         : "Add your preferred locations and workplace style so Job Ops can prepare sensible run defaults and sponsor-focused sources.",
     primaryAction: profileCompleted === "1" ? "none" : "save_profile",
   });
-  const requirements = userEditableLlmSettings
+  // Fork: skip the AI connection step when the server already provides one.
+  const showModelStep = userEditableLlmSettings && !isServerLlmPreconfigured();
+  const requirements = showModelStep
     ? [
         profileRequirement,
         await buildModelRequirement(),
