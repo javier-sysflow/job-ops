@@ -1,5 +1,6 @@
 import { GripVertical } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import {
   AccordionContent,
   AccordionItem,
@@ -35,6 +36,7 @@ export function DesignResumeSection({
   isDragging,
   isDragTarget,
 }: DesignResumeSectionProps) {
+  const { t } = useTranslation("resumeStudio");
   return (
     <AccordionItem
       value={value}
@@ -53,7 +55,7 @@ export function DesignResumeSection({
             draggable
             {...dragHandleProps}
             className="flex h-12 w-8 cursor-grab touch-none items-center justify-center text-muted-foreground/40 transition-colors hover:text-foreground active:cursor-grabbing pl-2"
-            aria-label={`Drag ${title} to reorder`}
+            aria-label={t("listSection.dragToReorder", { label: title })}
           >
             <GripVertical className="h-4 w-4" />
           </button>

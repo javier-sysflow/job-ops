@@ -11,6 +11,7 @@ import type {
 } from "@shared/types";
 import type React from "react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Accordion } from "@/components/ui/accordion";
 import { bucketCount, trackProductEvent } from "@/lib/analytics";
 import {
@@ -157,6 +158,7 @@ export function DesignResumeRail({
   pictureDisabledReason,
   activeSectionId = null,
 }: DesignResumeRailProps) {
+  const { t } = useTranslation("resumeStudio");
   const { settings } = useSettings();
   const updateSettingsMutation = useUpdateSettingsMutation();
   const resumeJson = draft.resumeJson as Record<string, unknown>;
@@ -285,7 +287,8 @@ export function DesignResumeRail({
     unknown
   >[];
   const customFieldsTitle =
-    toText(basics.customFieldsTitle).trim() || "Custom Fields";
+    toText(basics.customFieldsTitle).trim() ||
+    t("rail.customFields.defaultTitle");
 
   const updateBasics = (path: string, value: unknown) => {
     onUpdateResumeJson((current) => {
@@ -521,8 +524,8 @@ export function DesignResumeRail({
     <Accordion type="multiple" defaultValue={[]} className="space-y-3">
       <DesignResumeSection
         value="picture"
-        title="Picture"
-        subtitle="Manage your resume photo and how it appears."
+        title={t("rail.picture.title")}
+        subtitle={t("rail.picture.subtitle")}
       >
         <PictureSection
           picture={picture}
@@ -537,8 +540,8 @@ export function DesignResumeRail({
 
       <DesignResumeSection
         value="basics"
-        title="Basics"
-        subtitle="Edit your name, headline, and contact details."
+        title={t("rail.basics.title")}
+        subtitle={t("rail.basics.subtitle")}
       >
         <BasicsSection
           resumeJson={draft.resumeJson}
@@ -550,8 +553,12 @@ export function DesignResumeRail({
       <DesignResumeSection
         value="basics-custom-fields"
         title={customFieldsTitle}
-        subtitle="Add extra links or short details near your contact info."
-        badge={customFields.length === 0 ? "Empty" : `${customFields.length}`}
+        subtitle={t("rail.customFields.subtitle")}
+        badge={
+          customFields.length === 0
+            ? t("badges.empty")
+            : `${customFields.length}`
+        }
       >
         <BasicsCustomFieldsSection
           title={customFieldsTitle}
@@ -563,8 +570,8 @@ export function DesignResumeRail({
 
       <DesignResumeSection
         value="summary"
-        title="Summary"
-        subtitle="Write the short intro that appears near the top of your resume."
+        title={t("rail.summary.title")}
+        subtitle={t("rail.summary.subtitle")}
       >
         <SummarySection
           resumeJson={draft.resumeJson}

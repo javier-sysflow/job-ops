@@ -3,6 +3,7 @@ import { createId } from "@paralleldrive/cuid2";
 import type { DesignResumeJson } from "@shared/types";
 import { FileImage, ImagePlus, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,6 +95,7 @@ export function PictureSection({
   onDeletePicture,
   onUpdatePicture,
 }: PictureSectionProps) {
+  const { t } = useTranslation(["resumeStudio", "common"]);
   const editDisabled = !pictureEnabled;
   const pictureUrl = toText(picture.url);
   const [previewUrl, setPreviewUrl] = useState(pictureUrl);
@@ -136,8 +138,7 @@ export function PictureSection({
       {!pictureEnabled ? (
         <Alert>
           <AlertDescription>
-            {pictureDisabledReason ??
-              "Pictures require JobOps to be reachable at a public URL."}
+            {pictureDisabledReason ?? t("picture.disabledReason")}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -148,7 +149,7 @@ export function PictureSection({
         >
           <img
             src={previewUrl}
-            alt="Resume Studio profile"
+            alt={t("picture.alt")}
             className="h-16 w-16 rounded-lg border border-border/60 object-cover"
           />
           <div className="flex flex-wrap gap-2">
@@ -159,7 +160,7 @@ export function PictureSection({
               disabled={pictureUploading || editDisabled}
             >
               <ImagePlus className="mr-2 h-4 w-4" />
-              Replace
+              {t("picture.replace")}
             </Button>
             <Button
               type="button"
@@ -169,7 +170,7 @@ export function PictureSection({
               disabled={pictureUploading}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              {t("common:actions.delete")}
             </Button>
           </div>
         </div>
@@ -182,13 +183,13 @@ export function PictureSection({
           disabled={pictureUploading || editDisabled}
         >
           <FileImage className="mr-2 h-4 w-4" />
-          {pictureUploading ? "Uploading..." : "Upload image"}
+          {pictureUploading ? t("picture.uploading") : t("picture.upload")}
         </Button>
       )}
 
       <div className="grid gap-2">
         <label className={labelClassName} htmlFor={fieldId("picture", "url")}>
-          Image URL
+          {t("picture.imageUrl")}
         </label>
         <Input
           id={fieldId("picture", "url")}
@@ -206,10 +207,10 @@ export function PictureSection({
       >
         <div>
           <div className="text-sm font-medium text-foreground">
-            Show picture
+            {t("picture.show")}
           </div>
           <div className="text-xs text-muted-foreground">
-            Turn your photo on or off.
+            {t("picture.showDescription")}
           </div>
         </div>
         <Switch
@@ -220,17 +221,19 @@ export function PictureSection({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {[
-          ["size", "Size"],
-          ["rotation", "Rotation"],
-          ["aspectRatio", "Aspect ratio"],
-          ["borderRadius", "Border radius"],
-          ["borderWidth", "Border width"],
-          ["shadowWidth", "Shadow width"],
-        ].map(([key, label]) => (
+        {(
+          [
+            ["size", "picture.size"],
+            ["rotation", "picture.rotation"],
+            ["aspectRatio", "picture.aspectRatio"],
+            ["borderRadius", "picture.borderRadius"],
+            ["borderWidth", "picture.borderWidth"],
+            ["shadowWidth", "picture.shadowWidth"],
+          ] as const
+        ).map(([key, labelKey]) => (
           <div key={key} className="grid gap-2">
             <label className={labelClassName} htmlFor={fieldId("picture", key)}>
-              {label}
+              {t(labelKey)}
             </label>
             <Input
               id={fieldId("picture", key)}
@@ -244,14 +247,16 @@ export function PictureSection({
             />
           </div>
         ))}
-        {[
-          ["borderColor", "Border color"],
-          ["shadowColor", "Shadow color"],
-        ].map(([key, label]) => (
+        {(
+          [
+            ["borderColor", "picture.borderColor"],
+            ["shadowColor", "picture.shadowColor"],
+          ] as const
+        ).map(([key, labelKey]) => (
           <ColorField
             key={key}
             id={fieldId("picture", key)}
-            label={label}
+            label={t(labelKey)}
             value={toText(picture[key])}
             disabled={editDisabled}
             onChange={(nextValue) => onUpdatePicture(key, nextValue)}
@@ -268,24 +273,44 @@ type BasicsSectionProps = {
   onUpdateBasics: (path: string, value: unknown) => void;
 };
 
+// `label` is the English field name sent to the AI assistant;
+// `labelKey` is the translated label shown in the UI.
+const BASICS_FIELDS = [
+  { path: "name", label: "Name", labelKey: "basics.name", ai: false },
+  {
+    path: "headline",
+    label: "Headline",
+    labelKey: "basics.headline",
+    ai: true,
+  },
+  { path: "email", label: "Email", labelKey: "basics.email", ai: false },
+  { path: "phone", label: "Phone", labelKey: "basics.phone", ai: false },
+  {
+    path: "location",
+    label: "Location",
+    labelKey: "basics.location",
+    ai: false,
+  },
+  {
+    path: "website.url",
+    label: "Website",
+    labelKey: "basics.website",
+    ai: false,
+  },
+] as const;
+
 export function BasicsSection({
   resumeJson,
   basics,
   onUpdateBasics,
 }: BasicsSectionProps) {
+  const { t } = useTranslation("resumeStudio");
   return (
     <div className="grid gap-3">
-      {[
-        { path: "name", label: "Name", ai: false },
-        { path: "headline", label: "Headline", ai: true },
-        { path: "email", label: "Email", ai: false },
-        { path: "phone", label: "Phone", ai: false },
-        { path: "location", label: "Location", ai: false },
-        { path: "website.url", label: "Website", ai: false },
-      ].map(({ path, label, ai }) => (
+      {BASICS_FIELDS.map(({ path, label, labelKey, ai }) => (
         <div key={path} className="grid gap-2">
           <label className={labelClassName} htmlFor={fieldId("basics", path)}>
-            {label}
+            {t(labelKey)}
           </label>
           <div className="relative">
             <Input
@@ -302,6 +327,7 @@ export function BasicsSection({
                   resumeJson={resumeJson}
                   fieldPath={`basics.${path}`}
                   label={label}
+                  displayLabel={t(labelKey)}
                   value={toText(getByPath(basics, path))}
                   valueType="plain_text"
                   section="Basics"
@@ -330,6 +356,7 @@ export function BasicsCustomFieldsSection({
   onUpdateTitle,
   onChange,
 }: BasicsCustomFieldsSectionProps) {
+  const { t } = useTranslation(["resumeStudio", "common"]);
   const moveField = (index: number, direction: -1 | 1) => {
     const target = index + direction;
     if (target < 0 || target >= customFields.length) return;
@@ -346,7 +373,7 @@ export function BasicsCustomFieldsSection({
           className={labelClassName}
           htmlFor={fieldId("custom-fields", "title")}
         >
-          Section title
+          {t("customFields.sectionTitle")}
         </label>
         <Input
           id={fieldId("custom-fields", "title")}
@@ -361,18 +388,20 @@ export function BasicsCustomFieldsSection({
           className={`${insetPanelClassName} p-3`}
         >
           <div className="grid gap-3">
-            {[
-              ["title", "Title"],
-              ["icon", "Icon"],
-              ["text", "Value"],
-              ["link", "Link"],
-            ].map(([key, label]) => (
+            {(
+              [
+                ["title", "customFields.title"],
+                ["icon", "customFields.icon"],
+                ["text", "customFields.value"],
+                ["link", "customFields.link"],
+              ] as const
+            ).map(([key, labelKey]) => (
               <div key={key} className="grid gap-2">
                 <label
                   className={labelClassName}
                   htmlFor={fieldId("custom-field", String(index), key)}
                 >
-                  {label}
+                  {t(labelKey)}
                 </label>
                 <Input
                   id={fieldId("custom-field", String(index), key)}
@@ -396,14 +425,14 @@ export function BasicsCustomFieldsSection({
               variant="ghost"
               onClick={() => moveField(index, -1)}
             >
-              Up
+              {t("customFields.up")}
             </Button>
             <Button
               type="button"
               variant="ghost"
               onClick={() => moveField(index, 1)}
             >
-              Down
+              {t("customFields.down")}
             </Button>
             <Button
               type="button"
@@ -417,7 +446,7 @@ export function BasicsCustomFieldsSection({
                 )
               }
             >
-              Remove
+              {t("common:actions.remove")}
             </Button>
           </div>
         </div>
@@ -440,7 +469,7 @@ export function BasicsCustomFieldsSection({
         }
       >
         <Plus className="mr-2 h-4 w-4" />
-        Add custom field
+        {t("customFields.add")}
       </Button>
     </div>
   );
@@ -457,6 +486,7 @@ export function SummarySection({
   summary,
   onUpdateSummary,
 }: SummarySectionProps) {
+  const { t } = useTranslation(["resumeStudio", "common"]);
   return (
     <div className="space-y-3">
       <div
@@ -464,10 +494,10 @@ export function SummarySection({
       >
         <div>
           <div className="text-sm font-medium text-foreground">
-            Show summary
+            {t("summary.show")}
           </div>
           <div className="text-xs text-muted-foreground">
-            Show or hide this section on your resume.
+            {t("summary.showDescription")}
           </div>
         </div>
         <Switch
@@ -479,12 +509,13 @@ export function SummarySection({
         <RichTextEditor
           value={toText(summary.content)}
           onChange={(next) => onUpdateSummary("content", next)}
-          placeholder="Summarize the story your resume should tell."
+          placeholder={t("summary.placeholder")}
           toolbarEnd={
             <DesignResumeFieldAssistant
               resumeJson={resumeJson}
               fieldPath="summary.content"
-              label="Summary"
+              label="Summary" // i18n-ignore: English field name for the AI
+              displayLabel={t("summary.label")}
               value={toText(summary.content)}
               valueType="html"
               section="Summary"

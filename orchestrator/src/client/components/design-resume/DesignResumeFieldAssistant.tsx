@@ -12,6 +12,7 @@ import type {
 import { Check, GripHorizontal, Sparkles, X } from "lucide-react";
 import type React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { showErrorToast } from "@/client/lib/error-toast";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,10 @@ type DragSession = {
 type DesignResumeFieldAssistantProps = {
   resumeJson: DesignResumeJson;
   fieldPath: string;
+  /** English field label; sent to the AI assistant. */
   label: string;
+  /** Field label shown in the UI. Defaults to `label`. */
+  displayLabel?: string;
   value: FieldValue;
   valueType: DesignResumeAiFieldValueType;
   section?: string | null;
@@ -206,6 +210,7 @@ export const DesignResumeFieldAssistant: React.FC<
   resumeJson,
   fieldPath,
   label,
+  displayLabel,
   value,
   valueType,
   section = null,
@@ -213,6 +218,8 @@ export const DesignResumeFieldAssistant: React.FC<
   triggerClassName,
   onApply,
 }) => {
+  const { t } = useTranslation(["resumeStudio", "common"]);
+  const uiLabel = displayLabel ?? label;
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<FieldAssistantMessage[]>([]);
   const [pendingSuggestion, setPendingSuggestion] =
@@ -302,7 +309,7 @@ export const DesignResumeFieldAssistant: React.FC<
           was_empty: wasEmptyAtStart,
           prompt_length_bucket: promptLengthBucket,
         });
-        toast.success(`${label} filled with AI draft.`);
+        toast.success(t("assistant.filled", { label: uiLabel }));
         return;
       }
 
@@ -316,7 +323,7 @@ export const DesignResumeFieldAssistant: React.FC<
         was_empty: wasEmptyAtStart,
         prompt_length_bucket: promptLengthBucket,
       });
-      showErrorToast(error, "AI field edit failed");
+      showErrorToast(error, t("assistant.failed"));
     } finally {
       abortRef.current = null;
       setIsGenerating(false);
@@ -333,7 +340,7 @@ export const DesignResumeFieldAssistant: React.FC<
       was_empty: isEmptyValue(currentValueRef.current),
       prompt_length_bucket: lastPromptLengthBucketRef.current,
     });
-    toast.success(`${label} updated.`);
+    toast.success(t("assistant.updated", { label: uiLabel }));
   };
 
   const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -408,8 +415,8 @@ export const DesignResumeFieldAssistant: React.FC<
             "h-7 w-7 text-muted-foreground transition-transform duration-150 hover:-translate-y-0.5 hover:text-foreground data-[state=open]:-translate-y-0.5 data-[state=open]:bg-primary/15 data-[state=open]:text-primary",
             triggerClassName,
           )}
-          aria-label={`Open AI assistant for ${label}`}
-          title={`Improve ${label} with AI`}
+          aria-label={t("assistant.open", { label: uiLabel })}
+          title={t("assistant.improve", { label: uiLabel })}
         >
           <Sparkles className="h-3.5 w-3.5" />
         </Button>
@@ -435,7 +442,7 @@ export const DesignResumeFieldAssistant: React.FC<
               isDragging && "cursor-grabbing bg-muted/30",
             )}
             data-testid="design-resume-ai-assistant-drag-handle"
-            title="Drag AI assistant"
+            title={t("assistant.drag")}
             onPointerDown={startDrag}
             onPointerMove={drag}
             onPointerUp={stopDrag}
@@ -447,10 +454,10 @@ export const DesignResumeFieldAssistant: React.FC<
             />
             <div className="min-w-0">
               <div className="truncate text-xs font-semibold text-foreground">
-                Ghostwriter: {label}
+                {t("assistant.heading", { label: uiLabel })}
               </div>
               <div className="truncate text-[11px] text-muted-foreground">
-                Draft a focused replacement for this field.
+                {t("assistant.subheading")}
               </div>
             </div>
           </div>
@@ -460,8 +467,8 @@ export const DesignResumeFieldAssistant: React.FC<
             size="icon"
             className="h-7 w-7"
             onClick={closeSession}
-            aria-label="Close AI assistant"
-            title="Close"
+            aria-label={t("assistant.close")}
+            title={t("common:actions.close")}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -496,7 +503,7 @@ export const DesignResumeFieldAssistant: React.FC<
                         onClick={() => applySuggestion(pendingSuggestion)}
                       >
                         <Check className="mr-2 h-3.5 w-3.5" />
-                        Apply
+                        {t("common:actions.apply")}
                       </Button>
                     ) : null}
                   </div>
@@ -509,7 +516,7 @@ export const DesignResumeFieldAssistant: React.FC<
         <AiAssistComposer
           disabled={isGenerating}
           isStreaming={isGenerating}
-          placeholder="Ask for a concise rewrite, stronger bullets, or clearer keywords..."
+          placeholder={t("assistant.placeholder")}
           onStop={async () => {
             abortRef.current?.abort();
             abortRef.current = null;
