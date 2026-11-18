@@ -398,6 +398,7 @@ const settings: typeof en = {
       standard: "標準",
       japanese: "日本の選考フロー",
     },
+    stageStyleSaveFailed: "選考ステップの表示を変更できませんでした。",
   },
   environment: {
     title: "環境とワークスペース",

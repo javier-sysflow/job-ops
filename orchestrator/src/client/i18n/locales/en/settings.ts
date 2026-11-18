@@ -392,6 +392,7 @@ const settings = {
       standard: "Standard",
       japanese: "Japanese hiring process",
     },
+    stageStyleSaveFailed: "Could not change the stage names.",
   },
   environment: {
     title: "Environment & Workspaces",

@@ -3,6 +3,7 @@ import {
   LogEventModal,
 } from "@client/components/LogEventModal";
 import { PageHeader, PageMain } from "@client/components/layout";
+import { StageStyleSelect } from "@client/components/StageStyleSelect";
 import { stageLabel } from "@client/i18n/labels";
 import {
   APPLICATION_STAGES,
@@ -298,6 +299,7 @@ export const InProgressBoardPage: React.FC = () => {
         subtitle={t("page.subtitle")}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <StageStyleSelect />
             <Select
               value={sortMode}
               onValueChange={(value) =>

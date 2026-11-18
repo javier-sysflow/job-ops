@@ -62,6 +62,10 @@ vi.mock("../api", () => ({
   getAuthScopedStorageKey: (key: string) => key,
 }));
 
+vi.mock("@client/components/StageStyleSelect", () => ({
+  StageStyleSelect: () => null,
+}));
+
 vi.mock("@/client/lib/celebrate", () => ({
   celebrateOffer: vi.fn(),
 }));
