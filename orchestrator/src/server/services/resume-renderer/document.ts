@@ -87,6 +87,22 @@ const LATEX_RESUME_SECTION_TITLES: Record<
     volunteer: "Voluntariado",
     references: "Referencias",
   },
+  japanese: {
+    profiles: "プロフィール",
+    summary: "職務要約",
+    customFields: "その他",
+    experience: "職務経歴",
+    education: "学歴",
+    projects: "プロジェクト",
+    skills: "スキル",
+    languages: "語学",
+    interests: "趣味・関心",
+    awards: "受賞歴",
+    certifications: "資格",
+    publications: "著作・発表",
+    volunteer: "ボランティア",
+    references: "推薦者",
+  },
 };
 
 const ORDERABLE_SECTION_KEYS = [

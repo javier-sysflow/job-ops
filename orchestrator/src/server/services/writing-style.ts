@@ -32,7 +32,7 @@ const KEYWORD_LIMIT_PATTERNS = [
   /\b\d+\s*keywords?\s*(?:max(?:imum)?|limit|per (?:category|skill|section)|or (?:less|fewer))\b[.,;!?]?/gi,
 ];
 
-const LANGUAGE_NAMES_PATTERN = "english|german|french|spanish";
+const LANGUAGE_NAMES_PATTERN = "english|german|french|spanish|japanese";
 
 const LANGUAGE_DIRECTIVE_PATTERNS = [
   new RegExp(

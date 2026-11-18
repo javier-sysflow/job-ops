@@ -57,6 +57,9 @@ const LANGUAGE_MARKERS: Record<ChatStyleManualLanguage, Set<string>> = {
     "responsable",
     "lideré",
   ]),
+  // Japanese is detected by script (see detectJapaneseScript), not by
+  // whitespace-separated stopwords, so it has no markers here.
+  japanese: new Set(),
 };
 
 const SPECIAL_CHARACTER_PATTERNS: Partial<
@@ -196,11 +199,34 @@ function scoreLanguageSample(
   return score;
 }
 
+const KANA_PATTERN = /[\p{Script=Hiragana}\p{Script=Katakana}]/gu;
+const HAN_PATTERN = /\p{Script=Han}/gu;
+const LETTER_PATTERN = /\p{L}/gu;
+
+/**
+ * Japanese text has no spaces between words, so stopword scoring cannot see
+ * it. Kana is unique to Japanese (Chinese uses Han only), so require some
+ * kana and a meaningful share of Japanese script among all letters. Mixed
+ * job ads (Japanese prose with English tech terms) still pass.
+ */
+function detectJapaneseScript(sample: string): boolean {
+  const kana = sample.match(KANA_PATTERN)?.length ?? 0;
+  if (kana < 5) return false;
+  const han = sample.match(HAN_PATTERN)?.length ?? 0;
+  const letters = sample.match(LETTER_PATTERN)?.length ?? 0;
+  if (letters === 0) return false;
+  return (kana + han) / letters >= 0.2;
+}
+
 function detectLanguageFromSample(
   sample: string,
 ): ChatStyleManualLanguage | null {
   if (!sample.trim()) {
     return null;
+  }
+
+  if (detectJapaneseScript(sample)) {
+    return "japanese";
   }
 
   const scoredLanguages = (

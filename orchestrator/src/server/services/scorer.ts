@@ -16,9 +16,14 @@ import { isConfigurationFailure } from "./llm/policies/configuration-error";
 import type { JsonSchemaDefinition } from "./llm/types";
 import { stripMarkdownCodeFences } from "./llm/utils/json";
 import { createConfiguredLlmService, resolveLlmModel } from "./modelSelection";
+import {
+  getWritingLanguageLabel,
+  resolveWritingOutputLanguage,
+} from "./output-language";
 import { renderPromptTemplate } from "./prompt-templates";
 import { filterProfileProjectsForAi } from "./resumeProjects";
 import { getEffectiveSettings } from "./settings";
+import { getWritingStyle } from "./writing-style";
 
 export class LlmNotConfiguredError extends Error {
   constructor(message?: string) {
@@ -49,6 +54,7 @@ interface SuitabilityResult {
 type ScoringPreferences = {
   instructions: string;
   promptTemplate: string;
+  outputLanguage?: string;
 };
 
 type ProfileRecord = Record<string, unknown>;
@@ -278,17 +284,30 @@ export async function scoreJobSuitability(
     }));
   }
 
-  const [model, settings, aiProfile] = await Promise.all([
+  const [model, settings, aiProfile, writingStyle] = await Promise.all([
     resolveLlmModel("scoring"),
     getEffectiveSettings(),
     filterProfileProjectsForAi(profile),
+    getWritingStyle(),
   ]);
+  // Score reasons and job briefs follow the same output-language setting as
+  // tailoring (e.g. Japanese for a Japanese job ad in match-job-description).
+  const outputLanguage = getWritingLanguageLabel(
+    resolveWritingOutputLanguage({
+      style: writingStyle,
+      profile: profile as Parameters<
+        typeof resolveWritingOutputLanguage
+      >[0]["profile"],
+      jobDescription: stripHtmlTags(job.jobDescription ?? ""),
+    }).language,
+  );
   const scoringInstructions = Object.hasOwn(options, "scoringInstructions")
     ? (options.scoringInstructions ?? "")
     : (settings.scoringInstructions?.value ?? "");
 
   const prompt = buildScoringPrompt(job, sanitizeProfileForPrompt(aiProfile), {
     instructions: scoringInstructions,
+    outputLanguage,
     promptTemplate:
       settings.scoringPromptTemplate?.value ??
       getDefaultPromptTemplate("scoringPromptTemplate"),
@@ -508,7 +527,12 @@ function buildScoringPrompt(
     scoringInstructionsText: preferences.instructions
       ? preferences.instructions
       : "No additional custom scoring instructions.",
-  })}\n\nJOB DATA (JSON):\n${jobJson}\n\n${SCORING_OUTPUT_INSTRUCTIONS}`;
+  })}\n\nJOB DATA (JSON):\n${jobJson}\n\n${SCORING_OUTPUT_INSTRUCTIONS}${buildOutputLanguageInstruction(preferences.outputLanguage)}`;
+}
+
+function buildOutputLanguageInstruction(outputLanguage?: string): string {
+  if (!outputLanguage || outputLanguage === "English") return "";
+  return `\n\nOUTPUT LANGUAGE: Write "reason" and every jobBrief string in ${outputLanguage}. Keep JSON keys and enum values exactly as specified, keep jobPatches values in their stated types, and quote evidence excerpts verbatim from the listing.`;
 }
 
 function sanitizeProfileForPrompt(

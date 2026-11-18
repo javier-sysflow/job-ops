@@ -134,6 +134,9 @@ const LANGUAGE_TRANSLITERATION_MAPS: Record<
     ú: "u",
     ü: "u",
   },
+  // Japanese characters are kept verbatim (see transliterate); Latin text in
+  // a Japanese document falls back to the English map.
+  japanese: {},
 };
 
 function transliterate(
@@ -145,15 +148,22 @@ function transliterate(
     : LANGUAGE_TRANSLITERATION_MAPS.english;
 
   return Array.from(value, (char) => {
+    // Keep Japanese characters as-is: NFKD + mark stripping would turn
+    // が into か, and there is no meaningful ASCII transliteration.
+    if (JAPANESE_SCRIPT_CHAR.test(char)) return char;
     const mapped =
       languageMap[char] ?? LANGUAGE_TRANSLITERATION_MAPS.english[char];
     return mapped ?? char.normalize("NFKD").replace(/\p{Mark}/gu, "");
   }).join("");
 }
 
+// Hiragana, Katakana, Kanji and the long-vowel mark (ー).
+const JAPANESE_SCRIPT_CHAR =
+  /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー]/u;
+
 function sanitizeFilenamePart(value: string, options: FilenameOptions = {}) {
   const cleaned = transliterate(value, options.language).replace(
-    /[^a-z0-9]/gi,
+    /[^a-z0-9\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー]/giu,
     "_",
   );
   return cleaned.replace(/_/g, "") === "" ? "" : cleaned;

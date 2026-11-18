@@ -96,6 +96,7 @@ export const CHAT_STYLE_MANUAL_LANGUAGE_VALUES = [
   "german",
   "french",
   "spanish",
+  "japanese",
 ] as const;
 
 export type ChatStyleManualLanguage =
@@ -109,6 +110,7 @@ export const CHAT_STYLE_MANUAL_LANGUAGE_LABELS: Record<
   german: "German",
   french: "French",
   spanish: "Spanish",
+  japanese: "Japanese",
 };
 
 export interface ResumeProfile {

@@ -250,3 +250,42 @@ describe("resolveWritingOutputLanguage", () => {
     });
   });
 });
+
+describe("Japanese detection", () => {
+  it("detects a Japanese job description, including mixed English terms", () => {
+    expect(
+      detectJobDescriptionLanguage(
+        "【募集職種】バックエンドエンジニア（Go / TypeScript）\n当社のSaaSプロダクトの開発をお任せします。AWSでの開発経験がある方を歓迎します。",
+      ),
+    ).toBe("japanese");
+  });
+
+  it("does not treat an English ad with a few Japanese words as Japanese", () => {
+    expect(
+      detectJobDescriptionLanguage(
+        "We are hiring a backend engineer in Tokyo (東京). You will build and maintain services with the team, using Go and TypeScript, and help deliver new features for our customers across the region.",
+      ),
+    ).toBe("english");
+  });
+
+  it("does not treat Chinese text (no kana) as Japanese", () => {
+    expect(
+      detectJobDescriptionLanguage(
+        "我们正在招聘后端工程师，负责开发和维护服务。",
+      ),
+    ).not.toBe("japanese");
+  });
+
+  it("matches a Japanese job description in match-job-description mode", () => {
+    const result = resolveWritingOutputLanguage({
+      style: {
+        languageMode: "match-job-description",
+        manualLanguage: "english",
+      },
+      profile: {},
+      jobDescription:
+        "フロントエンドエンジニアを募集しています。React と TypeScript の実務経験が必要です。",
+    });
+    expect(result).toEqual({ language: "japanese", source: "detected" });
+  });
+});

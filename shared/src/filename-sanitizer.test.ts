@@ -25,7 +25,18 @@ describe("safeFilenamePart", () => {
   it("falls back to Unknown for unsupported or punctuation-only input", () => {
     expect(safeFilenamePart("")).toBe("Unknown");
     expect(safeFilenamePart("!!!")).toBe("Unknown");
-    expect(safeFilenamePart("東京")).toBe("Unknown");
+    expect(safeFilenamePart("Привет")).toBe("Unknown");
+  });
+
+  it("keeps Japanese characters, including voiced kana", () => {
+    expect(safeFilenamePart("東京")).toBe("東京");
+    expect(safeFilenamePart("山田 花子", { language: "japanese" })).toBe(
+      "山田_花子",
+    );
+    // NFKD would otherwise split が into か + a combining mark and drop it.
+    expect(safeFilenamePart("株式会社ガイア・エンジニア")).toBe(
+      "株式会社ガイア_エンジニア",
+    );
   });
 });
 
