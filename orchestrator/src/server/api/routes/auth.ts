@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import {
   badRequest,
   conflict,
@@ -25,6 +26,21 @@ const setupSchema = loginSchema.extend({
   password: z.string().min(8).max(500),
   displayName: z.string().trim().min(1).max(120).optional(),
 });
+
+const signupSchema = setupSchema.extend({
+  username: z.string().trim().min(1).max(120),
+  inviteCode: z.string().max(500).optional(),
+});
+
+/** Constant-time comparison, so response timing can't leak the code. */
+function inviteCodeMatches(
+  expected: string,
+  provided: string | undefined,
+): boolean {
+  if (!provided) return false;
+  const digest = (value: string) => createHash("sha256").update(value).digest();
+  return timingSafeEqual(digest(expected), digest(provided.trim()));
+}
 
 function isUsernameConflictError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -67,20 +83,31 @@ authRouter.post(
     }
 
     const appConfig = getJobOpsAppConfig();
-    if (appConfig.appMode !== "hosted") {
-      fail(res, forbidden("Signup is available only in hosted mode"));
-      return;
-    }
-    if (!appConfig.capabilities.hostedSignups) {
-      fail(res, forbidden("Hosted signups are disabled"));
-      return;
-    }
-    if (!appConfig.hostedTenantId) {
-      fail(res, serviceUnavailable("Hosted tenant is not configured"));
-      return;
+    const hostedTenantId =
+      appConfig.appMode === "hosted" ? appConfig.hostedTenantId : null;
+    if (appConfig.appMode === "hosted") {
+      if (!appConfig.capabilities.hostedSignups) {
+        fail(res, forbidden("Hosted signups are disabled"));
+        return;
+      }
+      if (!hostedTenantId) {
+        fail(res, serviceUnavailable("Hosted tenant is not configured"));
+        return;
+      }
+    } else {
+      if (!appConfig.capabilities.localSignups) {
+        fail(res, forbidden("Account signup is disabled on this instance"));
+        return;
+      }
+      // The first account is the instance admin and must come through the
+      // setup wizard, not whoever finds the signup form first.
+      if ((await usersRepo.countUsers()) === 0) {
+        fail(res, badRequest("Initial setup is required before sign-in"));
+        return;
+      }
     }
 
-    const parsed = setupSchema.safeParse(req.body);
+    const parsed = signupSchema.safeParse(req.body);
     if (!parsed.success) {
       fail(
         res,
@@ -92,14 +119,31 @@ authRouter.post(
       return;
     }
 
+    if (
+      appConfig.signupInviteCode &&
+      !inviteCodeMatches(appConfig.signupInviteCode, parsed.data.inviteCode)
+    ) {
+      fail(res, forbidden("Invalid invite code"));
+      return;
+    }
+
+    const displayName = parsed.data.displayName ?? parsed.data.username;
     let user: usersRepo.PublicUser | null;
     try {
-      user = await usersRepo.createHostedTenantUser({
-        username: parsed.data.username,
-        password: parsed.data.password,
-        displayName: parsed.data.displayName ?? parsed.data.username,
-        tenantId: appConfig.hostedTenantId,
-      });
+      user = hostedTenantId
+        ? await usersRepo.createHostedTenantUser({
+            username: parsed.data.username,
+            password: parsed.data.password,
+            displayName,
+            tenantId: hostedTenantId,
+          })
+        : // Same private workspace an admin gets from Settings > Users.
+          await usersRepo.createPrivateWorkspaceUser({
+            username: parsed.data.username,
+            password: parsed.data.password,
+            displayName,
+            isSystemAdmin: false,
+          });
     } catch (error) {
       if (isUsernameConflictError(error)) {
         fail(res, conflict("Username already exists"));

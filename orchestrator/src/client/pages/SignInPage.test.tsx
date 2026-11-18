@@ -10,6 +10,8 @@ vi.mock("@client/api", () => ({
     appMode: "local",
     capabilities: {
       hostedSignups: false,
+      localSignups: false,
+      signupInviteCodeRequired: false,
       platformLlm: false,
       quotas: false,
       userEditableLlmSettings: true,
@@ -53,6 +55,8 @@ const localAppStatus = {
   appMode: "local" as const,
   capabilities: {
     hostedSignups: false,
+    localSignups: false,
+    signupInviteCodeRequired: false,
     platformLlm: false,
     quotas: false,
     userEditableLlmSettings: true,
@@ -64,6 +68,8 @@ const hostedSignupAppStatus = {
   appMode: "hosted" as const,
   capabilities: {
     hostedSignups: true,
+    localSignups: false,
+    signupInviteCodeRequired: false,
     platformLlm: false,
     quotas: false,
     userEditableLlmSettings: true,
@@ -76,6 +82,8 @@ const hostedSignupDisabledAppStatus = {
   capabilities: {
     ...hostedSignupAppStatus.capabilities,
     hostedSignups: false,
+    localSignups: false,
+    signupInviteCodeRequired: false,
   },
 };
 
@@ -277,6 +285,73 @@ describe("SignInPage", () => {
     expect(localStorage.getItem("jobops.rememberedAuthUsers")).toContain(
       "new-user",
     );
+  });
+
+  it("offers private-workspace signup in local mode and sends the invite code", async () => {
+    vi.mocked(getAppStatus).mockResolvedValueOnce({
+      ...localAppStatus,
+      capabilities: {
+        ...localAppStatus.capabilities,
+        localSignups: true,
+        signupInviteCodeRequired: true,
+      },
+    });
+    vi.mocked(signupWithCredentials).mockResolvedValueOnce({
+      id: "user-3",
+      username: "hanako",
+      displayName: "Hanako",
+      isSystemAdmin: false,
+      isDisabled: false,
+      hasPassword: true,
+      workspaceId: "tenant-hanako",
+      workspaceName: "Hanako",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    renderSignInPage(
+      ["/sign-in?next=%2Fonboarding"],
+      <Route path="/onboarding" element={<div>onboarding-page</div>} />,
+    );
+
+    const signupTab = await screen.findByRole("tab", {
+      name: "Create account",
+    });
+    // The invite field only appears on the signup tab.
+    expect(screen.queryByLabelText("Invite code")).toBeNull();
+    fireEvent.pointerDown(signupTab);
+    fireEvent.click(signupTab);
+    expect(await screen.findByText(/stay private to you/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Hanako" },
+    });
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "hanako" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "super-secret" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+    expect(
+      await screen.findByText("Enter the invite code you were given."),
+    ).toBeInTheDocument();
+    expect(signupWithCredentials).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("Invite code"), {
+      target: { value: " sakura-2026 " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    await waitFor(() => {
+      expect(signupWithCredentials).toHaveBeenCalledWith({
+        username: "hanako",
+        password: "super-secret",
+        displayName: "Hanako",
+        inviteCode: "sakura-2026",
+      });
+      expect(screen.getByText("onboarding-page")).toBeInTheDocument();
+    });
   });
 
   it("hides the single sign-on divider when no provider is configured", async () => {

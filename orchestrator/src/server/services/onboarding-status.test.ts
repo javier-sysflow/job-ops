@@ -104,6 +104,8 @@ describe("onboarding status engine", () => {
       appMode: "local",
       capabilities: {
         hostedSignups: false,
+        localSignups: false,
+        signupInviteCodeRequired: false,
         platformLlm: false,
         quotas: false,
         userEditableLlmSettings: true,
@@ -386,6 +388,8 @@ describe("onboarding status engine", () => {
       appMode: "hosted",
       capabilities: {
         hostedSignups: true,
+        localSignups: false,
+        signupInviteCodeRequired: false,
         platformLlm: true,
         quotas: true,
         userEditableLlmSettings: false,

@@ -8,6 +8,8 @@ const APP_MODE_ENV_KEY = "JOBOPS_APP_MODE";
 const LEGACY_APP_MODE_ENV_KEY = "JOBOPS_MODE";
 const HOSTED_TENANT_ID_ENV_KEY = "JOBOPS_HOSTED_TENANT_ID";
 const HOSTED_SIGNUPS_ENV_KEY = "JOBOPS_HOSTED_SIGNUPS_ENABLED";
+const LOCAL_SIGNUPS_ENV_KEY = "JOBOPS_LOCAL_SIGNUPS_ENABLED";
+const SIGNUP_INVITE_CODE_ENV_KEY = "JOBOPS_SIGNUP_INVITE_CODE";
 const HOSTED_PLATFORM_LLM_ENV_KEY = "JOBOPS_HOSTED_PLATFORM_LLM_ENABLED";
 const HOSTED_QUOTAS_ENV_KEY = "JOBOPS_HOSTED_QUOTAS_ENABLED";
 
@@ -18,6 +20,8 @@ type EnvSource = Pick<NodeJS.ProcessEnv, string>;
 
 export type JobOpsAppConfig = JobOpsAppStatusResponse & {
   hostedTenantId: string | null;
+  /** Never sent to the client; only `signupInviteCodeRequired` is. */
+  signupInviteCode: string | null;
 };
 
 function readTrimmedEnv(env: EnvSource, key: string): string {
@@ -48,14 +52,21 @@ function parseBooleanFlag(env: EnvSource, key: string): boolean {
 function buildCapabilities(args: {
   appMode: JobOpsAppMode;
   hostedSignupsEnabled: boolean;
+  localSignupsEnabled: boolean;
+  signupInviteCodeConfigured: boolean;
   hostedPlatformLlmEnabled: boolean;
   hostedQuotasEnabled: boolean;
 }): JobOpsAppCapabilities {
   const hostedMode = args.appMode === "hosted";
   const platformLlm = hostedMode && args.hostedPlatformLlmEnabled;
+  const hostedSignups = hostedMode && args.hostedSignupsEnabled;
+  const localSignups = !hostedMode && args.localSignupsEnabled;
 
   return {
-    hostedSignups: hostedMode && args.hostedSignupsEnabled,
+    hostedSignups,
+    localSignups,
+    signupInviteCodeRequired:
+      (hostedSignups || localSignups) && args.signupInviteCodeConfigured,
     platformLlm,
     quotas: hostedMode && args.hostedQuotasEnabled,
     userEditableLlmSettings: !platformLlm,
@@ -74,9 +85,14 @@ export function getJobOpsAppConfig(
     );
   }
 
+  const signupInviteCode =
+    readTrimmedEnv(env, SIGNUP_INVITE_CODE_ENV_KEY) || null;
+
   const capabilities = buildCapabilities({
     appMode,
     hostedSignupsEnabled: parseBooleanFlag(env, HOSTED_SIGNUPS_ENV_KEY),
+    localSignupsEnabled: parseBooleanFlag(env, LOCAL_SIGNUPS_ENV_KEY),
+    signupInviteCodeConfigured: signupInviteCode !== null,
     hostedPlatformLlmEnabled: parseBooleanFlag(
       env,
       HOSTED_PLATFORM_LLM_ENV_KEY,
@@ -89,6 +105,7 @@ export function getJobOpsAppConfig(
     capabilities,
     hostedTenantConfigured: appMode === "hosted" && Boolean(hostedTenantId),
     hostedTenantId: appMode === "hosted" ? hostedTenantId : null,
+    signupInviteCode,
   };
 }
 

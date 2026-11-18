@@ -7,6 +7,8 @@ describe("hosted app-mode config", () => {
       appMode: "local",
       capabilities: {
         hostedSignups: false,
+        localSignups: false,
+        signupInviteCodeRequired: false,
         platformLlm: false,
         quotas: false,
         userEditableLlmSettings: true,
@@ -61,6 +63,8 @@ describe("hosted app-mode config", () => {
       appMode: "local",
       capabilities: {
         hostedSignups: false,
+        localSignups: false,
+        signupInviteCodeRequired: false,
         platformLlm: false,
         quotas: false,
         userEditableLlmSettings: true,
@@ -79,11 +83,69 @@ describe("hosted app-mode config", () => {
       appMode: "hosted",
       capabilities: {
         hostedSignups: true,
+        localSignups: false,
+        signupInviteCodeRequired: false,
         platformLlm: true,
         quotas: true,
         userEditableLlmSettings: false,
       },
       hostedTenantConfigured: true,
     });
+  });
+
+  it("enables local signups only in local mode", () => {
+    expect(
+      getJobOpsAppStatus({ JOBOPS_LOCAL_SIGNUPS_ENABLED: "true" }).capabilities,
+    ).toMatchObject({
+      hostedSignups: false,
+      localSignups: true,
+      signupInviteCodeRequired: false,
+    });
+
+    expect(
+      getJobOpsAppStatus({
+        JOBOPS_APP_MODE: "hosted",
+        JOBOPS_HOSTED_TENANT_ID: "tenant_hosted",
+        JOBOPS_LOCAL_SIGNUPS_ENABLED: "true",
+      }).capabilities,
+    ).toMatchObject({ hostedSignups: false, localSignups: false });
+  });
+
+  it("rejects an invalid local signups flag", () => {
+    expect(() =>
+      getJobOpsAppConfig({ JOBOPS_LOCAL_SIGNUPS_ENABLED: "maybe" }),
+    ).toThrow("JOBOPS_LOCAL_SIGNUPS_ENABLED must be a boolean flag");
+  });
+
+  it("requires the invite code only while some signup path is open", () => {
+    const closed = getJobOpsAppConfig({
+      JOBOPS_SIGNUP_INVITE_CODE: "  open-sesame  ",
+    });
+    expect(closed.capabilities.signupInviteCodeRequired).toBe(false);
+    expect(closed.signupInviteCode).toBe("open-sesame");
+
+    expect(
+      getJobOpsAppStatus({
+        JOBOPS_LOCAL_SIGNUPS_ENABLED: "true",
+        JOBOPS_SIGNUP_INVITE_CODE: "open-sesame",
+      }).capabilities.signupInviteCodeRequired,
+    ).toBe(true);
+
+    expect(
+      getJobOpsAppStatus({
+        JOBOPS_APP_MODE: "hosted",
+        JOBOPS_HOSTED_TENANT_ID: "tenant_hosted",
+        JOBOPS_HOSTED_SIGNUPS_ENABLED: "true",
+        JOBOPS_SIGNUP_INVITE_CODE: "open-sesame",
+      }).capabilities.signupInviteCodeRequired,
+    ).toBe(true);
+  });
+
+  it("never exposes the invite code in the public status", () => {
+    const status = getJobOpsAppStatus({
+      JOBOPS_LOCAL_SIGNUPS_ENABLED: "true",
+      JOBOPS_SIGNUP_INVITE_CODE: "open-sesame",
+    });
+    expect(JSON.stringify(status)).not.toContain("open-sesame");
   });
 });

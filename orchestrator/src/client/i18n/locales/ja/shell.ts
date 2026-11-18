@@ -42,6 +42,11 @@ const shell: typeof en = {
     signInDescription: "JobOps のユーザー名とパスワードを入力してください。",
     signupDescription:
       "このホスト型ワークスペースで使う JobOps アカウントを作成します。",
+    signupDescriptionLocal:
+      "自分専用の JobOps アカウントを作成します。求人・履歴書・設定は他のユーザーには表示されません。",
+    inviteCodeLabel: "招待コード",
+    inviteCodePlaceholder: "招待してくれた人から受け取ったコード",
+    missingInviteCode: "受け取った招待コードを入力してください。",
     rememberedUsers: "このブラウザに保存済み",
     nameLabel: "名前",
     namePlaceholder: "お名前",

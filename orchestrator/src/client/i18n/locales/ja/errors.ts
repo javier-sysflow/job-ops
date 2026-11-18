@@ -63,7 +63,9 @@ const errors: typeof en = {
     requestTimedOut: "リクエストがタイムアウトしました。",
     invalidRequestBody: "リクエストの内容が正しくありません。",
     usernameExists: "このユーザー名は既に使われています。",
-    signupHostedOnly: "アカウントの作成はホスト版でのみ利用できます。",
+    signupDisabledLocal:
+      "このサーバーではアカウントの作成が無効になっています。",
+    invalidInviteCode: "招待コードが正しくありません。",
     signupsDisabled: "新しいアカウントの作成は無効になっています。",
     setupRequired: "サインインする前に初期設定が必要です。",
     setupCompleted: "初期設定は既に完了しています。",

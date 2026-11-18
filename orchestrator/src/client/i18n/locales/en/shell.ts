@@ -38,6 +38,11 @@ const shell = {
     createAccount: "Create account",
     signInDescription: "Enter your JobOps username and password.",
     signupDescription: "Create your JobOps account for this hosted workspace.",
+    signupDescriptionLocal:
+      "Create your own JobOps account. Your jobs, CV and settings stay private to you.",
+    inviteCodeLabel: "Invite code",
+    inviteCodePlaceholder: "Code from the person who invited you",
+    missingInviteCode: "Enter the invite code you were given.",
     rememberedUsers: "Remembered on this browser",
     nameLabel: "Name",
     namePlaceholder: "Your name",

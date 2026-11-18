@@ -210,6 +210,8 @@ describe("OnboardingPage", () => {
       appMode: "local",
       capabilities: {
         hostedSignups: false,
+        localSignups: false,
+        signupInviteCodeRequired: false,
         platformLlm: false,
         quotas: false,
         userEditableLlmSettings: true,

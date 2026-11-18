@@ -35,6 +35,8 @@ describe.sequential("App status routes", () => {
           appMode: "local",
           capabilities: {
             hostedSignups: false,
+            localSignups: false,
+            signupInviteCodeRequired: false,
             platformLlm: false,
             quotas: false,
             userEditableLlmSettings: true,
@@ -75,6 +77,8 @@ describe.sequential("App status routes", () => {
           appMode: "hosted",
           capabilities: {
             hostedSignups: true,
+            localSignups: false,
+            signupInviteCodeRequired: false,
             platformLlm: true,
             quotas: true,
             userEditableLlmSettings: false,

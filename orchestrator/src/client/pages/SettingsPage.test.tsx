@@ -111,6 +111,8 @@ const localAppStatus = {
   appMode: "local" as const,
   capabilities: {
     hostedSignups: false,
+    localSignups: false,
+    signupInviteCodeRequired: false,
     platformLlm: false,
     quotas: false,
     userEditableLlmSettings: true,
@@ -122,6 +124,8 @@ const hostedPlatformLlmStatus = {
   appMode: "hosted" as const,
   capabilities: {
     hostedSignups: true,
+    localSignups: false,
+    signupInviteCodeRequired: false,
     platformLlm: true,
     quotas: true,
     userEditableLlmSettings: false,

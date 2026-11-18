@@ -95,6 +95,7 @@ export async function signupWithCredentials(input: {
   username: string;
   password: string;
   displayName?: string;
+  inviteCode?: string;
 }): Promise<AuthUser> {
   const res = await fetch("/api/auth/signup", {
     method: "POST",

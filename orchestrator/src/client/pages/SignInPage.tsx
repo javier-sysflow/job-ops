@@ -47,7 +47,9 @@ export function SignInPage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
-  const [hostedSignupEnabled, setHostedSignupEnabled] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [signupMode, setSignupMode] = useState<"hosted" | "local" | null>(null);
+  const [inviteCodeRequired, setInviteCodeRequired] = useState(false);
   const [isBusy, setIsBusy] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [rememberedUsers, setRememberedUsers] = useState(() =>
@@ -81,10 +83,15 @@ export function SignInPage() {
       try {
         const appStatus = await getAppStatus();
         if (cancelled) return;
-        const canSignup =
-          appStatus.appMode === "hosted" &&
-          appStatus.capabilities.hostedSignups;
-        setHostedSignupEnabled(canSignup);
+        const { capabilities } = appStatus;
+        setSignupMode(
+          appStatus.appMode === "hosted" && capabilities.hostedSignups
+            ? "hosted"
+            : capabilities.localSignups
+              ? "local"
+              : null,
+        );
+        setInviteCodeRequired(capabilities.signupInviteCodeRequired);
 
         const bootstrap = await getAuthBootstrapStatus();
         if (cancelled) return;
@@ -128,6 +135,10 @@ export function SignInPage() {
       setErrorMessage(t("signIn.passwordTooShort"));
       return;
     }
+    if (authMode === "signup" && inviteCodeRequired && !inviteCode.trim()) {
+      setErrorMessage(t("signIn.missingInviteCode"));
+      return;
+    }
 
     setIsBusy(true);
     setErrorMessage(null);
@@ -138,6 +149,7 @@ export function SignInPage() {
           username: normalizedUsername,
           password,
           displayName: displayName.trim() || normalizedUsername,
+          ...(inviteCodeRequired ? { inviteCode: inviteCode.trim() } : {}),
         });
         setRememberedUsers(
           rememberAuthUser({
@@ -195,7 +207,9 @@ export function SignInPage() {
     authMode === "signup" ? t("signIn.createAccount") : t("signIn.signIn");
   const description =
     authMode === "signup"
-      ? t("signIn.signupDescription")
+      ? signupMode === "local"
+        ? t("signIn.signupDescriptionLocal")
+        : t("signIn.signupDescription")
       : t("signIn.signInDescription");
 
   return (
@@ -215,7 +229,7 @@ export function SignInPage() {
             <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent>
-            {hostedSignupEnabled ? (
+            {signupMode ? (
               <Tabs
                 value={authMode}
                 onValueChange={(value) => resetFormFeedback(value as AuthMode)}
@@ -319,6 +333,26 @@ export function SignInPage() {
                   disabled={isBusy}
                 />
               </div>
+              {authMode === "signup" && inviteCodeRequired ? (
+                <div className="space-y-2">
+                  <label
+                    className="text-sm font-medium"
+                    htmlFor="auth-invite-code"
+                  >
+                    {t("signIn.inviteCodeLabel")}
+                  </label>
+                  <Input
+                    id="auth-invite-code"
+                    autoComplete="off"
+                    value={inviteCode}
+                    onChange={(event) =>
+                      setInviteCode(event.currentTarget.value)
+                    }
+                    placeholder={t("signIn.inviteCodePlaceholder")}
+                    disabled={isBusy}
+                  />
+                </div>
+              ) : null}
               {errorMessage ? (
                 <p className="text-sm text-destructive" role="alert">
                   {errorMessage}

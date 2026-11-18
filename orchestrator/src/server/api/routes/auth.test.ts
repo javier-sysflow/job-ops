@@ -429,6 +429,160 @@ describe.sequential("Auth routes", () => {
     });
   });
 
+  describe("POST /api/auth/signup in local mode", () => {
+    const LOCAL_SIGNUP_ENV = {
+      ...AUTH_ENV,
+      JOBOPS_LOCAL_SIGNUPS_ENABLED: "true",
+    };
+
+    async function signup(body: Record<string, unknown>): Promise<Response> {
+      return fetch(`${baseUrl}/api/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    }
+
+    it("gives each new account its own private workspace", async () => {
+      ({ server, baseUrl, closeDb, tempDir } = await startServer({
+        env: LOCAL_SIGNUP_ENV,
+      }));
+      const tenantsBefore = await countTenants();
+
+      const aliceRes = await signup({
+        username: " Alice ",
+        displayName: "Alice A",
+        password: "alice-secret-pw",
+      });
+      expect(aliceRes.status).toBe(201);
+      const alice = (await aliceRes.json()).data;
+      expect(alice.token).toBeTruthy();
+      expect(alice.user).toMatchObject({
+        username: "alice",
+        displayName: "Alice A",
+        isSystemAdmin: false,
+        isDisabled: false,
+        workspaceName: "Alice A",
+      });
+
+      const bobRes = await signup({
+        username: "bob",
+        password: "bob-secret-pw",
+      });
+      expect(bobRes.status).toBe(201);
+      const bob = (await bobRes.json()).data;
+
+      await expect(countTenants()).resolves.toBe(tenantsBefore + 2);
+      expect(bob.user.workspaceId).not.toBe(alice.user.workspaceId);
+      expect(alice.user.workspaceId).not.toBe("tenant_default");
+      await expect(
+        getTenantMembership({ userId: alice.user.id }),
+      ).resolves.toEqual({ tenantId: alice.user.workspaceId, role: "owner" });
+
+      const meRes = await fetch(`${baseUrl}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${alice.token}` },
+      });
+      expect(meRes.status).toBe(200);
+      expect((await meRes.json()).data.user.id).toBe(alice.user.id);
+
+      // A self-registered account is not an admin.
+      const usersRes = await fetch(`${baseUrl}/api/workspaces/users`, {
+        headers: { Authorization: `Bearer ${alice.token}` },
+      });
+      expect(usersRes.status).toBe(403);
+
+      // And the password they chose works for a normal sign-in.
+      await expect(signIn("alice", "alice-secret-pw")).resolves.toBeTruthy();
+    });
+
+    it("returns 409 when the username is taken", async () => {
+      ({ server, baseUrl, closeDb, tempDir } = await startServer({
+        env: LOCAL_SIGNUP_ENV,
+      }));
+
+      const res = await signup({ username: "Admin", password: "another-pw" });
+      expect(res.status).toBe(409);
+      expect((await res.json()).error.message).toBe("Username already exists");
+    });
+
+    it("requires first-run setup before anyone can sign up", async () => {
+      ({ server, baseUrl, closeDb, tempDir } = await startServer({
+        env: {
+          JOBOPS_TEST_AUTH_BYPASS: "0",
+          JOBOPS_LOCAL_SIGNUPS_ENABLED: "true",
+        },
+      }));
+      const tenantsBefore = await countTenants();
+
+      const res = await signup({
+        username: "early",
+        password: "early-bird-pw",
+      });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error.message).toBe(
+        "Initial setup is required before sign-in",
+      );
+      await expect(countTenants()).resolves.toBe(tenantsBefore);
+    });
+
+    it("is closed unless JOBOPS_LOCAL_SIGNUPS_ENABLED is set", async () => {
+      ({ server, baseUrl, closeDb, tempDir } = await startServer({
+        env: AUTH_ENV,
+      }));
+
+      const res = await signup({ username: "nope", password: "nope-nope-pw" });
+      expect(res.status).toBe(403);
+      expect((await res.json()).error.message).toBe(
+        "Account signup is disabled on this instance",
+      );
+    });
+
+    it("checks the invite code before creating the account", async () => {
+      ({ server, baseUrl, closeDb, tempDir } = await startServer({
+        env: {
+          ...LOCAL_SIGNUP_ENV,
+          JOBOPS_SIGNUP_INVITE_CODE: "sakura-2026",
+        },
+      }));
+      const tenantsBefore = await countTenants();
+
+      for (const inviteCode of [undefined, "", "sakura-2025", "SAKURA-2026"]) {
+        const res = await signup({
+          username: "guest",
+          password: "guest-secret-pw",
+          ...(inviteCode === undefined ? {} : { inviteCode }),
+        });
+        expect(res.status).toBe(403);
+        expect((await res.json()).error.message).toBe("Invalid invite code");
+      }
+      await expect(countTenants()).resolves.toBe(tenantsBefore);
+
+      const okRes = await signup({
+        username: "guest",
+        password: "guest-secret-pw",
+        inviteCode: "  sakura-2026 ",
+      });
+      expect(okRes.status).toBe(201);
+      await expect(countTenants()).resolves.toBe(tenantsBefore + 1);
+    });
+
+    it("does not reveal taken usernames to people without the code", async () => {
+      ({ server, baseUrl, closeDb, tempDir } = await startServer({
+        env: {
+          ...LOCAL_SIGNUP_ENV,
+          JOBOPS_SIGNUP_INVITE_CODE: "sakura-2026",
+        },
+      }));
+
+      const res = await signup({
+        username: "admin",
+        password: "whatever-pw",
+        inviteCode: "wrong",
+      });
+      expect(res.status).toBe(403);
+    });
+  });
+
   describe("JWT-authenticated requests", () => {
     beforeEach(async () => {
       ({ server, baseUrl, closeDb, tempDir } = await startServer({

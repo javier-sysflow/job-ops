@@ -161,6 +161,15 @@ Settings and user accounts are saved to the local database. If you are upgrading
 
 System admins can create more users from **Settings → Environment & Workspaces**. Each created user receives a separate private workspace with isolated jobs, settings, resumes, integrations, PDFs, pipeline runs, chat, analytics, and post-application data.
 
+To let people create their own accounts instead, enable self-service signup:
+
+```bash
+JOBOPS_LOCAL_SIGNUPS_ENABLED=true
+JOBOPS_SIGNUP_INVITE_CODE=pick-a-long-random-code
+```
+
+`/sign-in` then shows a **Create account** tab. Each account created there gets its own private workspace, exactly like one an admin creates, and is never a system admin. Signup stays closed until first-run setup has created the admin account. Self-registered accounts use the deployment's LLM provider and key, so set `JOBOPS_SIGNUP_INVITE_CODE` unless you are happy for anyone who finds the URL to sign up: when it is set, the form asks for the code and the server rejects signups without it. Admins can still disable any account from **Settings**.
+
 ## Hosted single-tenant mode
 
 JobOps defaults to local/self-hosted mode when hosted flags are unset. Hosted mode is an env-gated deployment mode for running one configured tenant with multiple users in that tenant.
