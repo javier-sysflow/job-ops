@@ -1,6 +1,8 @@
 import type { JobStatus } from "@shared/types/jobs";
 import type React from "react";
 import { cn } from "@/lib/utils";
+import i18n from "../i18n";
+import { jobStatusLabel } from "../i18n/labels";
 import {
   defaultStatusToken,
   statusTokens,
@@ -97,11 +99,18 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({
 
 const getJobStatusIndicator = (status: JobStatus) => {
   const tokens = statusTokens[status] ?? defaultStatusToken;
-  return { label: tokens.label, dotColor: tokens.dot };
+  return {
+    label: statusTokens[status]
+      ? jobStatusLabel(status)
+      : i18n.t("shell:status.unknown"),
+    dotColor: tokens.dot,
+  };
 };
 
 const getTracerStatusIndicator = (enabled: boolean) => ({
-  label: enabled ? "Tracer On" : "Tracer Off",
+  label: enabled
+    ? i18n.t("shell:status.tracerOn")
+    : i18n.t("shell:status.tracerOff"),
   dotColor: enabled ? "bg-violet-500" : "bg-slate-500",
 });
 
