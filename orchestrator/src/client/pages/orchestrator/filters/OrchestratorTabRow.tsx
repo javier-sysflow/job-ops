@@ -3,6 +3,7 @@ import { Tip } from "@client/components/Tip";
 import { getDisplayKey, SHORTCUTS } from "@client/lib/shortcut-map";
 import { Filter, RotateCcw, Search } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ export const OrchestratorTabRow: React.FC<OrchestratorTabRowProps> = ({
   activeFilterCount,
   onResetFilters,
 }) => {
+  const { t } = useTranslation("jobs");
   const commandShortcutLabel = getDisplayKey(SHORTCUTS.search);
 
   return (
@@ -68,7 +70,7 @@ export const OrchestratorTabRow: React.FC<OrchestratorTabRowProps> = ({
             className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Reset
+            {t("filters.reset")}
           </Button>
         ) : null}
 
@@ -85,7 +87,7 @@ export const OrchestratorTabRow: React.FC<OrchestratorTabRowProps> = ({
           )}
         >
           <Filter className="h-3.5 w-3.5" />
-          Filters
+          {t("filters.toggle")}
           {activeFilterCount > 0 ? (
             <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/20 px-1 text-[10px] font-semibold tabular-nums text-primary">
               {activeFilterCount}
@@ -98,11 +100,11 @@ export const OrchestratorTabRow: React.FC<OrchestratorTabRowProps> = ({
           variant="ghost"
           size="sm"
           onClick={onOpenCommandBar}
-          aria-label="Search jobs"
+          aria-label={t("filters.searchAria")}
           className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
         >
           <Search className="h-3.5 w-3.5" />
-          Search
+          {t("filters.search")}
           <span className="rounded border border-border/70 px-1 py-0.5 font-mono text-xs leading-none text-muted-foreground">
             {commandShortcutLabel}
           </span>

@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import { Briefcase } from "lucide-react";
 import type React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,7 +11,7 @@ export const EmploymentTypeFilterPill: React.FC<
 > = ({ employmentTypes, onEmploymentTypesChange }) => (
   <FilterPill
     icon={<Briefcase />}
-    label="Employment"
+    label={i18n.t("jobs:filters.employment.label")}
     active={employmentTypes.length > 0}
     badge={employmentTypes.length}
   >

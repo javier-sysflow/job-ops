@@ -1,9 +1,11 @@
+import i18n from "@client/i18n";
 import NumberFlow from "@number-flow/react";
 import type { Job } from "@shared/types.js";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Popover,
   PopoverContent,
@@ -21,7 +23,7 @@ const getSuitabilityScoreTokens = (
     return {
       shell: "border-blue-300/55 bg-blue-500/10 text-blue-200",
       value: "loading",
-      label: "Waiting for AI scoring to finish.",
+      label: i18n.t("jobs:score.awaitingAi"),
     };
   }
 
@@ -29,8 +31,7 @@ const getSuitabilityScoreTokens = (
     return {
       shell: "border-destructive/40 bg-destructive/10 text-destructive",
       value: "!",
-      label:
-        "AI misconfiguration or service error. Please check your settings and AI service status.",
+      label: i18n.t("jobs:score.aiError"),
     };
   }
 
@@ -38,7 +39,7 @@ const getSuitabilityScoreTokens = (
     return {
       shell: "border-emerald-400/60 bg-emerald-500/10 text-emerald-100",
       value: `${Math.round(score)}`,
-      label: `Suitability score ${Math.round(score)}`,
+      label: i18n.t("jobs:score.suitability", { score: Math.round(score) }),
     };
   }
 
@@ -46,14 +47,14 @@ const getSuitabilityScoreTokens = (
     return {
       shell: "border-amber-400/60 bg-amber-500/10 text-amber-100",
       value: `${Math.round(score)}`,
-      label: `Suitability score ${Math.round(score)}`,
+      label: i18n.t("jobs:score.suitability", { score: Math.round(score) }),
     };
   }
 
   return {
     shell: "border-slate-500/55 bg-slate-500/10 text-slate-200",
     value: `${Math.round(score)}`,
-    label: `Suitability score ${Math.round(score)}`,
+    label: i18n.t("jobs:score.suitability", { score: Math.round(score) }),
   };
 };
 
@@ -77,6 +78,7 @@ export const ScoreRing: React.FC<{
   suitabilityReason,
   jobId,
 }) => {
+  const { t } = useTranslation("jobs");
   const tokens = getSuitabilityScoreTokens(score, isAwaitingAi);
   const isLoading = score === null && isAwaitingAi;
   const hasReason = !!suitabilityReason;
@@ -132,7 +134,7 @@ export const ScoreRing: React.FC<{
             </div>
             {size === "lg" && (
               <div className="mt-0.5 text-[9px] uppercase tracking-[0.22em] text-current/70">
-                score
+                {t("score.ringLabel")}
               </div>
             )}
           </div>
@@ -145,7 +147,7 @@ export const ScoreRing: React.FC<{
     <Popover open={popoverOpen} onOpenChange={handlePopoverOpenChange}>
       <Tip
         asChild
-        content="Find out why"
+        content={t("score.findOutWhy")}
         contentClassName="text-xs"
         clickBehavior="none"
         disabled={popoverOpen}
@@ -153,7 +155,7 @@ export const ScoreRing: React.FC<{
         <PopoverTrigger asChild>
           <button
             type="button"
-            aria-label="View fit assessment"
+            aria-label={t("score.viewFitAssessment")}
             className={cn(
               "relative overflow-visible",
               size === "sm"
@@ -196,7 +198,7 @@ export const ScoreRing: React.FC<{
               </div>
               {size === "lg" && (
                 <div className="mt-0.5 text-[9px] uppercase tracking-[0.22em] text-current/70">
-                  score
+                  {t("score.ringLabel")}
                 </div>
               )}
             </div>

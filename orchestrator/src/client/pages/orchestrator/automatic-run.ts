@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import {
   buildLocationPreferencesSummary,
   type LocationInputMode,
@@ -107,20 +108,41 @@ export const SEARCH_SCOPE_OPTIONS: Array<{
   label: string;
   description: string;
 }> = [
+  // Getters: labels are translated when read (at render time).
   {
     value: "selected_only",
-    label: "Only selected locations",
-    description: "Limit results to your chosen map area or cities.",
+    get label() {
+      return i18n.t("jobs:automaticRun.searchScope.selected_only.label");
+    },
+    get description() {
+      return i18n.t("jobs:automaticRun.searchScope.selected_only.description");
+    },
   },
   {
     value: "selected_plus_remote_worldwide",
-    label: "Selected locations + remote worldwide",
-    description: "Also include remote roles available worldwide.",
+    get label() {
+      return i18n.t(
+        "jobs:automaticRun.searchScope.selected_plus_remote_worldwide.label",
+      );
+    },
+    get description() {
+      return i18n.t(
+        "jobs:automaticRun.searchScope.selected_plus_remote_worldwide.description",
+      );
+    },
   },
   {
     value: "remote_worldwide_prioritize_selected",
-    label: "Remote worldwide",
-    description: "Search globally and prioritise your selected locations.",
+    get label() {
+      return i18n.t(
+        "jobs:automaticRun.searchScope.remote_worldwide_prioritize_selected.label",
+      );
+    },
+    get description() {
+      return i18n.t(
+        "jobs:automaticRun.searchScope.remote_worldwide_prioritize_selected.description",
+      );
+    },
   },
 ];
 
@@ -131,13 +153,21 @@ export const MATCH_STRICTNESS_OPTIONS: Array<{
 }> = [
   {
     value: "exact_only",
-    label: "Exact matches only",
-    description: "Only jobs explicitly matching your selected location.",
+    get label() {
+      return i18n.t("jobs:automaticRun.matchStrictness.exact_only.label");
+    },
+    get description() {
+      return i18n.t("jobs:automaticRun.matchStrictness.exact_only.description");
+    },
   },
   {
     value: "flexible",
-    label: "Include likely matches",
-    description: "Include nearby and plausibly compatible locations.",
+    get label() {
+      return i18n.t("jobs:automaticRun.matchStrictness.flexible.label");
+    },
+    get description() {
+      return i18n.t("jobs:automaticRun.matchStrictness.flexible.description");
+    },
   },
 ];
 

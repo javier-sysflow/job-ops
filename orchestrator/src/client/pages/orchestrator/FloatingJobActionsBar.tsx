@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
 interface FloatingJobActionsBarProps {
@@ -25,6 +26,7 @@ export const FloatingJobActionsBar: React.FC<FloatingJobActionsBarProps> = ({
   onRescoreSelected,
   onClear,
 }) => {
+  const { t } = useTranslation("jobs");
   return (
     <AnimatePresence initial={false}>
       {selectedCount > 0 ? (
@@ -37,7 +39,7 @@ export const FloatingJobActionsBar: React.FC<FloatingJobActionsBarProps> = ({
         >
           <div className="pointer-events-auto flex w-full max-w-md flex-col items-stretch gap-2 rounded-xl border border-border/70 bg-card/95 px-3 py-2 shadow-xl backdrop-blur supports-[backdrop-filter]:bg-card/85 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center">
             <div className="text-xs text-muted-foreground tabular-nums sm:mr-1">
-              {selectedCount} selected
+              {t("selection.selectedCount", { count: selectedCount })}
             </div>
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
               {canMoveSelected && (
@@ -49,7 +51,7 @@ export const FloatingJobActionsBar: React.FC<FloatingJobActionsBarProps> = ({
                   disabled={jobActionInFlight}
                   onClick={onMoveToReady}
                 >
-                  Move to Ready
+                  {t("selection.moveToReady")}
                 </Button>
               )}
               {canSkipSelected && (
@@ -61,7 +63,7 @@ export const FloatingJobActionsBar: React.FC<FloatingJobActionsBarProps> = ({
                   disabled={jobActionInFlight}
                   onClick={onSkipSelected}
                 >
-                  Skip selected
+                  {t("selection.skipSelected")}
                 </Button>
               )}
               {canRescoreSelected && (
@@ -73,7 +75,7 @@ export const FloatingJobActionsBar: React.FC<FloatingJobActionsBarProps> = ({
                   disabled={jobActionInFlight}
                   onClick={onRescoreSelected}
                 >
-                  Recalculate match
+                  {t("selection.recalculateMatch")}
                 </Button>
               )}
               <Button
@@ -84,7 +86,7 @@ export const FloatingJobActionsBar: React.FC<FloatingJobActionsBarProps> = ({
                 onClick={onClear}
                 disabled={jobActionInFlight}
               >
-                Clear
+                {t("selection.clear")}
               </Button>
             </div>
           </div>

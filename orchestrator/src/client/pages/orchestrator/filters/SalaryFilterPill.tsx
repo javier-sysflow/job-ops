@@ -1,5 +1,6 @@
 import { Banknote } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,6 +21,7 @@ export const SalaryFilterPill: React.FC<SalaryFilterPillProps> = ({
   salaryActive,
   salarySummary,
 }) => {
+  const { t } = useTranslation("jobs");
   const showSalaryMin =
     salaryFilter.mode === "at_least" || salaryFilter.mode === "between";
   const showSalaryMax =
@@ -28,13 +30,13 @@ export const SalaryFilterPill: React.FC<SalaryFilterPillProps> = ({
   return (
     <FilterPill
       icon={<Banknote />}
-      label="Salary"
+      label={t("filters.salary.label")}
       active={salaryActive}
       summary={salarySummary}
     >
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <span>Salary is</span>
+          <span>{t("filters.salary.prefix")}</span>
           <Select
             value={salaryFilter.mode}
             onValueChange={(value) => {
@@ -64,7 +66,7 @@ export const SalaryFilterPill: React.FC<SalaryFilterPillProps> = ({
           >
             <SelectTrigger
               id="salary-mode"
-              aria-label="Salary range specifier"
+              aria-label={t("filters.salary.modeAria")}
               className="h-8 w-[140px] text-foreground"
             >
               <SelectValue />
@@ -82,7 +84,9 @@ export const SalaryFilterPill: React.FC<SalaryFilterPillProps> = ({
         <div className="grid gap-3 sm:grid-cols-2">
           {showSalaryMin && (
             <div className="space-y-1">
-              <Label htmlFor="salary-min-filter">Minimum</Label>
+              <Label htmlFor="salary-min-filter">
+                {t("filters.salary.minimum")}
+              </Label>
               <Input
                 id="salary-min-filter"
                 value={salaryFilter.min == null ? "" : String(salaryFilter.min)}
@@ -95,14 +99,16 @@ export const SalaryFilterPill: React.FC<SalaryFilterPillProps> = ({
                   });
                 }}
                 inputMode="numeric"
-                placeholder="e.g. 60000"
+                placeholder={t("filters.salary.minPlaceholder")}
               />
             </div>
           )}
 
           {showSalaryMax && (
             <div className="space-y-1">
-              <Label htmlFor="salary-max-filter">Maximum</Label>
+              <Label htmlFor="salary-max-filter">
+                {t("filters.salary.maximum")}
+              </Label>
               <Input
                 id="salary-max-filter"
                 value={salaryFilter.max == null ? "" : String(salaryFilter.max)}
@@ -115,7 +121,7 @@ export const SalaryFilterPill: React.FC<SalaryFilterPillProps> = ({
                   });
                 }}
                 inputMode="numeric"
-                placeholder="e.g. 100000"
+                placeholder={t("filters.salary.maxPlaceholder")}
               />
             </div>
           )}

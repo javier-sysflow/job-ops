@@ -1,5 +1,6 @@
 import { CalendarDays } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ export const DateFilterPill: React.FC<DateFilterPillProps> = ({
   dateFilter,
   onDateFilterChange,
 }) => {
+  const { t } = useTranslation("jobs");
   const clearDateFilter = () =>
     onDateFilterChange({
       dimensions: [],
@@ -27,7 +29,7 @@ export const DateFilterPill: React.FC<DateFilterPillProps> = ({
   return (
     <FilterPill
       icon={<CalendarDays />}
-      label="Dates"
+      label={t("filters.dates.label")}
       active={dateFilter.dimensions.length > 0}
       badge={dateFilter.dimensions.length}
       contentClassName="w-80"
@@ -72,14 +74,16 @@ export const DateFilterPill: React.FC<DateFilterPillProps> = ({
                     })
                   }
                 >
-                  Last {option.label}
+                  {t("filters.dates.lastPreset", { label: option.label })}
                 </Button>
               ))}
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label htmlFor="date-start-filter">Start date</Label>
+                <Label htmlFor="date-start-filter">
+                  {t("filters.dates.startDate")}
+                </Label>
                 <Input
                   id="date-start-filter"
                   type="date"
@@ -95,7 +99,9 @@ export const DateFilterPill: React.FC<DateFilterPillProps> = ({
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="date-end-filter">End date</Label>
+                <Label htmlFor="date-end-filter">
+                  {t("filters.dates.endDate")}
+                </Label>
                 <Input
                   id="date-end-filter"
                   type="date"
@@ -117,7 +123,7 @@ export const DateFilterPill: React.FC<DateFilterPillProps> = ({
               variant="outline"
               onClick={clearDateFilter}
             >
-              Clear date filters
+              {t("filters.dates.clear")}
             </Button>
           </>
         )}

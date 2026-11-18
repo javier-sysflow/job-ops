@@ -2,6 +2,7 @@ import { PageHeader, StatusIndicator } from "@client/components/layout";
 import type { JobSource } from "@shared/types.js";
 import { FileText, Loader2, Search, Square, X } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
 interface OrchestratorHeaderProps {
@@ -29,6 +30,7 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
   onCancelPipeline,
   onOpenManualImport,
 }) => {
+  const { t } = useTranslation("jobs");
   const primaryAction = hideRunAction ? null : isPipelineRunning ? (
     <Button
       size="sm"
@@ -43,7 +45,9 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
         <Square className="h-4 w-4" />
       )}
       <span>
-        {isCancelling ? `Cancelling (${pipelineSources.length})` : `Cancel run`}
+        {isCancelling
+          ? t("header.cancelling", { sourceCount: pipelineSources.length })
+          : t("header.cancelRun")}
       </span>
     </Button>
   ) : (
@@ -59,7 +63,9 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
       ) : (
         <Search className="h-4 w-4" />
       )}
-      <span>{isSearchComposerOpen ? "Close search" : "Find jobs"}</span>
+      <span>
+        {isSearchComposerOpen ? t("header.closeSearch") : t("header.findJobs")}
+      </span>
     </Button>
   );
   const actions = (
@@ -72,7 +78,7 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
         onClick={onOpenManualImport}
       >
         <FileText className="h-4 w-4" />
-        Add a job
+        {t("header.addJob")}
       </Button>
     </div>
   );
@@ -82,13 +88,13 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
       icon={() => (
         <img src="/favicon.png" alt="" className="size-8 rounded-lg" />
       )}
-      title="Job Ops"
-      subtitle="Orchestrator"
+      title="Job Ops" // i18n-ignore
+      subtitle={t("header.subtitle")}
       navOpen={navOpen}
       onNavOpenChange={onNavOpenChange}
       statusIndicator={
         isPipelineRunning ? (
-          <StatusIndicator label="Search running" variant="amber" />
+          <StatusIndicator label={t("header.searchRunning")} variant="amber" />
         ) : undefined
       }
       actions={actions}

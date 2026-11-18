@@ -14,6 +14,7 @@ import {
 } from "@client/lib/shortcut-map";
 import type { FilterTab } from "@client/pages/orchestrator/constants";
 import type React from "react";
+import { Trans, useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -21,13 +22,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-const groupLabel: Record<ShortcutGroup, string> = {
-  navigation: "Navigation",
-  tabs: "Tabs",
-  actions: "Actions",
-  meta: "General",
-};
 
 const groupOrder: ShortcutGroup[] = ["navigation", "actions", "tabs", "meta"];
 
@@ -42,6 +36,7 @@ export const KeyboardShortcutDialog: React.FC<KeyboardShortcutDialogProps> = ({
   onOpenChange,
   activeTab,
 }) => {
+  const { t } = useTranslation("jobs");
   const hasKeyboard = useKeyboardAvailability();
 
   if (!hasKeyboard) return null;
@@ -53,13 +48,17 @@ export const KeyboardShortcutDialog: React.FC<KeyboardShortcutDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Keyboard Shortcuts</DialogTitle>
+          <DialogTitle>{t("shortcuts.dialog.title")}</DialogTitle>
           <DialogDescription>
-            Available shortcuts for the current view. Press{" "}
-            <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded border border-border/60 bg-muted/40 text-[10px] font-mono font-medium leading-none">
-              ?
-            </kbd>{" "}
-            to toggle this dialog.
+            <Trans
+              t={t}
+              i18nKey="shortcuts.dialog.description"
+              components={{
+                kbd: (
+                  <kbd className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded border border-border/60 bg-muted/40 text-[10px] font-mono font-medium leading-none" />
+                ),
+              }}
+            />
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2 pt-2">
@@ -70,7 +69,7 @@ export const KeyboardShortcutDialog: React.FC<KeyboardShortcutDialogProps> = ({
             return (
               <div key={group}>
                 <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                  {groupLabel[group]}
+                  {t(`shortcuts.dialogGroups.${group}`)}
                 </div>
                 <div className="space-y-1.5">
                   {deduped.map((item) => (

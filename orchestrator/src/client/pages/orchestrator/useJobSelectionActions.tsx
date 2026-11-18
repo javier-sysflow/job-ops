@@ -1,4 +1,5 @@
 import * as api from "@client/api";
+import i18n from "@client/i18n";
 import type {
   JobAction,
   JobActionResponse,
@@ -19,18 +20,6 @@ import {
 import { clampNumber } from "./utils";
 
 const MAX_JOB_ACTION_JOB_IDS = 500;
-
-const jobActionLabel: Record<JobAction, string> = {
-  move_to_ready: "Moving jobs to Ready...",
-  skip: "Skipping selected jobs...",
-  rescore: "Calculating match scores...",
-};
-
-const jobActionSuccessLabel: Record<JobAction, string> = {
-  move_to_ready: "jobs moved to Ready",
-  skip: "jobs skipped",
-  rescore: "matches recalculated",
-};
 
 interface UseJobSelectionActionsArgs {
   activeJobs: JobListItem[];
@@ -104,7 +93,9 @@ export function useJobSelectionActions({
           return new Set(allIds);
         }
         toast.error(
-          `Select all is limited to ${MAX_JOB_ACTION_JOB_IDS} jobs per action.`,
+          i18n.t("jobs:bulkActions.selectAllLimit", {
+            max: MAX_JOB_ACTION_JOB_IDS,
+          }),
         );
         return new Set(allIds.slice(0, MAX_JOB_ACTION_JOB_IDS));
       });
@@ -122,7 +113,7 @@ export function useJobSelectionActions({
       if (selectedAtStart.length === 0) return;
       if (selectedAtStart.length > MAX_JOB_ACTION_JOB_IDS) {
         toast.error(
-          `You can run job actions on up to ${MAX_JOB_ACTION_JOB_IDS} jobs at a time.`,
+          i18n.t("jobs:bulkActions.tooMany", { max: MAX_JOB_ACTION_JOB_IDS }),
         );
         return;
       }
@@ -145,7 +136,10 @@ export function useJobSelectionActions({
           0,
           safeRequested,
         );
-        return `${safeCompleted}/${safeRequested} ${jobActionLabel[action]}`;
+        return i18n.t(`jobs:bulkActions.progress.${action}`, {
+          completed: safeCompleted,
+          requested: safeRequested,
+        });
       };
 
       const upsertProgressToast = () => {
@@ -179,7 +173,8 @@ export function useJobSelectionActions({
           {
             onEvent: (event) => {
               if (event.type === "error") {
-                streamError = event.message || "Failed to run job action";
+                streamError =
+                  event.message || i18n.t("jobs:bulkActions.failed");
                 return;
               }
 
@@ -228,12 +223,11 @@ export function useJobSelectionActions({
         }
 
         if (!finalResult) {
-          throw new Error("Job action stream ended before completion");
+          throw new Error(i18n.t("jobs:bulkActions.streamEnded"));
         }
 
         const result = finalResult as JobActionResponse;
         const failedIds = getFailedJobIds(result);
-        const successLabel = jobActionSuccessLabel[action];
         trackProductEvent("jobs_bulk_action_completed", {
           action: result.action,
           requested: result.requested,
@@ -243,10 +237,17 @@ export function useJobSelectionActions({
         });
 
         if (result.failed === 0) {
-          toast.success(`${result.succeeded} ${successLabel}`);
+          toast.success(
+            i18n.t(`jobs:bulkActions.success.${action}`, {
+              succeeded: result.succeeded,
+            }),
+          );
         } else {
           toast.error(
-            `${result.succeeded} succeeded, ${result.failed} failed.`,
+            i18n.t("jobs:bulkActions.partial", {
+              succeeded: result.succeeded,
+              failed: result.failed,
+            }),
           );
         }
 
@@ -266,7 +267,7 @@ export function useJobSelectionActions({
           return next;
         });
       } catch (error) {
-        showErrorToast(error, "Failed to run job action");
+        showErrorToast(error, i18n.t("jobs:bulkActions.failed"));
       } finally {
         if (progressToastId !== undefined) {
           toast.dismiss(progressToastId);

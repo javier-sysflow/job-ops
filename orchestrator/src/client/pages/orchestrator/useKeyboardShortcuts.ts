@@ -6,6 +6,7 @@ import {
 import { useHotkeys } from "@client/hooks/useHotkeys";
 import { useProfile } from "@client/hooks/useProfile";
 import { useSettings } from "@client/hooks/useSettings";
+import i18n from "@client/i18n";
 import { resolveFilenameLanguage } from "@client/lib/pdf-filename";
 import { downloadJobPdf, openJobPdf } from "@client/lib/private-pdf";
 import { SHORTCUTS } from "@client/lib/shortcut-map";
@@ -155,13 +156,15 @@ export function useKeyboardShortcuts(args: UseKeyboardShortcutsArgs): void {
         skipJobMutation
           .mutateAsync(jobId)
           .then(async () => {
-            toast.message("Job skipped");
+            toast.message(i18n.t("jobs:jobToasts.skipped"));
             selectNextAfterAction(jobId);
             await loadJobs();
           })
           .catch((err: unknown) => {
             const msg =
-              err instanceof Error ? err.message : "Failed to skip job";
+              err instanceof Error
+                ? err.message
+                : i18n.t("jobs:jobToasts.skipFailed");
             toast.error(msg);
           })
           .finally(() => {
@@ -178,15 +181,20 @@ export function useKeyboardShortcuts(args: UseKeyboardShortcutsArgs): void {
         markAsAppliedMutation
           .mutateAsync(jobId)
           .then(async () => {
-            toast.success("Marked as applied", {
-              description: `${selectedJob.title} at ${selectedJob.employer}`,
+            toast.success(i18n.t("jobs:jobToasts.markedApplied"), {
+              description: i18n.t("jobs:jobToasts.jobAtEmployer", {
+                title: selectedJob.title,
+                employer: selectedJob.employer,
+              }),
             });
             selectNextAfterAction(jobId);
             await loadJobs();
           })
           .catch((err: unknown) => {
             const msg =
-              err instanceof Error ? err.message : "Failed to mark as applied";
+              err instanceof Error
+                ? err.message
+                : i18n.t("jobs:jobToasts.markAppliedFailed");
             toast.error(msg);
           })
           .finally(() => {
@@ -207,13 +215,13 @@ export function useKeyboardShortcuts(args: UseKeyboardShortcutsArgs): void {
 
         shortcutActionInFlight.current = true;
         const jobId = selectedJob.id;
-        toast.message("Moving job to Ready...");
+        toast.message(i18n.t("jobs:jobToasts.movingToReady"));
 
         api
           .processJob(jobId)
           .then(async () => {
-            toast.success("Job moved to Ready", {
-              description: "Your tailored PDF has been generated.",
+            toast.success(i18n.t("jobs:jobToasts.movedToReady"), {
+              description: i18n.t("jobs:jobToasts.pdfGenerated"),
             });
             selectNextAfterAction(jobId);
             await loadJobs();
@@ -222,7 +230,7 @@ export function useKeyboardShortcuts(args: UseKeyboardShortcutsArgs): void {
             const msg =
               err instanceof Error
                 ? err.message
-                : "Failed to move job to ready";
+                : i18n.t("jobs:jobToasts.moveToReadyFailed");
             toast.error(msg);
           })
           .finally(() => {
@@ -234,7 +242,7 @@ export function useKeyboardShortcuts(args: UseKeyboardShortcutsArgs): void {
         if (!selectedJob) return;
         if (activeTab !== "ready") return;
         void openJobPdf(selectedJob.id).catch((error) => {
-          showErrorToast(error, "Could not open PDF");
+          showErrorToast(error, i18n.t("jobs:jobToasts.openPdfFailed"));
         });
       },
 
@@ -249,7 +257,7 @@ export function useKeyboardShortcuts(args: UseKeyboardShortcutsArgs): void {
             language: filenameLanguage,
           })}.pdf`,
         ).catch((error) => {
-          showErrorToast(error, "Could not download PDF");
+          showErrorToast(error, i18n.t("jobs:jobToasts.downloadPdfFailed"));
         });
       },
 

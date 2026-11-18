@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Progress } from "@/components/ui/progress";
 import { clampNumber } from "./utils";
 
@@ -14,6 +15,7 @@ export function JobActionProgressToast({
   succeeded,
   failed,
 }: JobActionProgressToastProps) {
+  const { t } = useTranslation("jobs");
   const safeRequested = Math.max(requested, 1);
   const safeCompleted = clampNumber(completed, 0, safeRequested);
   const progressValue = Math.round((safeCompleted / safeRequested) * 100);
@@ -22,7 +24,7 @@ export function JobActionProgressToast({
     <div className="mt-2 w-full space-y-1.5">
       <Progress value={progressValue} className="h-1.5 w-full" />
       <p className="tabular-nums text-xs text-muted-foreground">
-        {succeeded} succeeded, {failed} failed
+        {t("bulkActions.progressCounts", { succeeded, failed })}
       </p>
     </div>
   );

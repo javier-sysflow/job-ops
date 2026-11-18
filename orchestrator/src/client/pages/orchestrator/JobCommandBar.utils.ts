@@ -1,3 +1,5 @@
+import i18n from "@client/i18n";
+import { jobStatusLabel } from "@client/i18n/labels";
 import type { JobListItem, JobStatus } from "@shared/types.js";
 import type { FilterTab } from "./constants";
 
@@ -33,10 +35,31 @@ export type CommandBarRow =
 
 export const commandGroupMeta: Array<{ id: CommandGroupId; heading: string }> =
   [
-    { id: "ready", heading: "Ready" },
-    { id: "discovered", heading: "Discovered" },
-    { id: "applied", heading: "Applied" },
-    { id: "other", heading: "Other" },
+    // Getters: headings are translated when read, not at module load.
+    {
+      id: "ready",
+      get heading() {
+        return jobStatusLabel("ready");
+      },
+    },
+    {
+      id: "discovered",
+      get heading() {
+        return jobStatusLabel("discovered");
+      },
+    },
+    {
+      id: "applied",
+      get heading() {
+        return jobStatusLabel("applied");
+      },
+    },
+    {
+      id: "other",
+      get heading() {
+        return i18n.t("jobs:commandBar.groups.other");
+      },
+    },
   ];
 
 const lockAliases: Record<StatusLock, string[]> = {
@@ -48,6 +71,7 @@ const lockAliases: Record<StatusLock, string[]> = {
   expired: ["expired", "expire", "exp"],
 };
 
+// The @-tokens users type to lock a status (command syntax, not translated).
 export const lockLabel: Record<StatusLock, string> = {
   ready: "ready",
   discovered: "discovered",
@@ -257,7 +281,7 @@ export const buildCommandBarRows = ({
     rows.push({
       id: "command-bar-filters-heading",
       kind: "groupHeading",
-      heading: "Filters",
+      heading: i18n.t("jobs:commandBar.groups.filters"),
       groupId: "filters",
     });
 

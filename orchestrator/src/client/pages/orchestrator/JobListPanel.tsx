@@ -1,6 +1,7 @@
 import type { JobListItem } from "@shared/types.js";
 import { Loader2 } from "lucide-react";
 import { forwardRef, useImperativeHandle } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useVirtualizedList,
   useWindowScrollMargin,
@@ -58,6 +59,7 @@ export const JobListPanel = forwardRef<VirtualListHandle, JobListPanelProps>(
     },
     ref,
   ) => {
+    const { t } = useTranslation("jobs");
     const { ref: listRef, scrollMargin } =
       useWindowScrollMargin<HTMLDivElement>();
     const virtualizer = useVirtualizedList({
@@ -83,7 +85,9 @@ export const JobListPanel = forwardRef<VirtualListHandle, JobListPanelProps>(
         <div className="min-w-0 rounded-xl border border-border bg-card shadow-sm">
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <div className="text-sm text-muted-foreground">Loading jobs...</div>
+            <div className="text-sm text-muted-foreground">
+              {t("list.loading")}
+            </div>
           </div>
         </div>
       );
@@ -93,7 +97,9 @@ export const JobListPanel = forwardRef<VirtualListHandle, JobListPanelProps>(
       return (
         <div className="min-w-0 rounded-xl border border-border bg-card shadow-sm">
           <div className="flex flex-col items-center justify-center gap-4 px-6 py-12 text-center">
-            <div className="text-base font-semibold">No jobs found</div>
+            <div className="text-base font-semibold">
+              {t("list.emptyTitle")}
+            </div>
             <p className="max-w-md text-sm text-muted-foreground">
               {emptyStateMessage ?? emptyStateCopy[activeTab]}
             </p>
@@ -142,12 +148,12 @@ export const JobListPanel = forwardRef<VirtualListHandle, JobListPanelProps>(
                     activeJobs.every((job) => selectedJobIds.has(job.id));
                   onToggleSelectAll(!allSelected);
                 }}
-                aria-label="Select all filtered jobs"
+                aria-label={t("list.selectAllAria")}
               />
-              Select all filtered
+              {t("list.selectAll")}
             </label>
             <span className="text-xs text-muted-foreground tabular-nums">
-              {selectedJobIds.size} selected
+              {t("list.selectedCount", { count: selectedJobIds.size })}
             </span>
           </div>
           <div
@@ -218,7 +224,7 @@ export const JobListPanel = forwardRef<VirtualListHandle, JobListPanelProps>(
                       checked={isChecked}
                       onCheckedChange={() => onToggleSelectJob(job.id)}
                       onClick={(event) => event.stopPropagation()}
-                      aria-label={`Select ${job.title}`}
+                      aria-label={t("list.selectJob", { title: job.title })}
                       className={cn(
                         "absolute inset-0 m-0 border-border/80 cursor-pointer text-muted-foreground/70 transition-opacity duration-150 ease-out data-[state=checked]:border-primary group-hover:border-primary data-[state=checked]:bg-primary/20 data-[state=checked]:text-primary",
                         isChecked || isSelected

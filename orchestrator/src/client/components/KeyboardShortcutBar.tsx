@@ -16,13 +16,7 @@ import {
 } from "@client/lib/shortcut-map";
 import type { FilterTab } from "@client/pages/orchestrator/constants";
 import type React from "react";
-
-const groupLabel: Record<ShortcutGroup, string> = {
-  navigation: "Navigate",
-  tabs: "Tabs",
-  actions: "Actions",
-  meta: "General",
-};
+import { useTranslation } from "react-i18next";
 
 const groupOrder: ShortcutGroup[] = ["navigation", "actions", "tabs", "meta"];
 
@@ -33,6 +27,7 @@ interface KeyboardShortcutBarProps {
 export const KeyboardShortcutBar: React.FC<KeyboardShortcutBarProps> = ({
   activeTab,
 }) => {
+  const { t } = useTranslation("jobs");
   const hasKeyboard = useKeyboardAvailability();
   const isControlPressed = useModifierPressed("Control");
 
@@ -51,7 +46,7 @@ export const KeyboardShortcutBar: React.FC<KeyboardShortcutBarProps> = ({
           return (
             <div key={group} className="flex items-center gap-4">
               <span className="font-bold text-muted-foreground/90 uppercase tracking-wider text-[10px] w-20 shrink-0">
-                {groupLabel[group]}
+                {t(`shortcuts.barGroups.${group}`)}
               </span>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {deduped.map((item) => (

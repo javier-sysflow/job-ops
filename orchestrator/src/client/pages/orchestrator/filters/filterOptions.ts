@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import type {
   DateFilterPreset,
   FilterTab,
@@ -7,33 +8,90 @@ import type {
   SponsorFilter,
 } from "../constants";
 
+// Labels are getters so they are translated when read (at render time).
+
 export const sponsorOptions: Array<{
   value: SponsorFilter;
   label: string;
 }> = [
-  { value: "all", label: "All statuses" },
-  { value: "confirmed", label: "Confirmed sponsor" },
-  { value: "potential", label: "Potential sponsor" },
-  { value: "not_found", label: "Sponsor not found" },
-  { value: "unknown", label: "Unchecked sponsor" },
+  {
+    value: "all",
+    get label() {
+      return i18n.t("jobs:filters.sponsor.options.all");
+    },
+  },
+  {
+    value: "confirmed",
+    get label() {
+      return i18n.t("jobs:filters.sponsor.options.confirmed");
+    },
+  },
+  {
+    value: "potential",
+    get label() {
+      return i18n.t("jobs:filters.sponsor.options.potential");
+    },
+  },
+  {
+    value: "not_found",
+    get label() {
+      return i18n.t("jobs:filters.sponsor.options.not_found");
+    },
+  },
+  {
+    value: "unknown",
+    get label() {
+      return i18n.t("jobs:filters.sponsor.options.unknown");
+    },
+  },
 ];
 
 export const salaryModeOptions: Array<{
   value: SalaryFilterMode;
   label: string;
 }> = [
-  { value: "at_least", label: "at least" },
-  { value: "at_most", label: "at most" },
-  { value: "between", label: "between" },
+  {
+    value: "at_least",
+    get label() {
+      return i18n.t("jobs:filters.salary.modes.at_least");
+    },
+  },
+  {
+    value: "at_most",
+    get label() {
+      return i18n.t("jobs:filters.salary.modes.at_most");
+    },
+  },
+  {
+    value: "between",
+    get label() {
+      return i18n.t("jobs:filters.salary.modes.between");
+    },
+  },
 ];
 
 export const scoreModeOptions: Array<{
   value: ScoreFilterMode;
   label: string;
 }> = [
-  { value: "any", label: "Any" },
-  { value: "has", label: "Has a score" },
-  { value: "missing", label: "No score" },
+  {
+    value: "any",
+    get label() {
+      return i18n.t("jobs:filters.score.modes.any");
+    },
+  },
+  {
+    value: "has",
+    get label() {
+      return i18n.t("jobs:filters.score.modes.has");
+    },
+  },
+  {
+    value: "missing",
+    get label() {
+      return i18n.t("jobs:filters.score.modes.missing");
+    },
+  },
 ];
 
 export const sortFieldOrder: JobSort["key"][] = [
@@ -46,16 +104,40 @@ export const sortFieldOrder: JobSort["key"][] = [
 ];
 
 export const tabDescriptions: Partial<Record<FilterTab, string>> = {
-  discovered: "Jobs searched, ready to be tailored",
-  ready: "Jobs with tailored CVs, ready to apply",
+  get discovered() {
+    return i18n.t("jobs:tabs.descriptions.discovered");
+  },
+  get ready() {
+    return i18n.t("jobs:tabs.descriptions.ready");
+  },
 };
 
 export const datePresetOptions: Array<{
   value: Exclude<DateFilterPreset, "custom">;
   label: string;
 }> = [
-  { value: "7", label: "7 days" },
-  { value: "14", label: "14 days" },
-  { value: "30", label: "30 days" },
-  { value: "90", label: "90 days" },
+  {
+    value: "7",
+    get label() {
+      return i18n.t("jobs:filters.dates.presetDays", { days: 7 });
+    },
+  },
+  {
+    value: "14",
+    get label() {
+      return i18n.t("jobs:filters.dates.presetDays", { days: 14 });
+    },
+  },
+  {
+    value: "30",
+    get label() {
+      return i18n.t("jobs:filters.dates.presetDays", { days: 30 });
+    },
+  },
+  {
+    value: "90",
+    get label() {
+      return i18n.t("jobs:filters.dates.presetDays", { days: 90 });
+    },
+  },
 ];

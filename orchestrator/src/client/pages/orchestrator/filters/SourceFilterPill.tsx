@@ -1,5 +1,6 @@
 import { Globe } from "lucide-react";
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { sourceLabel } from "@/lib/utils";
 import { orderedFilterSources } from "../constants";
@@ -11,6 +12,7 @@ export const SourceFilterPill: React.FC<SourceFilterPillProps> = ({
   onSourceFilterChange,
   sourcesWithJobs,
 }) => {
+  const { t } = useTranslation("jobs");
   const visibleSources = orderedFilterSources.filter((source) =>
     sourcesWithJobs.includes(source),
   );
@@ -18,7 +20,7 @@ export const SourceFilterPill: React.FC<SourceFilterPillProps> = ({
   return (
     <FilterPill
       icon={<Globe />}
-      label="Source"
+      label={t("filters.source.label")}
       active={sourceFilter !== "all"}
       summary={sourceFilter === "all" ? null : sourceLabel[sourceFilter]}
       contentClassName="w-72"
@@ -30,7 +32,7 @@ export const SourceFilterPill: React.FC<SourceFilterPillProps> = ({
           variant={sourceFilter === "all" ? "default" : "outline"}
           onClick={() => onSourceFilterChange("all")}
         >
-          All sources
+          {t("filters.source.all")}
         </Button>
         {visibleSources.map((source) => (
           <Button

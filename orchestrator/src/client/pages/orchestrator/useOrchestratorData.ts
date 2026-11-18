@@ -1,4 +1,5 @@
 import * as api from "@client/api";
+import i18n from "@client/i18n";
 import { subscribeToEventSource } from "@client/lib/sse";
 import type {
   Job,
@@ -209,7 +210,7 @@ export const useOrchestratorData = (selectedJobId: string | null) => {
       } catch (error) {
         if (seq === selectedJobRequestSeqRef.current) {
           setSelectedJobRequestState({ jobId, status: "error" });
-          showErrorToast(error, "Failed to load selected job details");
+          showErrorToast(error, i18n.t("jobs:data.loadSelectedFailed"));
         }
       }
     },
@@ -230,7 +231,7 @@ export const useOrchestratorData = (selectedJobId: string | null) => {
         lastRevisionRef.current = data.revision;
       }
     } catch (error) {
-      showErrorToast(error, "Failed to load jobs");
+      showErrorToast(error, i18n.t("jobs:data.loadFailed"));
     } finally {
       pendingLoadCountRef.current = Math.max(
         0,

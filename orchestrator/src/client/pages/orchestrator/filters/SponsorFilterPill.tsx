@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import { BadgeCheck } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ export const SponsorFilterPill: React.FC<SponsorFilterPillProps> = ({
 }) => (
   <FilterPill
     icon={<BadgeCheck />}
-    label="Sponsor"
+    label={i18n.t("jobs:filters.sponsor.label")}
     active={sponsorFilter !== "all"}
     summary={sponsorLabel}
     contentClassName="w-72"

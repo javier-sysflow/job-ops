@@ -1,3 +1,4 @@
+import i18n from "@client/i18n";
 import { getMetaShortcutLabel } from "@client/lib/meta-key";
 import type { FilterTab } from "@client/pages/orchestrator/constants";
 
@@ -20,30 +21,40 @@ export interface ShortcutDef {
 
 // ─── Definitions ─────────────────────────────────────────────────────────────
 
+// Labels are getters so they are translated when read (at render time).
+
 export const SHORTCUTS = {
   // Navigation
   nextJob: {
     key: "j",
     displayKey: "j",
-    label: "Next job",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.nextJob");
+    },
     group: "navigation",
   },
   nextJobArrow: {
     key: "ArrowDown",
     displayKey: "\u2193",
-    label: "Next job",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.nextJob");
+    },
     group: "navigation",
   },
   prevJob: {
     key: "k",
     displayKey: "k",
-    label: "Previous job",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.prevJob");
+    },
     group: "navigation",
   },
   prevJobArrow: {
     key: "ArrowUp",
     displayKey: "\u2191",
-    label: "Previous job",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.prevJob");
+    },
     group: "navigation",
   },
 
@@ -51,31 +62,41 @@ export const SHORTCUTS = {
   tabReady: {
     key: "1",
     displayKey: "1",
-    label: "Ready tab",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.tabReady");
+    },
     group: "tabs",
   },
   tabDiscovered: {
     key: "2",
     displayKey: "2",
-    label: "Discovered tab",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.tabDiscovered");
+    },
     group: "tabs",
   },
   tabAll: {
     key: "3",
     displayKey: "3",
-    label: "All Jobs tab",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.tabAll");
+    },
     group: "tabs",
   },
   prevTabArrow: {
     key: "ArrowLeft",
     displayKey: "\u2190",
-    label: "Previous tab",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.prevTab");
+    },
     group: "tabs",
   },
   nextTabArrow: {
     key: "ArrowRight",
     displayKey: "\u2192",
-    label: "Next tab",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.nextTab");
+    },
     group: "tabs",
   },
 
@@ -83,54 +104,70 @@ export const SHORTCUTS = {
   skip: {
     key: "s",
     displayKey: "s",
-    label: "Skip job",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.skip");
+    },
     group: "actions",
     scope: ["discovered", "ready"],
   },
   moveToReady: {
     key: "r",
     displayKey: "r",
-    label: "Move to Ready",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.moveToReady");
+    },
     group: "actions",
     scope: ["discovered"],
   },
   markApplied: {
     key: "a",
     displayKey: "a",
-    label: "Mark applied",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.markApplied");
+    },
     group: "actions",
     scope: ["ready"],
   },
   viewPdf: {
     key: "p",
     displayKey: "p",
-    label: "View PDF",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.viewPdf");
+    },
     group: "actions",
     scope: ["ready"],
   },
   downloadPdf: {
     key: "d",
     displayKey: "d",
-    label: "Download PDF",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.downloadPdf");
+    },
     group: "actions",
     scope: ["ready"],
   },
   openListing: {
     key: "o",
     displayKey: "o",
-    label: "Open job listing",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.openListing");
+    },
     group: "actions",
   },
   toggleSelect: {
     key: "x",
     displayKey: "x",
-    label: "Toggle select",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.toggleSelect");
+    },
     group: "actions",
   },
   clearSelection: {
     key: "Escape",
     displayKey: "Esc",
-    label: "Clear selection",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.clearSelection");
+    },
     group: "actions",
   },
 
@@ -138,19 +175,25 @@ export const SHORTCUTS = {
   search: {
     key: "$mod+k",
     displayKey: "$mod+K",
-    label: "Search jobs",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.search");
+    },
     group: "meta",
   },
   searchSlash: {
     key: "/",
     displayKey: "/",
-    label: "Search jobs",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.search");
+    },
     group: "meta",
   },
   help: {
     key: "Shift+?",
     displayKey: "?",
-    label: "Keyboard shortcuts",
+    get label() {
+      return i18n.t("jobs:shortcuts.labels.help");
+    },
     group: "meta",
   },
 } as const satisfies Record<string, ShortcutDef>;
