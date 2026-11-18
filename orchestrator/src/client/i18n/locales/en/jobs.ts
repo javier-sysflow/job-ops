@@ -39,6 +39,7 @@ const jobs = {
     selectJob: "Select {{title}}",
   },
   row: {
+    locationSeparator: " in ",
     generatingPdf: "Generating PDF",
     regeneratePdf: "Regenerate PDF",
   },

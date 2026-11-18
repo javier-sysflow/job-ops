@@ -15,7 +15,9 @@ The client uses **i18next + react-i18next**. English is the source language; Jap
 import { useTranslation } from "react-i18next";
 
 export function JobListEmpty() {
-  const { t } = useTranslation("jobs");
+  // List every namespace you use: "common:" keys only type-check when
+  // "common" is in the hook's namespace list.
+  const { t } = useTranslation(["jobs", "common"]);
   return (
     <p>
       {t("list.empty")}{" "}
@@ -25,7 +27,7 @@ export function JobListEmpty() {
 }
 ```
 
-- **Keys** are camelCase and grouped by component or area: `list.empty`, `filters.salary.placeholder`, `detail.actions.markApplied`. Cross-namespace: `t("common:actions.save")`.
+- **Keys** are camelCase and grouped by component or area: `list.empty`, `filters.salary.placeholder`, `detail.actions.markApplied`. Cross-namespace: `t("common:actions.save")` (needs `useTranslation(["yourNs", "common"])`).
 - **Interpolation:** `"Showing {{count}} jobs"` → `t("list.showing", { count })`. Never concatenate translated fragments into a sentence; Japanese word order differs.
 - **Plurals:** English uses `key_one` / `key_other`; Japanese only needs `key_other`. Call with `{ count }`.
 - **Rich text** (links, bold inside a sentence): `<Trans i18nKey="jobs:list.hint" components={{ strong: <strong />, link: <a href="..." /> }} />` with `"Press <strong>?</strong> for <link>shortcuts</link>"`.

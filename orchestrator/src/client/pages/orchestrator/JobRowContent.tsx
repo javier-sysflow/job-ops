@@ -63,7 +63,12 @@ export const JobRowContent = ({
         <div className="truncate text-sm text-muted-foreground mt-0.5">
           {job.employer}
           {job.location && (
-            <span className="before:content-['_in_']">{job.location}</span>
+            <span
+              className="before:whitespace-pre before:content-[attr(data-separator)]"
+              data-separator={t("row.locationSeparator")}
+            >
+              {job.location}
+            </span>
           )}
         </div>
         {(job.salary?.trim() || showRegeneratingPdf || showStalePdf) && (

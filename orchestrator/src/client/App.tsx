@@ -4,6 +4,7 @@
 
 import { X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Navigate,
   Route,
@@ -57,6 +58,7 @@ const REDIRECTS: Array<{ from: string; to: string }> = [
 const DEMO_WAITLIST_BANNER_DISMISSED_KEY = "jobops.demoWaitlistBannerDismissed";
 
 export const App: React.FC = () => {
+  const { t } = useTranslation("shell");
   useAnalyticsIdentity();
   const location = useLocation();
   const navigate = useNavigate();
@@ -112,21 +114,19 @@ export const App: React.FC = () => {
           <div className="mx-auto flex items-center justify-center gap-3">
             <p className="flex-1 text-center">
               <span className="font-medium">
-                Demo mode: integrations are simulated and data resets every{" "}
-                {demoInfo.resetCadenceHours} hours.
+                {t("demo.banner", { hours: demoInfo.resetCadenceHours })}
               </span>
               {!demoWaitlistBannerDismissed && (
                 <>
                   {" "}
-                  This is a read-only demo. Want JobOps without the Docker
-                  setup?{" "}
+                  {t("demo.waitlistPrompt")}{" "}
                   <a
                     className="font-semibold underline underline-offset-2 hover:text-amber-50"
                     href="https://try.jobops.app?utm_source=demo&utm_medium=banner&utm_campaign=waitlist"
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Join the waitlist.
+                    {t("demo.waitlistLink")}
                   </a>
                 </>
               )}
@@ -150,7 +150,7 @@ export const App: React.FC = () => {
                 }}
               >
                 <X className="h-4 w-4" />
-                <span className="sr-only">Dismiss demo waitlist banner</span>
+                <span className="sr-only">{t("demo.dismiss")}</span>
               </Button>
             )}
           </div>

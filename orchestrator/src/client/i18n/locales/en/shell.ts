@@ -146,6 +146,14 @@ const shell = {
       },
     },
   },
+  demo: {
+    banner:
+      "Demo mode: integrations are simulated and data resets every {{hours}} hours.",
+    waitlistPrompt:
+      "This is a read-only demo. Want JobOps without the Docker setup?",
+    waitlistLink: "Join the waitlist.",
+    dismiss: "Dismiss demo waitlist banner",
+  },
 };
 
 export default shell;

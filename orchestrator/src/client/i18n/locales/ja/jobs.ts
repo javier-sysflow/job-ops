@@ -42,6 +42,7 @@ const jobs: typeof en = {
     selectJob: "{{title}}を選択",
   },
   row: {
+    locationSeparator: "・",
     generatingPdf: "PDFを生成中",
     regeneratePdf: "PDFの再生成が必要",
   },

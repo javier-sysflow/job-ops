@@ -149,6 +149,14 @@ const shell: typeof en = {
       },
     },
   },
+  demo: {
+    banner:
+      "デモモード：連携機能はシミュレーションで、データは{{hours}}時間ごとにリセットされます。",
+    waitlistPrompt:
+      "これは閲覧専用のデモです。Dockerなしで JobOps を使いたい方は",
+    waitlistLink: "ウェイトリストに登録",
+    dismiss: "デモのウェイトリスト案内を閉じる",
+  },
 };
 
 export default shell;
