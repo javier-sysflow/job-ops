@@ -92,6 +92,28 @@ export function applyTailoredSummary(
   }
 }
 
+/** A Reactive Resume v5 skill item built from a tailored skill alone. */
+function buildSkillItem(newSkill: RecordLike): RecordLike | null {
+  const name = typeof newSkill.name === "string" ? newSkill.name.trim() : "";
+  if (!name) return null;
+  return {
+    id: (typeof newSkill.id === "string" && newSkill.id) || createId(),
+    hidden: typeof newSkill.hidden === "boolean" ? newSkill.hidden : false,
+    icon: "",
+    name,
+    proficiency:
+      typeof newSkill.proficiency === "string"
+        ? newSkill.proficiency
+        : typeof newSkill.description === "string"
+          ? newSkill.description
+          : "",
+    level: typeof newSkill.level === "number" ? newSkill.level : 0,
+    keywords: Array.isArray(newSkill.keywords)
+      ? newSkill.keywords.filter((k): k is string => typeof k === "string")
+      : [],
+  };
+}
+
 export function applyTailoredSkills(
   resumeData: RecordLike,
   tailoredSkills?: TailoredSkillsInput,
@@ -108,7 +130,15 @@ export function applyTailoredSkills(
     .filter((item): item is RecordLike => Boolean(item));
 
   const template = existing[0] ?? null;
-  if (!template) return;
+  if (!template) {
+    // Fork: a résumé imported without a skills section (a 履歴書 has none)
+    // used to drop the tailored skills here, so the PDF had no skills at all
+    // while the Word export (which reads job.tailoredSkills) showed them.
+    skillsSection.items = skills
+      .map((newSkill) => buildSkillItem(newSkill))
+      .filter((item): item is RecordLike => item !== null);
+    return;
+  }
 
   skillsSection.items = skills.map((newSkill) => {
     const match =
