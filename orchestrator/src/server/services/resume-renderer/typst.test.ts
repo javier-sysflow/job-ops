@@ -754,6 +754,94 @@ describe("typst resume renderer", () => {
   );
 
   it.skipIf(!typstAvailable() || !typstHasJapaneseFonts())(
+    "puts ふりがな above the name in the shokumu-keirekisho header",
+    async () => {
+      const tempDir = await createTempDir();
+      tempDirs.push(tempDir);
+      const outputPath = join(tempDir, "shokumu-furigana.pdf");
+      const document = buildResumeRenderDocument(shokumuFixture, {
+        language: "japanese",
+      });
+
+      await renderTypstPdf({
+        document: {
+          ...document,
+          customFieldItems: [
+            { title: null, text: "ふりがな：みらー けんた", url: null },
+            ...document.customFieldItems,
+          ],
+        },
+        outputPath,
+        jobId: "job-render-shokumu-furigana",
+        typstTheme: "shokumu-keirekisho",
+      });
+      const text = await readCompactPdfText(outputPath);
+
+      expect(text.match(/みらーけんた/g)).toHaveLength(1);
+      expect(text.indexOf("ふりがなみらーけんた")).toBeGreaterThan(-1);
+      expect(text.indexOf("ふりがなみらーけんた")).toBeLessThan(
+        text.indexOf("氏名ミラー健太"),
+      );
+      expect(text.indexOf("ふりがな")).toBeLessThan(text.indexOf("■職務要約"));
+    },
+  );
+
+  it.skipIf(!typstAvailable() || !typstHasJapaneseFonts())(
+    "never starts a shokumu-keirekisho page that holds only 以上",
+    async () => {
+      const tempDir = await createTempDir();
+      tempDirs.push(tempDir);
+      const base = buildResumeRenderDocument(shokumuFixture, {
+        language: "japanese",
+      });
+      const render = async (rows: number) => {
+        const outputPath = join(tempDir, `shokumu-closing-${rows}.pdf`);
+        await renderTypstPdf({
+          document: {
+            ...base,
+            summary: null,
+            customFieldItems: [],
+            skillGroups: [],
+            languages: [],
+            education: [],
+            awards: [],
+            publications: [],
+            volunteer: [],
+            profileItems: [],
+            experience: base.experience.slice(0, 1),
+            certifications: Array.from({ length: rows }, (_, index) => ({
+              title: `資格テスト${index + 1}番`,
+              date: "2020年1月",
+              bullets: [],
+            })),
+          },
+          outputPath,
+          jobId: `job-render-shokumu-closing-${rows}`,
+          typstTheme: "shokumu-keirekisho",
+        });
+        return (await readPdfText(outputPath)).split("\n");
+      };
+
+      // The smallest row count that needs a second page.
+      let low = 1;
+      let high = 120;
+      expect((await render(high)).length).toBeGreaterThan(1);
+      while (low < high) {
+        const middle = Math.floor((low + high) / 2);
+        if ((await render(middle)).length > 1) high = middle;
+        else low = middle + 1;
+      }
+      const pages = await render(low);
+      const lastPage = pages.at(-1)?.replace(/\s+/g, "") ?? "";
+
+      // Content spilled over, not just the closing mark.
+      expect(lastPage).toContain("以上");
+      expect(lastPage.replace("以上", "").replace(/\d+\/\d+/, "")).not.toBe("");
+      expect(lastPage).toContain(`資格テスト${low}番`);
+    },
+  );
+
+  it.skipIf(!typstAvailable() || !typstHasJapaneseFonts())(
     "renders the remaining shokumu-keirekisho sections and literal markup",
     async () => {
       const tempDir = await createTempDir();

@@ -373,6 +373,31 @@ function shokumuPeriodText(value: string): string {
 
 const SELF_PR_PREFIX = /^(自己\s*(PR|ＰＲ)|self[\s\-_]*pr)\s*[:：]\s*/i;
 
+const FURIGANA_TITLES = new Set(["ふりがな", "フリガナ", "furigana"]);
+const FURIGANA_PREFIX = /^(ふりがな|フリガナ|furigana)\s*[:：]\s*/i;
+
+/**
+ * Fork: the reading of the name from a field titled ふりがな / フリガナ, or an
+ * untitled "ふりがな：きくちはら りほ" (how a 履歴書 import arrives). It goes
+ * above the name in the header instead of under その他. Same rule as the
+ * 職務経歴書 Typst theme.
+ */
+export function furiganaOf(item: {
+  title?: string | null;
+  text?: string | null;
+}): string {
+  const title = clean(item.title);
+  const body = clean(item.text);
+  if (FURIGANA_TITLES.has(title.toLowerCase()) && body && body !== title) {
+    return body;
+  }
+  if (!title || title === body) {
+    const prefix = FURIGANA_PREFIX.exec(body);
+    if (prefix) return body.slice(prefix[0].length).trim();
+  }
+  return "";
+}
+
 function isSelfPrTitle(value: string): boolean {
   const key = value.toLowerCase().replace(/[\s\-_・]/g, "");
   return key === "自己pr" || key === "自己ｐｒ" || key === "selfpr";
@@ -458,6 +483,16 @@ function renderShokumuBody(
   out.push(
     paragraph(ctx.run(`${year}年${month}月${day}日現在`), { align: "right" }),
   );
+  const furigana =
+    document.customFieldItems.map(furiganaOf).find(Boolean) ?? "";
+  if (name && furigana) {
+    out.push(
+      paragraph(
+        ctx.run(`ふりがな　${furigana}`, { size: 8, color: SHOKUMU_MUTED }),
+        { align: "right" },
+      ),
+    );
+  }
   if (name) {
     out.push(
       paragraph(`${ctx.run("氏名　")}${ctx.run(name, { size: 11 })}`, {
@@ -680,6 +715,7 @@ function renderShokumuBody(
     }),
     ...document.customFieldItems
       .filter((item) => !isSelfPrField(clean(item.title), clean(item.text)))
+      .filter((item) => !furiganaOf(item))
       .map((item): [string, string] | [string] => {
         const title = clean(item.title);
         const body = clean(item.text);

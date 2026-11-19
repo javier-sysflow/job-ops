@@ -196,7 +196,29 @@
   let body = field(item, "text")
   is-self-pr-title(title) or ((title == "" or title == body) and body.match(self-pr-prefix) != none)
 }
-#let other-fields = custom-fields.filter(item => not is-self-pr-field(item))
+// Fork: ふりがな belongs with the name in the header, not under その他. It
+// comes from a field titled ふりがな / フリガナ / Furigana, or an untitled
+// field written as "ふりがな：きくちはら りほ" (how a 履歴書 import arrives).
+#let furigana-title(value) = lower(value.trim()) in ("ふりがな", "フリガナ", "furigana")
+#let furigana-prefix = regex("^(ふりがな|フリガナ|(?i)furigana)\\s*[:：]\\s*")
+#let furigana-of(item) = {
+  let title = field(item, "title")
+  let body = field(item, "text")
+  if furigana-title(title) and body != "" and body != title {
+    body
+  } else if title == "" or title == body {
+    let prefix = body.match(furigana-prefix)
+    if prefix != none { body.slice(prefix.end).trim() } else { "" }
+  } else { "" }
+}
+#let furigana = {
+  let found = ""
+  for item in custom-fields {
+    if found == "" { found = furigana-of(item) }
+  }
+  found
+}
+#let other-fields = custom-fields.filter(item => not is-self-pr-field(item) and furigana-of(item) == "")
 
 // ---------------------------------------------------------------------------
 // Style
@@ -216,9 +238,21 @@
 #let keep-together-height = 100mm
 
 #set document(title: if name == "" { "職務経歴書" } else { "職務経歴書 " + name }, author: name)
+#let page-margin-bottom = 20mm
+#let closing-mark = context {
+  let ends = query(<shokumu-content-end>)
+  if ends.len() > 0 and ends.first().location().page() == here().page() {
+    let end-y = ends.first().location().position().y
+    let mark = text(font: serif-fonts, size: 10pt, fill: ink, lang: "ja")[以上]
+    let mark-height = measure(mark).height
+    let gap = if end-y + 12pt + mark-height <= page.height - page-margin-bottom { 12pt } else { 3pt }
+    place(top + right, dx: -margin-x, dy: end-y + gap, mark)
+  }
+}
 #set page(
   paper: __PAGE_PAPER__,
-  margin: (x: margin-x, top: 18mm, bottom: 20mm),
+  margin: (x: margin-x, top: 18mm, bottom: page-margin-bottom),
+  foreground: closing-mark,
   footer: context {
     if counter(page).final().first() > 1 {
       align(center, text(size: 8.5pt, fill: muted, counter(page).display("1 / 1", both: true)))
@@ -405,10 +439,15 @@
 
 #align(center, text(font: sans-fonts, size: 18pt, weight: "bold", tracking: 0.45em)[職務経歴書#h(-0.45em)])
 #v(0.6em)
-#align(right)[
-  #document-date.display("[year]年[month padding:none]月[day padding:none]日現在") \
-  #if name != "" [氏名#h(1em)#text(size: 11pt)[#name]]
-]
+#stack(
+  dir: ttb,
+  spacing: 0.5em,
+  align(right, document-date.display("[year]年[month padding:none]月[day padding:none]日現在")),
+  ..if name != "" and furigana != "" {
+    (align(right, text(size: 8pt, fill: muted)[ふりがな#h(1em)#furigana]),)
+  },
+  ..if name != "" { (align(right)[氏名#h(1em)#text(size: 11pt)[#name]],) },
+)
 
 #if summary != "" [
   = 職務要約
@@ -429,6 +468,11 @@
 
 #if skill-rows.len() > 0 [
   = 活かせる経験・知識・技術
+  // A keyword list justified across the cell spreads mixed Japanese and
+  // English apart (商 社 … 貿 易 実 務), so it stays ragged-right.
+  // A row split across pages leaves an empty label cell on the next one.
+  #set par(justify: false)
+  #set table.cell(breakable: false)
   #table(columns: (label-width + 10mm, 1fr), align: left + horizon, ..skill-rows.flatten())
 ] else if bare-skills.len() > 0 [
   = 活かせる経験・知識・技術
@@ -477,5 +521,10 @@
   }
 ]
 
-#v(1.2em)
-#align(right)[以上]
+// Fork: 以上 closes the document. In the normal flow it started a page of
+// its own whenever the last line sat at the bottom of a page, so it is drawn
+// in the page foreground just below the last line instead (into the bottom
+// margin when there is no room, clear of the centred page number). The
+// marker must be the last thing in the document: Typst keeps a marker with
+// whatever follows it.
+#metadata(none) <shokumu-content-end>

@@ -2,7 +2,7 @@ import { JSDOM } from "jsdom";
 import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 import { buildResumeRenderDocument } from "./document";
-import { renderResumeDocx } from "./docx";
+import { furiganaOf, renderResumeDocx } from "./docx";
 import shokumuFixture from "./fixtures/shokumu-keirekisho-ja.json";
 import type { LatexResumeDocument } from "./types";
 
@@ -159,6 +159,44 @@ describe("renderResumeDocx", () => {
     expect(await read("docProps/core.xml")).toContain(
       "<dc:title>職務経歴書 ミラー 健太</dc:title>",
     );
+  });
+
+  it("puts ふりがな above the name in the 職務経歴書, not under その他", async () => {
+    const base = buildResumeRenderDocument(shokumuFixture, {
+      language: "japanese",
+    });
+    const { text } = await unpack(
+      await renderResumeDocx({
+        document: {
+          ...base,
+          customFieldItems: [
+            { title: null, text: "ふりがな：みらー けんた", url: null },
+            ...base.customFieldItems,
+          ],
+        },
+        layout: "shokumu",
+      }),
+    );
+
+    expect(text.match(/みらー けんた/g)).toHaveLength(1);
+    expect(text.indexOf("ふりがな　みらー けんた")).toBeGreaterThan(-1);
+    expect(text.indexOf("ふりがな　みらー けんた")).toBeLessThan(
+      text.indexOf("氏名"),
+    );
+  });
+
+  it("reads ふりがな from a titled or untitled custom field", () => {
+    expect(furiganaOf({ title: null, text: "ふりがな：きくちはら りほ" })).toBe(
+      "きくちはら りほ",
+    );
+    expect(furiganaOf({ title: "フリガナ", text: "キクチハラ リホ" })).toBe(
+      "キクチハラ リホ",
+    );
+    expect(furiganaOf({ title: "Furigana", text: "kikuchihara riho" })).toBe(
+      "kikuchihara riho",
+    );
+    expect(furiganaOf({ title: null, text: "生年月日：1998年" })).toBe("");
+    expect(furiganaOf({ title: "趣味", text: "ふりがな：x" })).toBe("");
   });
 
   it("leaves out empty 職務経歴書 sections", async () => {
