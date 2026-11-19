@@ -787,6 +787,49 @@ describe("typst resume renderer", () => {
   );
 
   it.skipIf(!typstAvailable() || !typstHasJapaneseFonts())(
+    "joins English skill groups with commas and leaves 履歴書-only fields off the 職務経歴書",
+    async () => {
+      const tempDir = await createTempDir();
+      tempDirs.push(tempDir);
+      const outputPath = join(tempDir, "shokumu-skills-fields.pdf");
+      const document = buildResumeRenderDocument(shokumuFixture, {
+        language: "japanese",
+      });
+
+      await renderTypstPdf({
+        document: {
+          ...document,
+          skillGroups: [
+            { name: "営業", keywords: ["法人営業", "提案営業"] },
+            {
+              name: "Sales",
+              keywords: ["Business Development", "Account Management"],
+            },
+          ],
+          customFieldItems: [
+            ...document.customFieldItems,
+            { title: null, text: "生年月日：1998年10月22日生", url: null },
+            { title: null, text: "連絡先：同上", url: null },
+            { title: "性別", text: "女", url: null },
+            { title: null, text: "趣味：登山", url: null },
+          ],
+        },
+        outputPath,
+        jobId: "job-render-shokumu-skills-fields",
+        typstTheme: "shokumu-keirekisho",
+      });
+      const text = await readCompactPdfText(outputPath);
+
+      expect(text).toContain("法人営業、提案営業");
+      expect(text).toContain("BusinessDevelopment,AccountManagement");
+      expect(text).not.toContain("生年月日");
+      expect(text).not.toContain("同上");
+      expect(text).not.toContain("性別");
+      expect(text).toContain("趣味：登山");
+    },
+  );
+
+  it.skipIf(!typstAvailable() || !typstHasJapaneseFonts())(
     "never starts a shokumu-keirekisho page that holds only 以上",
     async () => {
       const tempDir = await createTempDir();

@@ -185,6 +185,41 @@ describe("renderResumeDocx", () => {
     );
   });
 
+  it("joins English skill groups with commas and leaves 履歴書-only fields out", async () => {
+    const base = buildResumeRenderDocument(shokumuFixture, {
+      language: "japanese",
+    });
+    const { text } = await unpack(
+      await renderResumeDocx({
+        document: {
+          ...base,
+          skillGroups: [
+            { name: "営業", keywords: ["法人営業", "提案営業"] },
+            {
+              name: "Sales",
+              keywords: ["Business Development", "Account Management"],
+            },
+          ],
+          customFieldItems: [
+            ...base.customFieldItems,
+            { title: null, text: "生年月日：1998年10月22日生", url: null },
+            { title: null, text: "連絡先：同上", url: null },
+            { title: "性別", text: "女", url: null },
+            { title: null, text: "趣味：登山", url: null },
+          ],
+        },
+        layout: "shokumu",
+      }),
+    );
+
+    expect(text).toContain("法人営業、提案営業");
+    expect(text).toContain("Business Development, Account Management");
+    expect(text).not.toContain("生年月日");
+    expect(text).not.toContain("同上");
+    expect(text).not.toContain("性別");
+    expect(text).toContain("趣味：登山");
+  });
+
   it("reads ふりがな from a titled or untitled custom field", () => {
     expect(furiganaOf({ title: null, text: "ふりがな：きくちはら りほ" })).toBe(
       "きくちはら りほ",
