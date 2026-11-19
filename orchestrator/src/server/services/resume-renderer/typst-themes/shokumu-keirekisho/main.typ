@@ -161,6 +161,9 @@
     or experience.any(entry => has-cjk(repr(entry)))
 )
 #let list-separator = if is-japanese { "、" } else { ", " }
+// Fork: a skill group written in English reads "A, B" even in a Japanese
+// document; 、 is for lists that contain Japanese.
+#let join-list(values) = values.join(if values.any(has-cjk) { "、" } else { ", " })
 #let paren(value) = if is-japanese { "（" + value + "）" } else { " (" + value + ")" }
 
 #let pr-key(value) = lower(value).replace(regex("[\\s\\-_・]"), "")
@@ -218,7 +221,16 @@
   }
   found
 }
-#let other-fields = custom-fields.filter(item => not is-self-pr-field(item) and furigana-of(item) == "")
+// Fork: 生年月日, 性別 and 連絡先 belong on the 履歴書 (which reads them), not
+// a 職務経歴書: an imported "連絡先：同上" points at nothing here.
+#let rirekisho-only-title = regex("^(生年月日|誕生日|性別|連絡先)$")
+#let rirekisho-only-prefix = regex("^(生年月日|誕生日|性別|連絡先)\\s*[:：]")
+#let is-rirekisho-only(item) = {
+  let title = field(item, "title").trim()
+  let body = field(item, "text")
+  title.match(rirekisho-only-title) != none or ((title == "" or title == body) and body.match(rirekisho-only-prefix) != none)
+}
+#let other-fields = custom-fields.filter(item => not is-self-pr-field(item) and furigana-of(item) == "" and not is-rirekisho-only(item))
 
 // ---------------------------------------------------------------------------
 // Style
@@ -356,10 +368,10 @@
 #let skill-label-cell(body) = table.cell(fill: header-fill, label-text(text(weight: "bold", body)))
 #let skill-rows = keyword-skill-groups.map(group => (
   skill-label-cell(field(group, "name")),
-  strings-of(group, "keywords").join(list-separator),
+  join-list(strings-of(group, "keywords")),
 )) + (
   if keyword-skill-groups.len() > 0 and bare-skills.len() > 0 {
-    ((skill-label-cell(other-label), bare-skills.join(list-separator)),)
+    ((skill-label-cell(other-label), join-list(bare-skills)),)
   } else {
     ()
   }
@@ -476,7 +488,7 @@
   #table(columns: (label-width + 10mm, 1fr), align: left + horizon, ..skill-rows.flatten())
 ] else if bare-skills.len() > 0 [
   = 活かせる経験・知識・技術
-  #bare-skills.join(list-separator)
+  #join-list(bare-skills)
 ]
 
 #if certification-rows.len() > 0 [

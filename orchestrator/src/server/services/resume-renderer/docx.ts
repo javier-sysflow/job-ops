@@ -86,6 +86,25 @@ function escapeXml(value: string): string {
 
 const CJK_PATTERN = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
 
+/**
+ * Fork: a list written in English reads "A, B" even in a Japanese document;
+ * 、 is for lists that contain Japanese. Same rule as the 職務経歴書 theme.
+ */
+function joinList(values: string[]): string {
+  return values.join(values.some((value) => hasCjk(value)) ? "、" : ", ");
+}
+
+/** Fork: 履歴書-only fields the 職務経歴書 leaves out (the 履歴書 reads them). */
+const RIREKISHO_ONLY_TITLE = /^(生年月日|誕生日|性別|連絡先)$/;
+const RIREKISHO_ONLY_PREFIX = /^(生年月日|誕生日|性別|連絡先)\s*[:：]/;
+
+function isRirekishoOnlyField(title: string, body: string): boolean {
+  return (
+    RIREKISHO_ONLY_TITLE.test(title) ||
+    ((!title || title === body) && RIREKISHO_ONLY_PREFIX.test(body))
+  );
+}
+
 function hasCjk(value: string | null | undefined): boolean {
   return Boolean(value && CJK_PATTERN.test(value));
 }
@@ -423,7 +442,6 @@ function renderShokumuBody(
         ),
       ),
     );
-  const listSeparator = isJapanese ? "、" : ", ";
   const paren = (value: string) =>
     isJapanese ? `（${value}）` : ` (${value})`;
   const out: string[] = [];
@@ -605,10 +623,10 @@ function renderShokumuBody(
         { cantSplit: true },
       );
     const rows = keywordGroups.map((group) =>
-      skillRow(clean(group.name), group.keywords.join(listSeparator)),
+      skillRow(clean(group.name), joinList(group.keywords)),
     );
     if (bareSkills.length > 0) {
-      rows.push(skillRow(otherLabel, bareSkills.join(listSeparator)));
+      rows.push(skillRow(otherLabel, joinList(bareSkills)));
     }
     out.push(heading(ctx, "■活かせる経験・知識・技術"));
     out.push(
@@ -621,7 +639,7 @@ function renderShokumuBody(
     );
   } else if (bareSkills.length > 0) {
     out.push(heading(ctx, "■活かせる経験・知識・技術"));
-    out.push(paragraph(ctx.run(bareSkills.join(listSeparator))));
+    out.push(paragraph(ctx.run(joinList(bareSkills))));
   }
 
   if (document.certifications.length > 0) {
@@ -716,6 +734,9 @@ function renderShokumuBody(
     ...document.customFieldItems
       .filter((item) => !isSelfPrField(clean(item.title), clean(item.text)))
       .filter((item) => !furiganaOf(item))
+      .filter(
+        (item) => !isRirekishoOnlyField(clean(item.title), clean(item.text)),
+      )
       .map((item): [string, string] | [string] => {
         const title = clean(item.title);
         const body = clean(item.text);
@@ -770,7 +791,6 @@ function renderResumeBody(
     /[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(
       [document.name, document.headline, document.summary].join(" "),
     );
-  const listSeparator = japanese ? "、" : ", ";
   const levelLabel = japanese ? "レベル" : "Level";
   const tab = textWidth(ctx.page);
   const out: string[] = [];
@@ -895,10 +915,7 @@ function renderResumeBody(
             .map((group) =>
               paragraph(
                 group.keywords.length > 0
-                  ? labelled(
-                      group.name,
-                      ctx.run(group.keywords.join(listSeparator)),
-                    )
+                  ? labelled(group.name, ctx.run(joinList(group.keywords)))
                   : ctx.run(group.name, { bold: true }),
               ),
             )
@@ -923,7 +940,7 @@ function renderResumeBody(
         titles.interests,
         document.interests.map((item) =>
           item.keywords.length > 0
-            ? labelled(item.name, ctx.run(item.keywords.join(listSeparator)))
+            ? labelled(item.name, ctx.run(joinList(item.keywords)))
             : ctx.run(item.name, { bold: true }),
         ),
       ),
