@@ -13,6 +13,9 @@ import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { notFound } from "@infra/errors";
 import { logger } from "@infra/logger";
+import * as jobRirekishoRepo from "@server/repositories/job-rirekisho";
+import * as jobsRepo from "@server/repositories/jobs";
+import * as settingsRepo from "@server/repositories/settings";
 import { safeFilenamePart } from "@shared/filename-sanitizer";
 import {
   buildRirekishoData,
@@ -21,9 +24,6 @@ import {
   resolveRirekishoProfile,
 } from "@shared/rirekisho.js";
 import { stripHtmlTags } from "@shared/utils/string";
-import * as jobRirekishoRepo from "../../repositories/job-rirekisho";
-import * as jobsRepo from "../../repositories/jobs";
-import * as settingsRepo from "../../repositories/settings";
 import { withHostedUsageReservation } from "../hosted-usage";
 import type { JsonSchemaDefinition } from "../llm/types";
 import { createConfiguredLlmService, resolveLlmModel } from "../modelSelection";
@@ -77,7 +77,9 @@ export async function isRirekishoEnabled(): Promise<boolean> {
 }
 
 async function loadRirekishoProfile() {
-  return parseRirekishoProfile(await settingsRepo.getSetting("rirekishoProfile"));
+  return parseRirekishoProfile(
+    await settingsRepo.getSetting("rirekishoProfile"),
+  );
 }
 
 async function resolveToday(): Promise<CalendarDate> {
@@ -151,7 +153,10 @@ function rirekishoFileName(...parts: string[]): string {
 /** The base 履歴書 with the profile's own 志望動機. */
 export async function generateDesignRirekishoPdf(): Promise<RirekishoPdfFile> {
   const resumeJson = await loadBaseResumeJson();
-  const content = await renderRirekishoPdf({ resumeJson, jobId: "design-resume" });
+  const content = await renderRirekishoPdf({
+    resumeJson,
+    jobId: "design-resume",
+  });
   const name = (resumeJson.basics as { name?: string } | undefined)?.name ?? "";
   logger.info("Generated base 履歴書 PDF", { bytes: content.length });
   return { fileName: rirekishoFileName(name || "resume"), content };
@@ -280,7 +285,8 @@ export async function generateJobMotivation(
       brief: job.jobBrief ? JSON.stringify(job.jobBrief) : null,
     },
     profileJson: JSON.stringify(aiProfile),
-    baseMotivation: resolveRirekishoProfile(storedProfile, resumeJson).motivation,
+    baseMotivation: resolveRirekishoProfile(storedProfile, resumeJson)
+      .motivation,
     constraints: writingStyle.constraints?.trim() ?? "",
     doNotUse: writingStyle.doNotUse?.trim() ?? "",
   });

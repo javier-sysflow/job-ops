@@ -48,12 +48,16 @@ const RESUME = {
     phone: "090-1234-5678",
     email: "hanako@example.com",
     location: "〒160-0023 東京都新宿区西新宿1-1-1",
-    customFields: [{ id: "1", icon: "", text: "ふりがな：やまだ はなこ", link: "" }],
+    customFields: [
+      { id: "1", icon: "", text: "ふりがな：やまだ はなこ", link: "" },
+    ],
   },
   summary: { title: "志望動機", content: "<p>基本の志望動機です。</p>" },
   sections: {
     education: {
-      items: [{ school: "見本大学", area: "文学部", period: "2017年4月 - 2021年3月" }],
+      items: [
+        { school: "見本大学", area: "文学部", period: "2017年4月 - 2021年3月" },
+      ],
     },
     experience: {
       items: [
@@ -73,7 +77,9 @@ const RESUME = {
 };
 
 function settings(values: Record<string, string | null>) {
-  mocks.getSetting.mockImplementation(async (key: string) => values[key] ?? null);
+  mocks.getSetting.mockImplementation(
+    async (key: string) => values[key] ?? null,
+  );
 }
 
 function typstAvailable(): boolean {
@@ -84,7 +90,9 @@ function typstAvailable(): boolean {
 function typstHasJapaneseFonts(): boolean {
   const binary = process.env.TYPST_BIN?.trim() || "typst";
   const result = spawnSync(binary, ["fonts"], { encoding: "utf8" });
-  return result.status === 0 && /Noto (Serif|Sans) CJK JP/.test(result.stdout ?? "");
+  return (
+    result.status === 0 && /Noto (Serif|Sans) CJK JP/.test(result.stdout ?? "")
+  );
 }
 
 beforeEach(() => {
@@ -115,7 +123,9 @@ describe("refreshJobMotivationAfterTailoring", () => {
     mocks.getJobRirekisho.mockResolvedValue(null);
     mocks.callJson.mockResolvedValue({
       success: true,
-      data: { motivation: "**貴社**の事業に惹かれました。\n\n\n経験を活かします。" },
+      data: {
+        motivation: "**貴社**の事業に惹かれました。\n\n\n経験を活かします。",
+      },
     });
 
     await refreshJobMotivationAfterTailoring("job-1", { tailoringRan: true });
@@ -125,7 +135,8 @@ describe("refreshJobMotivationAfterTailoring", () => {
       "貴社の事業に惹かれました。\n\n経験を活かします。",
       "ai",
     );
-    const prompt = mocks.callJson.mock.calls[0][0].messages[0].content as string;
+    const prompt = mocks.callJson.mock.calls[0][0].messages[0]
+      .content as string;
     expect(prompt).toContain("株式会社テスト");
     expect(prompt).toContain("太陽光の法人営業を募集します。");
     expect(prompt).toContain("基本の志望動機です。");
@@ -173,7 +184,11 @@ describe("refreshJobMotivationAfterTailoring", () => {
 describe("renderRirekishoPdf", () => {
   const tempDirs: string[] = [];
   afterEach(async () => {
-    await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+    await Promise.all(
+      tempDirs
+        .splice(0)
+        .map((dir) => rm(dir, { recursive: true, force: true })),
+    );
   });
 
   async function renderToText(
@@ -181,19 +196,28 @@ describe("renderRirekishoPdf", () => {
     motivation: string | null,
   ): Promise<string[]> {
     const { renderRirekishoPdf } = await import("./index");
-    const pdf = await renderRirekishoPdf({ resumeJson, motivation, jobId: "test" });
+    const pdf = await renderRirekishoPdf({
+      resumeJson,
+      motivation,
+      jobId: "test",
+    });
     const dir = await mkdtemp(join(tmpdir(), "job-ops-rirekisho-test-"));
     tempDirs.push(dir);
     const path = join(dir, "rirekisho.pdf");
     await writeFile(path, pdf);
-    return (await readPdfText(path)).split("\n").map((page) => page.replace(/\s+/g, ""));
+    return (await readPdfText(path))
+      .split("\n")
+      .map((page) => page.replace(/\s+/g, ""));
   }
 
   it.skipIf(!typstAvailable() || !typstHasJapaneseFonts())(
     "fills the two-page form from the résumé and the profile",
     async () => {
       settings({
-        rirekishoProfile: JSON.stringify({ birthDate: "1998-10-22", gender: "" }),
+        rirekishoProfile: JSON.stringify({
+          birthDate: "1998-10-22",
+          gender: "",
+        }),
         timeZone: "Asia/Tokyo",
       });
       const pages = await renderToText(RESUME, "貴社の事業に惹かれました。");
