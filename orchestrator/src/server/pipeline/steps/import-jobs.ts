@@ -1,6 +1,9 @@
 import { logger } from "@infra/logger";
 import * as jobsRepo from "@server/repositories/jobs";
-import { deduplicateJobsByTitleAndEmployer } from "@shared/job-matching.js";
+import {
+  deduplicateJobsByTitleAndEmployer,
+  filterJobsAlreadyKnown,
+} from "@shared/job-matching.js";
 import type { CreateJobInput } from "@shared/types";
 import { progressHelpers } from "../progress";
 
@@ -22,8 +25,20 @@ export async function importJobsStep(args: {
     });
   }
 
-  const { created, skipped } = await jobsRepo.createJobs(
+  // Fork: also drop jobs already in the list under another link or from
+  // another site; exact-URL matches are still skipped by createJobs.
+  const { fresh, duplicates } = filterJobsAlreadyKnown(
     dedupedJobs,
+    await jobsRepo.listJobIdentities(),
+  );
+  if (duplicates.length > 0) {
+    logger.info("Skipped discovered jobs already in the list", {
+      knownDuplicates: duplicates.length,
+    });
+  }
+
+  const { created, skipped: skippedByUrl } = await jobsRepo.createJobs(
+    fresh,
     (job, index, total) =>
       progressHelpers.importingJob(index, total, {
         id: job.jobUrl,
@@ -31,6 +46,7 @@ export async function importJobsStep(args: {
         employer: job.employer,
       }),
   );
+  const skipped = skippedByUrl + duplicates.length;
   logger.info("Import step complete", {
     discovered: args.discoveredJobs.length,
     fuzzyMerged,

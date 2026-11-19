@@ -458,6 +458,23 @@ export async function getJobBySourceJobId(
 }
 
 /**
+ * Fork: URL, title and employer of every job in scope, so import can spot a
+ * job that is already in the list under another link or from another site.
+ */
+export async function listJobIdentities(): Promise<
+  Array<{ jobUrl: string; title: string; employer: string }>
+> {
+  return db
+    .select({
+      jobUrl: jobs.jobUrl,
+      title: jobs.title,
+      employer: jobs.employer,
+    })
+    .from(jobs)
+    .where(jobsScopeFilter());
+}
+
+/**
  * Get all known job URLs (for deduplication / crawler optimizations).
  */
 export async function getAllJobUrls(): Promise<string[]> {

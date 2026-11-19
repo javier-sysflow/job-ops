@@ -27,6 +27,7 @@ vi.mock("../repositories/jobs", () => ({
   getJobById: vi.fn(),
   createJobs: vi.fn(),
   getAllJobUrls: vi.fn(),
+  listJobIdentities: vi.fn(async () => []),
 }));
 
 // Mock other dependencies to prevent side effects

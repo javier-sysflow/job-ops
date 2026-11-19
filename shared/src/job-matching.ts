@@ -359,3 +359,82 @@ export function deduplicateJobsByTitleAndEmployer(
 
   return merged.map((entry) => entry.job);
 }
+
+/**
+ * Fork: a key that is the same for every link to one posting. LinkedIn links
+ * differ by subdomain and title slug (www.linkedin.com/jobs/view/123 and
+ * jp.linkedin.com/jobs/view/consultant-at-kpmg-123) but end in the same job
+ * number. Other links only lose utm_* tracking parameters and the #fragment.
+ */
+export function getJobIdentityKey(url: string): string {
+  const linkedIn = url.match(/linkedin\.com\/jobs\/view\/(?:[^/?#]*-)?(\d+)/i);
+  if (linkedIn) return `linkedin:${linkedIn[1]}`;
+  try {
+    const parsed = new URL(url.trim());
+    for (const key of [...parsed.searchParams.keys()]) {
+      if (/^utm_/i.test(key)) parsed.searchParams.delete(key);
+    }
+    parsed.hash = "";
+    return parsed.toString();
+  } catch {
+    return url.trim();
+  }
+}
+
+export interface KnownJobIdentity {
+  jobUrl: string;
+  title: string;
+  employer: string;
+}
+
+/**
+ * Fork: splits freshly discovered jobs into new ones and ones already in the
+ * user's list under another link: the same LinkedIn job number, or the same
+ * title at the same employer from another site (the thresholds
+ * deduplicateJobsByTitleAndEmployer uses within one run). Jobs whose exact
+ * URL is already stored are kept, because createJobs skips those itself.
+ */
+export function filterJobsAlreadyKnown<
+  T extends { jobUrl: string; title: string; employer: string },
+>(jobs: T[], known: KnownJobIdentity[]): { fresh: T[]; duplicates: T[] } {
+  const knownUrls = new Set(known.map((job) => job.jobUrl));
+  const knownKeys = new Set(known.map((job) => getJobIdentityKey(job.jobUrl)));
+  const titlesByEmployer = new Map<string, string[]>();
+  for (const job of known) {
+    const employer = normalizeCompanyName(job.employer);
+    const title = normalizeJobTitle(job.title);
+    if (!employer || !title) continue;
+    const titles = titlesByEmployer.get(employer) ?? [];
+    titles.push(title);
+    titlesByEmployer.set(employer, titles);
+  }
+  const employers = [...titlesByEmployer.keys()];
+
+  const isKnownElsewhere = (job: T): boolean => {
+    if (knownKeys.has(getJobIdentityKey(job.jobUrl))) return true;
+    const employer = normalizeCompanyName(job.employer);
+    const title = normalizeJobTitle(job.title);
+    if (!employer || !title) return false;
+    return employers.some(
+      (knownEmployer) =>
+        calculateSimilarity(employer, knownEmployer) >
+          FUZZY_DEDUP_EMPLOYER_THRESHOLD &&
+        (titlesByEmployer.get(knownEmployer) ?? []).some(
+          (knownTitle) =>
+            calculateSimilarity(title, knownTitle) >
+            FUZZY_DEDUP_TITLE_THRESHOLD,
+        ),
+    );
+  };
+
+  const fresh: T[] = [];
+  const duplicates: T[] = [];
+  for (const job of jobs) {
+    if (!knownUrls.has(job.jobUrl) && isKnownElsewhere(job)) {
+      duplicates.push(job);
+    } else {
+      fresh.push(job);
+    }
+  }
+  return { fresh, duplicates };
+}

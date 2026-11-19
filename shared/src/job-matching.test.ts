@@ -1,8 +1,92 @@
 import { describe, expect, it } from "vitest";
 import {
   deduplicateJobsByTitleAndEmployer,
+  filterJobsAlreadyKnown,
+  getJobIdentityKey,
   matchJobLocationIntent,
 } from "./job-matching";
+
+describe("getJobIdentityKey", () => {
+  it("gives every link to one LinkedIn job the same key", () => {
+    const key = "linkedin:4210900577";
+    expect(
+      getJobIdentityKey("https://www.linkedin.com/jobs/view/4210900577"),
+    ).toBe(key);
+    expect(
+      getJobIdentityKey(
+        "https://jp.linkedin.com/jobs/view/%E3%80%90tcf-deals-m-a%E3%80%91-at-ey-4210900577?position=9&refId=abc",
+      ),
+    ).toBe(key);
+  });
+
+  it("ignores utm tracking and fragments on other links", () => {
+    expect(
+      getJobIdentityKey(
+        "https://careers.example.com/postings/9190fa39?utm_source=freehire.me#apply",
+      ),
+    ).toBe("https://careers.example.com/postings/9190fa39");
+    expect(getJobIdentityKey("https://jp.indeed.com/viewjob?jk=abc")).toBe(
+      "https://jp.indeed.com/viewjob?jk=abc",
+    );
+  });
+});
+
+describe("filterJobsAlreadyKnown", () => {
+  const known = [
+    {
+      jobUrl: "https://www.linkedin.com/jobs/view/4481302317",
+      title: "Advisory Senior Analyst",
+      employer: "Aurora Energy Research",
+    },
+    {
+      jobUrl: "https://www.linkedin.com/jobs/view/3876325633",
+      title:
+        "[BI](CVI)Climate & Value Innovationコンサルタント（気候変動・脱炭素）",
+      employer: "KPMGジャパン／KPMG Japan",
+    },
+  ];
+
+  it("drops the same LinkedIn job under its other link", () => {
+    const job = {
+      jobUrl:
+        "https://jp.linkedin.com/jobs/view/bi-cvi-climate-value-innovation-3876325633",
+      title:
+        "[BI](CVI)Climate & Value Innovationコンサルタント（気候変動・脱炭素）",
+      employer: "KPMGジャパン／KPMG Japan",
+    };
+    expect(filterJobsAlreadyKnown([job], known)).toEqual({
+      fresh: [],
+      duplicates: [job],
+    });
+  });
+
+  it("drops the same title at the same employer from another site", () => {
+    const job = {
+      jobUrl:
+        "https://careers.auroraer.com/en/postings/9190fa39?utm_source=freehire.me",
+      title: "Advisory Senior Analyst",
+      employer: "Aurora Energy Research",
+    };
+    expect(filterJobsAlreadyKnown([job], known).duplicates).toEqual([job]);
+  });
+
+  it("keeps new jobs, other roles at a known employer, and exact URLs", () => {
+    const otherRole = {
+      jobUrl: "https://www.linkedin.com/jobs/view/4448305298",
+      title: "[SRS]サステナビリティ戦略・事業変革コンサルタント",
+      employer: "KPMGジャパン／KPMG Japan",
+    };
+    const newJob = {
+      jobUrl: "https://www.linkedin.com/jobs/view/4450674047",
+      title: "エネルギー・脱炭素分野 調査・コンサルタント",
+      employer: "PERSOL CAREER BRS",
+    };
+    const sameUrl = { ...known[0] };
+    expect(filterJobsAlreadyKnown([otherRole, newJob, sameUrl], known)).toEqual(
+      { fresh: [otherRole, newJob, sameUrl], duplicates: [] },
+    );
+  });
+});
 
 describe("map-radius location matching", () => {
   const intent = {

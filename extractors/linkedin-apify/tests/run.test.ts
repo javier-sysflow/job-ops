@@ -55,11 +55,11 @@ describe("mapLinkedInItem", () => {
     const job = mapLinkedInItem(CONSULTANT, { searchCountry: "japan" });
     expect(job).toMatchObject({
       source: "linkedin",
-      sourceJobId: "4487328734",
+      sourceJobId: "li-4487328734",
       title: "Sustainability Consultant",
       employer: "Verdant Search",
-      jobUrl: CONSULTANT.url,
-      applicationLink: CONSULTANT.url,
+      jobUrl: "https://www.linkedin.com/jobs/view/4487328734",
+      applicationLink: "https://www.linkedin.com/jobs/view/4487328734",
       location: "Tokyo, Tokyo, Japan",
       salary: "¥10,000,000/yr - ¥19,000,000/yr",
       datePosted: "2026-11-16",
@@ -87,13 +87,26 @@ describe("mapLinkedInItem", () => {
     }
   });
 
-  it("strips LinkedIn tracking parameters from the job URL", () => {
+  it("stores the job URL in JobSpy's format, so old LinkedIn jobs match", () => {
     const job = mapLinkedInItem({
       ...CONSULTANT,
+      id: undefined,
       url: undefined,
       link: `${CONSULTANT.url}?position=1&pageNum=0&refId=abc&trackingId=xyz`,
     });
-    expect(job?.jobUrl).toBe(CONSULTANT.url);
+    expect(job?.jobUrl).toBe("https://www.linkedin.com/jobs/view/4487328734");
+    expect(job?.sourceJobId).toBe("li-4487328734");
+  });
+
+  it("falls back to the cleaned URL when it has no job number", () => {
+    const job = mapLinkedInItem({
+      ...CONSULTANT,
+      id: undefined,
+      url: "https://www.linkedin.com/jobs/collections/recommended?refId=abc",
+    });
+    expect(job?.jobUrl).toBe(
+      "https://www.linkedin.com/jobs/collections/recommended",
+    );
   });
 
   it("skips results without a URL", () => {

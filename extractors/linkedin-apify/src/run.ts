@@ -117,6 +117,16 @@ function buildLocationEvidence(
   };
 }
 
+/** LinkedIn's job number, from the result id or the end of its URL. */
+function getLinkedInJobNumber(
+  item: Record<string, unknown>,
+  url: string,
+): string | undefined {
+  const id = toStr(item.id);
+  if (id && /^\d+$/.test(id)) return id;
+  return url.match(/\/jobs\/view\/(?:[^/?#]*-)?(\d+)/)?.[1];
+}
+
 /** Removes LinkedIn's tracking query (?refId=...&trackingId=...). */
 function cleanJobUrl(url: string): string {
   try {
@@ -135,13 +145,19 @@ export function mapLinkedInItem(
 ): CreateJobInput | null {
   const rawUrl = toStr(item.url) ?? toStr(item.link);
   if (!rawUrl) return null;
-  const jobUrl = cleanJobUrl(rawUrl);
+  // Fork: the same URL and id format JobSpy stored (www.linkedin.com/jobs/
+  // view/<number>, "li-<number>"), so jobs found before the switch to Apify
+  // are recognised and not imported a second time.
+  const jobNumber = getLinkedInJobNumber(item, rawUrl);
+  const jobUrl = jobNumber
+    ? `https://www.linkedin.com/jobs/view/${jobNumber}`
+    : cleanJobUrl(rawUrl);
   const location = toStr(item.location);
   const postedDate = toStr(item.postedDate) ?? toStr(item.postedAt);
 
   return {
     source: "linkedin",
-    sourceJobId: toStr(item.id) ?? jobUrl,
+    sourceJobId: jobNumber ? `li-${jobNumber}` : (toStr(item.id) ?? jobUrl),
     title: toStr(item.title) ?? "Unknown Title",
     employer: toStr(item.companyName) ?? "Unknown Employer",
     employerUrl: toStr(item.companyUrl) ?? toStr(item.companyLinkedinUrl),
