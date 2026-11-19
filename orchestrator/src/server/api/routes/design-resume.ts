@@ -25,6 +25,7 @@ import {
   docxContentDisposition,
   generateDesignResumeDocx,
 } from "@server/services/resume-docx";
+import { generateDesignRirekishoPdf } from "@server/services/rirekisho";
 import { parseV5ResumeData } from "@server/services/rxresume/schema/v5";
 import { getJobOpsPublicAvailability } from "@server/services/tracer-links";
 import type { DesignResumeJson, DesignResumePatchRequest } from "@shared/types";
@@ -448,6 +449,18 @@ designResumeRouter.get(
   asyncRoute(async (_req: Request, res: Response) => {
     const file = await generateDesignResumeDocx();
     res.setHeader("Content-Type", DOCX_MIME_TYPE);
+    res.setHeader("Content-Disposition", docxContentDisposition(file.fileName));
+    res.setHeader("Cache-Control", "no-store");
+    res.send(file.content);
+  }),
+);
+
+/** Fork: the base 履歴書 (厚生労働省 2021 様式) with the profile's 志望動機. */
+designResumeRouter.get(
+  "/rirekisho/pdf",
+  asyncRoute(async (_req: Request, res: Response) => {
+    const file = await generateDesignRirekishoPdf();
+    res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", docxContentDisposition(file.fileName));
     res.setHeader("Cache-Control", "no-store");
     res.send(file.content);

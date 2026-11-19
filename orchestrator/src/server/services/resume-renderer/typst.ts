@@ -702,7 +702,7 @@ function truncateOutput(value: string): string {
   return `${trimmed.slice(0, 1200)}...(truncated ${trimmed.length - 1200} chars)`;
 }
 
-async function runTypst(args: {
+export async function runTypst(args: {
   cwd: string;
   typPath: string;
   outputPath: string;

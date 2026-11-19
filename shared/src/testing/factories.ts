@@ -179,6 +179,7 @@ export const createAppSettings = (
     default: "standard",
     override: null,
   },
+  rirekishoProfile: { value: {}, default: {}, override: null },
   rxresumeBaseResumeId: null,
   timeZone: null,
   ukvisajobsMaxJobs: { value: 50, default: 50, override: null },

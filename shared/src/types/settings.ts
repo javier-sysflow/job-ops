@@ -7,6 +7,7 @@ import type {
   LocationMatchStrictness,
   LocationSearchScope,
 } from "../location-preferences";
+import type { RirekishoProfile } from "../rirekisho";
 
 export { TYPST_THEME_LABELS, TYPST_THEME_VALUES };
 
@@ -273,6 +274,7 @@ export interface AppSettings {
   typstTheme: Resolved<TypstTheme>;
   pdfPaperSize: Resolved<PdfPaperSize>;
   applicationStageStyle: Resolved<ApplicationStageStyle>;
+  rirekishoProfile: Resolved<RirekishoProfile>;
   ukvisajobsMaxJobs: Resolved<number>;
   adzunaMaxJobsPerTerm: Resolved<number>;
   gradcrackerMaxJobsPerTerm: Resolved<number>;

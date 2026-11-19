@@ -872,6 +872,37 @@ export const jobDocuments = sqliteTable(
   }),
 );
 
+// Fork: a job's own 志望動機 for its 履歴書 (one row per job).
+export const jobRirekisho = sqliteTable(
+  "job_rirekisho",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    jobId: text("job_id")
+      .notNull()
+      .unique()
+      .references(() => jobs.id, { onDelete: "cascade" }),
+    motivation: text("motivation").notNull().default(""),
+    motivationSource: text("motivation_source", { enum: ["ai", "user"] })
+      .notNull()
+      .default("ai"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    tenantJobIndex: index("idx_job_rirekisho_tenant_job_id").on(
+      table.tenantId,
+      table.jobId,
+    ),
+  }),
+);
+
 export const postApplicationIntegrations = sqliteTable(
   "post_application_integrations",
   {

@@ -6,6 +6,12 @@ import {
 } from "./location-preferences";
 import { getDefaultPromptTemplate } from "./prompt-template-definitions";
 import {
+  parseRirekishoProfile,
+  type RirekishoProfile,
+  rirekishoProfileSchema,
+  serializeRirekishoProfile,
+} from "./rirekisho";
+import {
   APPLICATION_STAGE_STYLE_VALUES,
   type ApplicationStageStyle,
   CHAT_STYLE_LANGUAGE_MODE_VALUES,
@@ -489,6 +495,15 @@ export const settingsRegistry = {
     serialize: (
       value: ApplicationStageStyle | null | undefined,
     ): string | null => value ?? null,
+  },
+  // Fork: 履歴書 form fields (ふりがな, 生年月日, 住所, base 志望動機...), edited in
+  // Resume Studio. See shared/rirekisho.ts for the fallbacks.
+  rirekishoProfile: {
+    kind: "typed" as const,
+    schema: rirekishoProfileSchema,
+    default: (): RirekishoProfile => ({}),
+    parse: parseRirekishoProfile,
+    serialize: serializeRirekishoProfile,
   },
   ukvisajobsMaxJobs: {
     kind: "typed" as const,

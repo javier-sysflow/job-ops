@@ -577,6 +577,24 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_job_documents_tenant_job_id
     ON job_documents(tenant_id, job_id)`,
 
+  // Fork: a job's own 志望動機 for its 履歴書 (one row per job).
+  `CREATE TABLE IF NOT EXISTS job_rirekisho (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+    user_id TEXT,
+    job_id TEXT NOT NULL UNIQUE,
+    motivation TEXT NOT NULL DEFAULT '',
+    motivation_source TEXT NOT NULL DEFAULT 'ai' CHECK(motivation_source IN ('ai', 'user')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+  )`,
+
+  `CREATE INDEX IF NOT EXISTS idx_job_rirekisho_tenant_job_id
+    ON job_rirekisho(tenant_id, job_id)`,
+
   `CREATE TABLE IF NOT EXISTS job_chat_threads (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL DEFAULT 'tenant_default',

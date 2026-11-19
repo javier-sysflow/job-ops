@@ -42,6 +42,7 @@ import {
   extractProjectsFromProfile,
   resolveResumeProjectsSettings,
 } from "../services/resumeProjects";
+import { refreshJobMotivationAfterTailoring } from "../services/rirekisho";
 import { LlmNotConfiguredError } from "../services/scorer";
 import { generateTailoring } from "../services/summary";
 import {
@@ -785,6 +786,7 @@ export async function summarizeJob(
         shouldUpdateAllTailoring || requestedFields.includes("projects");
       const shouldGenerateTailoring =
         shouldUpdateSummary || shouldUpdateHeadline || shouldUpdateSkills;
+      let tailoringRan = false;
 
       if (
         shouldGenerateTailoring &&
@@ -798,6 +800,7 @@ export async function summarizeJob(
         );
         if (tailoringResult.success && tailoringResult.data) {
           tailoringUsageSucceeded = true;
+          tailoringRan = true;
           if (shouldUpdateSummary) {
             tailoredSummary = tailoringResult.data.summary;
           }
@@ -896,6 +899,11 @@ export async function summarizeJob(
           ? { selectedProjectIds: selectedProjectIds ?? undefined }
           : {}),
       });
+
+      // Fork: the job's 履歴書 志望動機, with the 職務経歴書 layout on.
+      if (shouldUpdateSummary) {
+        await refreshJobMotivationAfterTailoring(job.id, { tailoringRan });
+      }
 
       await settleTailoringUsage();
       return { success: true };
