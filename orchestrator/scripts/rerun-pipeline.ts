@@ -4,14 +4,19 @@
  * run; search terms and location come from their saved settings.
  *
  *   npm run pipeline:rerun -- <username>
+ *   npm run pipeline:rerun -- <username> --sources mynavi,japandev
  *
  * In the container: cd /app/orchestrator && npm run pipeline:rerun -- <username>
+ *
+ * --sources replaces the sources of the last run. Use it when the last run's
+ * saved options are gone: migrate.ts currently resets them on every restart.
  *
  * The server does not know about a run started here, so the user's page shows
  * the new jobs when they reload, not live progress. Refuses to start while
  * the user has a run that started in the last 30 minutes and is still open.
  */
 import "../src/server/config/env";
+import type { ExtractorSourceId } from "@shared/extractors";
 import type { PipelineConfig } from "@shared/types";
 import { and, desc, eq } from "drizzle-orm";
 import { closeDb, db, schema } from "../src/server/db/index";
@@ -42,10 +47,29 @@ function pickRerunConfig(value: unknown): Partial<PipelineConfig> {
   return out as Partial<PipelineConfig>;
 }
 
+function parseArgs(argv: string[]): { username: string; sources: string[] } {
+  const words: string[] = [];
+  let sources: string[] = [];
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--sources") {
+      sources = (argv[i + 1] ?? "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+      i += 1;
+    } else {
+      words.push(argv[i]);
+    }
+  }
+  return { username: words.join(" ").trim(), sources };
+}
+
 async function main() {
-  const username = process.argv.slice(2).join(" ").trim();
+  const { username, sources } = parseArgs(process.argv.slice(2));
   if (!username) {
-    throw new Error("Usage: npm run pipeline:rerun -- <username>");
+    throw new Error(
+      "Usage: npm run pipeline:rerun -- <username> [--sources a,b,c]",
+    );
   }
 
   const [user] = await db
@@ -82,12 +106,21 @@ async function main() {
   }
 
   const config = pickRerunConfig(lastRun?.requestedConfig);
+  const registry = await initializeExtractorRegistry();
+  if (sources.length > 0) {
+    const unknown = sources.filter(
+      (source) => !registry.manifestBySource.has(source as ExtractorSourceId),
+    );
+    if (unknown.length > 0) {
+      throw new Error(`Unknown sources: ${unknown.join(", ")}`);
+    }
+    config.sources = sources as ExtractorSourceId[];
+  }
   console.log(
     `Re-running the last search for "${username}" with`,
     JSON.stringify(config),
   );
 
-  await initializeExtractorRegistry();
   const result = await runWithRequestContext(
     {
       requestId: `rerun-${Date.now()}`,
