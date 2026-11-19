@@ -3,6 +3,8 @@
  */
 
 import { logger } from "@infra/logger";
+import * as settingsRepo from "@server/repositories/settings";
+import { settingsRegistry } from "@shared/settings-registry";
 import type { ResumeProfile } from "@shared/types";
 import { stripHtmlTags } from "@shared/utils/string";
 import type { JsonSchemaDefinition } from "./llm/types";
@@ -146,12 +148,50 @@ export async function generateSummary(
   };
 }
 
+type WritingStyle = Awaited<ReturnType<typeof getWritingStyle>>;
+
+/**
+ * Fork: with the 職務経歴書 layout on, the tailored text follows the résumé's
+ * language, not the ad's. The layout, headings and work history are Japanese,
+ * so an English summary and skills for an English ad gave a mixed-language
+ * document. A manually chosen language still wins.
+ */
+async function resolveTailoringLanguageStyle(
+  style: WritingStyle,
+): Promise<WritingStyle> {
+  if (style.languageMode === "manual") return style;
+  const [rendererRaw, themeRaw] = await Promise.all([
+    settingsRepo.getSetting("pdfRenderer"),
+    settingsRepo.getSetting("typstTheme"),
+  ]);
+  const renderer =
+    settingsRegistry.pdfRenderer.parse(rendererRaw ?? undefined) ??
+    settingsRegistry.pdfRenderer.default();
+  const theme =
+    settingsRegistry.typstTheme.parse(themeRaw ?? undefined) ??
+    settingsRegistry.typstTheme.default();
+  return renderer === "typst" && theme === "shokumu-keirekisho"
+    ? { ...style, languageMode: "match-resume" }
+    : style;
+}
+
+/**
+ * Fork: appended after the template, so custom templates get it too. A
+ * résumé without a skills section got skills copied from the ad ("CRM, Lead
+ * Management") and career goals the candidate never stated.
+ */
+export const TAILORING_TRUTHFULNESS_RULES = `TRUTHFULNESS (always applies):
+- Every skill, tool, qualification, language, achievement and number you write must be supported by MY PROFILE. Renaming a skill the profile shows to the JD's wording is fine. Adding a skill only because the JD asks for it is not.
+- If MY PROFILE has no skills section, build the skill groups from what its experience, summary, education, certifications and languages actually show. Never copy requirements from the JD into the skills.
+- Do not state career goals, interests, plans or motivations that MY PROFILE does not state.`;
+
 async function buildTailoringPrompt(
   profile: ResumeProfile,
   jd: string,
-  writingStyle: Awaited<ReturnType<typeof getWritingStyle>>,
+  baseWritingStyle: WritingStyle,
 ): Promise<string> {
   const jobDescription = stripHtmlTags(jd);
+  const writingStyle = await resolveTailoringLanguageStyle(baseWritingStyle);
   const resolvedLanguage = resolveWritingOutputLanguage({
     style: writingStyle,
     profile,
@@ -187,11 +227,16 @@ async function buildTailoringPrompt(
       position: e.position,
       summary: e.summary,
     })),
+    // Fork: so skills can be grounded in real languages, degrees and
+    // certifications instead of the job ad.
+    languages: profile.sections?.languages,
+    education: profile.sections?.education,
+    certifications: profile.sections?.certifications,
   };
 
   const template = await getEffectivePromptTemplate("tailoringPromptTemplate");
 
-  return renderPromptTemplate(template, {
+  const prompt = renderPromptTemplate(template, {
     jobDescription,
     profileJson: JSON.stringify(relevantProfile),
     outputLanguage,
@@ -212,6 +257,7 @@ async function buildTailoringPrompt(
       ? `- Avoid these words or phrases: ${writingStyle.doNotUse}`
       : "",
   });
+  return `${prompt}\n\n${TAILORING_TRUTHFULNESS_RULES}`;
 }
 
 function sanitizeText(text: string): string {

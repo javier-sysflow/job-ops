@@ -367,4 +367,100 @@ describe("generateTailoring", () => {
     // "keep under 90 words" is stripped from constraints because summaryMaxWords (35) takes precedence
     expect(prompt).not.toContain("keep under 90 words");
   });
+
+  describe("fork: grounded, single-language tailoring", () => {
+    const japaneseProfile: ResumeProfile = {
+      basics: {
+        name: "Test User",
+        summary:
+          "半導体商社での法人営業と、ベトナムでの日系製造業向け太陽光の提案を担当してきました。",
+      },
+      sections: {
+        skills: { items: [] },
+        languages: {
+          items: [
+            { id: "l1", language: "英語", fluency: "ビジネス", visible: true },
+          ],
+        },
+        education: {
+          items: [
+            { id: "e1", school: "見本大学", area: "文学部", visible: true },
+          ],
+        },
+        certifications: {
+          items: [{ id: "c1", title: "IELTS 6.5", visible: true }],
+        },
+      },
+    } as unknown as ResumeProfile;
+    const englishAd =
+      "We are looking for a business development representative with CRM experience to grow our SaaS customers in Japan and work with the sales team.";
+
+    beforeEach(() => {
+      vi.mocked(getWritingStyle).mockResolvedValue({
+        tone: "professional",
+        formality: "medium",
+        constraints: "",
+        doNotUse: "",
+        languageMode: "match-job-description",
+        manualLanguage: "english",
+        summaryMaxWords: null,
+        maxKeywordsPerSkill: null,
+      });
+    });
+
+    it("writes in the résumé's language with the 職務経歴書 layout, even for an English ad", async () => {
+      vi.mocked(getSetting).mockImplementation(async (key) =>
+        key === "typstTheme"
+          ? "shokumu-keirekisho"
+          : key === "pdfRenderer"
+            ? "typst"
+            : null,
+      );
+      await generateTailoring(englishAd, japaneseProfile);
+      const prompt =
+        callJsonMock.mock.calls.at(-1)?.[0]?.messages?.[0]?.content;
+      expect(prompt).toContain("Write the summary in Japanese.");
+    });
+
+    it("follows the ad's language with another layout", async () => {
+      vi.mocked(getSetting).mockImplementation(async (key) =>
+        key === "typstTheme"
+          ? "classic"
+          : key === "pdfRenderer"
+            ? "typst"
+            : null,
+      );
+      await generateTailoring(englishAd, japaneseProfile);
+      const prompt =
+        callJsonMock.mock.calls.at(-1)?.[0]?.messages?.[0]?.content;
+      expect(prompt).toContain("Write the summary in English.");
+    });
+
+    it("gives the model languages, education and certifications and forbids invented skills", async () => {
+      await generateTailoring(englishAd, japaneseProfile);
+      const prompt =
+        callJsonMock.mock.calls.at(-1)?.[0]?.messages?.[0]?.content;
+      expect(prompt).toContain("IELTS 6.5");
+      expect(prompt).toContain("見本大学");
+      expect(prompt).toContain('"language":"英語"');
+      expect(prompt).toContain("TRUTHFULNESS (always applies):");
+      expect(prompt).toContain(
+        "Never copy requirements from the JD into the skills.",
+      );
+      expect(prompt.trim().endsWith("does not state.")).toBe(true);
+    });
+
+    it("keeps the truthfulness rules with a custom template", async () => {
+      vi.mocked(getSetting).mockImplementation(async (key) =>
+        key === "tailoringPromptTemplate"
+          ? "Custom template for {{jobDescription}}"
+          : null,
+      );
+      await generateTailoring(englishAd, japaneseProfile);
+      const prompt =
+        callJsonMock.mock.calls.at(-1)?.[0]?.messages?.[0]?.content;
+      expect(prompt).toContain("Custom template for");
+      expect(prompt).toContain("TRUTHFULNESS (always applies):");
+    });
+  });
 });
