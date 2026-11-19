@@ -169,6 +169,21 @@ const HEALTH_PROBE_CONFIG_BY_SOURCE: Record<
       jobspyResultsWanted: "1",
     },
   },
+  googlejobs: {
+    searchTerm: "営業",
+    selectedCountry: "japan",
+    settings: { jobspyResultsWanted: "1" },
+  },
+  kyujinbox: {
+    searchTerm: "営業",
+    selectedCountry: "japan",
+    settings: { jobspyResultsWanted: "1" },
+  },
+  daijob: {
+    searchTerm: "sales",
+    selectedCountry: "japan",
+    settings: { jobspyResultsWanted: "1" },
+  },
   manual: {
     searchTerm: DEFAULT_HEALTH_SEARCH_TERM,
     selectedCountry: DEFAULT_HEALTH_SELECTED_COUNTRY,

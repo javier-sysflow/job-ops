@@ -20,6 +20,9 @@ export const EXTRACTOR_SOURCE_IDS = [
   "himalayas",
   "japandev",
   "mynavi",
+  "googlejobs",
+  "kyujinbox",
+  "daijob",
   "manual",
 ] as const;
 
@@ -96,6 +99,25 @@ export const EXTRACTOR_SOURCE_METADATA: Record<
   mynavi: {
     label: "Mynavi 転職",
     order: 118,
+    category: "pipeline",
+    requiresCredentials: true,
+  },
+  // Fork: Google Jobs, 求人ボックス and Daijob through Apify actors.
+  googlejobs: {
+    label: "Google Jobs",
+    order: 119,
+    category: "pipeline",
+    requiresCredentials: true,
+  },
+  kyujinbox: {
+    label: "求人ボックス",
+    order: 119.1,
+    category: "pipeline",
+    requiresCredentials: true,
+  },
+  daijob: {
+    label: "Daijob",
+    order: 119.2,
     category: "pipeline",
     requiresCredentials: true,
   },

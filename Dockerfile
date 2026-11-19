@@ -99,6 +99,9 @@ COPY extractors/himalayas/package*.json ./extractors/himalayas/
 COPY extractors/japandev/package*.json ./extractors/japandev/
 COPY extractors/mynavi/package*.json ./extractors/mynavi/
 COPY extractors/linkedin-apify/package*.json ./extractors/linkedin-apify/
+COPY extractors/daijob/package*.json ./extractors/daijob/
+COPY extractors/kyujinbox/package*.json ./extractors/kyujinbox/
+COPY extractors/googlejobs/package*.json ./extractors/googlejobs/
 COPY extractors/browser-utils/package*.json ./extractors/browser-utils/
 
 # Install build-time Node dependencies on the native builder platform. The
@@ -133,6 +136,9 @@ COPY extractors/himalayas ./extractors/himalayas
 COPY extractors/japandev ./extractors/japandev
 COPY extractors/mynavi ./extractors/mynavi
 COPY extractors/linkedin-apify ./extractors/linkedin-apify
+COPY extractors/daijob ./extractors/daijob
+COPY extractors/kyujinbox ./extractors/kyujinbox
+COPY extractors/googlejobs ./extractors/googlejobs
 COPY extractors/browser-utils ./extractors/browser-utils
 
 # ============================================================================
@@ -190,6 +196,9 @@ COPY extractors/himalayas/package*.json ./extractors/himalayas/
 COPY extractors/japandev/package*.json ./extractors/japandev/
 COPY extractors/mynavi/package*.json ./extractors/mynavi/
 COPY extractors/linkedin-apify/package*.json ./extractors/linkedin-apify/
+COPY extractors/daijob/package*.json ./extractors/daijob/
+COPY extractors/kyujinbox/package*.json ./extractors/kyujinbox/
+COPY extractors/googlejobs/package*.json ./extractors/googlejobs/
 COPY extractors/browser-utils/package*.json ./extractors/browser-utils/
 
 # Install production Node dependencies only.
@@ -300,6 +309,9 @@ COPY extractors/himalayas ./extractors/himalayas
 COPY extractors/japandev ./extractors/japandev
 COPY extractors/mynavi ./extractors/mynavi
 COPY extractors/linkedin-apify ./extractors/linkedin-apify
+COPY extractors/daijob ./extractors/daijob
+COPY extractors/kyujinbox ./extractors/kyujinbox
+COPY extractors/googlejobs ./extractors/googlejobs
 COPY extractors/browser-utils ./extractors/browser-utils
 
 # Create runtime directories.

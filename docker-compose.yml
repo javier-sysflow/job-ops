@@ -104,6 +104,15 @@ services:
         - path: ./extractors/linkedin-apify/src
           target: /app/extractors/linkedin-apify/src
           action: sync+restart
+        - path: ./extractors/googlejobs/src
+          target: /app/extractors/googlejobs/src
+          action: sync+restart
+        - path: ./extractors/kyujinbox/src
+          target: /app/extractors/kyujinbox/src
+          action: sync+restart
+        - path: ./extractors/daijob/src
+          target: /app/extractors/daijob/src
+          action: sync+restart
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]

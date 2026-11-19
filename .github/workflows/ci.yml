@@ -60,6 +60,9 @@ jobs:
           - japandev-extractor
           - mynavi-extractor
           - linkedin-apify-extractor
+          - daijob-extractor
+          - kyujinbox-extractor
+          - googlejobs-extractor
           - ukvisajobs-extractor
     steps:
       - uses: actions/checkout@v4

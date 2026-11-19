@@ -71,6 +71,9 @@ describe("extractor deployment config", () => {
     "japandev",
     "mynavi",
     "linkedin-apify",
+    "googlejobs",
+    "kyujinbox",
+    "daijob",
   ])("ships and syncs the %s extractor", async (name) => {
     const dockerfile = await readFile(resolve(process.cwd(), "../Dockerfile"), {
       encoding: "utf8",

@@ -13,6 +13,7 @@ type TermScript = "japanese" | "latin";
 
 const TERM_SCRIPT_BY_SOURCE: Readonly<Record<string, TermScript>> = {
   mynavi: "japanese",
+  kyujinbox: "japanese",
   himalayas: "latin",
   workingnomads: "latin",
   startupjobs: "latin",

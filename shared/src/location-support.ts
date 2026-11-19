@@ -350,6 +350,9 @@ const SOURCE_SUPPORTED_COUNTRY_KEYS: Partial<Record<JobSource, string[]>> = {
   wazzuf: ["egypt"],
   japandev: ["japan"],
   mynavi: ["japan"],
+  googlejobs: ["japan"],
+  kyujinbox: ["japan"],
+  daijob: ["japan"],
 };
 
 const SOURCE_SUPPORTED_COUNTRY_KEYS_NORMALIZED: Partial<
