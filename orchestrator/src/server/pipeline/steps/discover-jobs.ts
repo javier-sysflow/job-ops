@@ -28,8 +28,8 @@ import {
   planLocationSource,
 } from "@shared/location-domain.js";
 import { formatCountryLabel } from "@shared/location-support.js";
-import { filterSearchTermsForSource } from "@shared/search-term-script.js";
 import { normalizeStringArray } from "@shared/normalize-string-array.js";
+import { filterSearchTermsForSource } from "@shared/search-term-script.js";
 import {
   type CreateJobInput,
   deriveExtractorLimits,
@@ -315,7 +315,8 @@ export async function discoverJobsStep(args: {
     if (existing) {
       existing.sources.push(source);
       for (const term of sourceTerms) {
-        if (!existing.searchTerms.includes(term)) existing.searchTerms.push(term);
+        if (!existing.searchTerms.includes(term))
+          existing.searchTerms.push(term);
       }
       existing.termsTotal = existing.searchTerms.length;
       continue;

@@ -18,7 +18,8 @@ const TERM_SCRIPT_BY_SOURCE: Readonly<Record<string, TermScript>> = {
   startupjobs: "latin",
 };
 
-const JAPANESE_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
+const JAPANESE_SCRIPT =
+  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
 
 /** True when the term has any kanji or kana (営業, PPA 営業, ＳａａＳ営業). */
 export function hasJapaneseScript(term: string): boolean {

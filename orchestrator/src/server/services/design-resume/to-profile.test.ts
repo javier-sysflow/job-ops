@@ -19,7 +19,12 @@ const RIREKISHO_IMPORT = {
           period: "2021年4月 - 2024年12月",
           description: "<ul><li>入社</li></ul>",
           roles: [
-            { id: "r1", position: "営業", period: "2022年12月 -", description: "" },
+            {
+              id: "r1",
+              position: "営業",
+              period: "2022年12月 -",
+              description: "",
+            },
             { id: "r2", position: "", period: "", description: "" },
           ],
         },
@@ -29,7 +34,13 @@ const RIREKISHO_IMPORT = {
       title: "",
       hidden: false,
       items: [
-        { id: "l1", hidden: false, language: "英語", fluency: "ビジネス", level: 4 },
+        {
+          id: "l1",
+          hidden: false,
+          language: "英語",
+          fluency: "ビジネス",
+          level: 4,
+        },
         { id: "l2", hidden: true, language: "Hidden", fluency: "", level: 0 },
       ],
     },
@@ -64,14 +75,20 @@ const RIREKISHO_IMPORT = {
         },
       ],
     },
-    awards: { title: "", hidden: true, items: [{ id: "a1", hidden: false, title: "Hidden section" }] },
+    awards: {
+      title: "",
+      hidden: true,
+      items: [{ id: "a1", hidden: false, title: "Hidden section" }],
+    },
   },
 };
 
 describe("designResumeToProfile", () => {
   it("gives the scorer languages, education, certifications and roles", async () => {
     const profile = await designResumeToProfile(
-      RIREKISHO_IMPORT as unknown as Parameters<typeof designResumeToProfile>[0],
+      RIREKISHO_IMPORT as unknown as Parameters<
+        typeof designResumeToProfile
+      >[0],
     );
     const prompt = sanitizeProfileForPrompt(
       profile as unknown as Record<string, unknown>,

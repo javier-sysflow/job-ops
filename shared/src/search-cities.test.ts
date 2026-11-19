@@ -152,7 +152,9 @@ describe("search-cities", () => {
 
   it("treats a Tokyo ward named on its own as Tokyo", () => {
     expect(matchesRequestedCity("Shibuya, Japan", "東京")).toBe(true);
-    expect(matchesRequestedCity("Minato City, Tokyo, Japan", "東京")).toBe(true);
+    expect(matchesRequestedCity("Minato City, Tokyo, Japan", "東京")).toBe(
+      true,
+    );
     expect(matchesRequestedCity("Setagaya City, JP", "Tokyo")).toBe(true);
     expect(matchesRequestedCity("Shinjuku-ku, Japan", "東京都")).toBe(true);
     expect(matchesRequestedCity("渋谷区神南1丁目", "東京")).toBe(true);
@@ -168,7 +170,9 @@ describe("search-cities", () => {
   it("recognises a Tokyo ward on its own as Japan", () => {
     expect(matchesRequestedCountry("Shinjuku-ku", "japan")).toBe(true);
     expect(matchesRequestedCountry("Shinjuku-ku", "united states")).toBe(false);
-    expect(matchesRequestedCountry("Kochi, Kerala, India", "japan")).toBe(false);
+    expect(matchesRequestedCountry("Kochi, Kerala, India", "japan")).toBe(
+      false,
+    );
     expect(matchesRequestedCountry("日本（フルリモート）", "japan")).toBe(true);
   });
 

@@ -129,7 +129,8 @@ export function getJobLocationCandidates(job: {
   return out;
 }
 
-const REMOTE_LOCATION_PATTERN = /\bremote\b|フルリモート|完全リモート|完全在宅/iu;
+const REMOTE_LOCATION_PATTERN =
+  /\bremote\b|フルリモート|完全リモート|完全在宅/iu;
 
 /**
  * Remote by the source's flag, the location evidence, or a location label

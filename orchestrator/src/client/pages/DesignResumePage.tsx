@@ -66,9 +66,7 @@ import { formatUserFacingError } from "../lib/error-format";
 export const DesignResumePage: React.FC = () => {
   const { t } = useTranslation(["resumeStudio", "common"]);
   const navigate = useNavigate();
-  const [pendingImportFile, setPendingImportFile] = useState<File | null>(
-    null,
-  );
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
   const {
     draft,
     dirty,
@@ -699,7 +697,9 @@ export const DesignResumePage: React.FC = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("page.replaceWithFile.title")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("page.replaceWithFile.title")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {t("page.replaceWithFile.description", {
                 fileName: pendingImportFile?.name ?? "",

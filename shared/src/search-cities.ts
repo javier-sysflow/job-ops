@@ -103,7 +103,9 @@ export function matchesRequestedCity(
   if (!japanPlace) return false;
   return (
     matchesRequestedLocationTokens(jobLocation, japanPlace.en) ||
-    japanPlace.ja.some((name) => containsJapanesePlaceName(jobLocation, name)) ||
+    japanPlace.ja.some((name) =>
+      containsJapanesePlaceName(jobLocation, name),
+    ) ||
     (japanPlace.en === "Tokyo" && namesTokyoWardOnly(jobLocation))
   );
 }

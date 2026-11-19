@@ -6,6 +6,11 @@ import { logger } from "@infra/logger";
 import { getDefaultPromptTemplate } from "@shared/prompt-template-definitions.js";
 import type { Job, JobBrief, UpdateJobInput } from "@shared/types";
 import { stripHtmlTags } from "@shared/utils/string";
+import {
+  describeTargetLocationForPrompt,
+  getCandidateTargetLocation,
+  withTargetWorkLocation,
+} from "./candidate-target-location";
 import { withHostedUsageReservation } from "./hosted-usage";
 import {
   type JobFactPatch,
@@ -22,11 +27,6 @@ import {
 } from "./output-language";
 import { renderPromptTemplate } from "./prompt-templates";
 import { filterProfileProjectsForAi } from "./resumeProjects";
-import {
-  describeTargetLocationForPrompt,
-  getCandidateTargetLocation,
-  withTargetWorkLocation,
-} from "./candidate-target-location";
 import { getEffectiveSettings } from "./settings";
 import { getWritingStyle } from "./writing-style";
 

@@ -516,7 +516,9 @@ describe("discoverJobsStep", () => {
       discoverJobsStep({
         mergedConfig: { ...baseConfig, sources: ["mynavi"] },
       }),
-    ).rejects.toThrow("None of the selected sources can use these search terms");
+    ).rejects.toThrow(
+      "None of the selected sources can use these search terms",
+    );
     expect(mynavi.run).not.toHaveBeenCalled();
   });
 

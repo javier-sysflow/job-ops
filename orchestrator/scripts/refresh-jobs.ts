@@ -104,7 +104,9 @@ async function main(): Promise<boolean> {
       ),
     );
   const toRescore = rescore ? jobs : [];
-  const toRetailor = retailor ? jobs.filter((job) => job.status === "ready") : [];
+  const toRetailor = retailor
+    ? jobs.filter((job) => job.status === "ready")
+    : [];
   console.log(
     `"${username}": ${toRescore.length} job(s) to re-score, ${toRetailor.length} to re-tailor`,
   );

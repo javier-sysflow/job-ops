@@ -2,9 +2,9 @@ import {
   createLocationIntentFromLegacyInputs,
   planLocationSources,
 } from "@shared/location-domain.js";
-import { describeNoUsableTerms } from "@shared/search-term-script.js";
 import { formatCountryLabel } from "@shared/location-support.js";
 import { parseSearchCitiesSetting } from "@shared/search-cities.js";
+import { describeNoUsableTerms } from "@shared/search-term-script.js";
 import type {
   AppSettings,
   PipelineConfig,

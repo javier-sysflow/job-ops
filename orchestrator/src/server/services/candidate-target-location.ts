@@ -109,7 +109,9 @@ export function describeTargetLocationForPrompt(
     lines.push(`- Cities: ${target.cities.join(", ")}`);
   }
   if (target.workplaceTypes.length > 0) {
-    lines.push(`- Work arrangements wanted: ${target.workplaceTypes.join(", ")}`);
+    lines.push(
+      `- Work arrangements wanted: ${target.workplaceTypes.join(", ")}`,
+    );
   }
   lines.push(
     target.workLocation
