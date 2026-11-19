@@ -2,13 +2,16 @@
  * Fork: re-scores and/or re-tailors the jobs already in a user's list, after
  * a change to scoring or tailoring (a re-run only imports new jobs).
  *
- *   npm run jobs:refresh -- <username> [--rescore] [--retailor] [--dry-run]
+ *   npm run jobs:refresh -- <username> [--rescore] [--retailor] [--motivation] [--dry-run]
  *
  * In the container: cd /app/orchestrator && npm run jobs:refresh -- <username> --rescore --retailor
  *
  * --rescore   re-scores every "discovered" and "ready" job (the scoring model).
  * --retailor  rewrites the tailored summary, headline and skills of every
  *             "ready" job and regenerates its PDF (the writing model).
+ * --motivation writes a 履歴書 志望動機 for every "ready" job that has none
+ *             (only with the 職務経歴書 layout on; never replaces an edit).
+ *             --retailor already does this for the jobs it re-tailors.
  * --dry-run   lists what would be refreshed and stops.
  *
  * Applied and later jobs are left alone: their PDF may already be sent.
@@ -24,6 +27,7 @@ import {
   buildJobActionExecutionOptions,
   executeJobActionForJob,
 } from "../src/server/services/jobs/actions";
+import { refreshJobMotivationAfterTailoring } from "../src/server/services/rirekisho";
 
 const RECENT_RUN_MS = 30 * 60 * 1000;
 
@@ -31,15 +35,22 @@ type Flags = {
   username: string;
   rescore: boolean;
   retailor: boolean;
+  motivation: boolean;
   dryRun: boolean;
 };
 
 function parseArgs(argv: string[]): Flags {
   const words: string[] = [];
-  const flags = { rescore: false, retailor: false, dryRun: false };
+  const flags = {
+    rescore: false,
+    retailor: false,
+    motivation: false,
+    dryRun: false,
+  };
   for (const arg of argv) {
     if (arg === "--rescore") flags.rescore = true;
     else if (arg === "--retailor") flags.retailor = true;
+    else if (arg === "--motivation") flags.motivation = true;
     else if (arg === "--dry-run") flags.dryRun = true;
     else words.push(arg);
   }
@@ -47,12 +58,12 @@ function parseArgs(argv: string[]): Flags {
 }
 
 async function main(): Promise<boolean> {
-  const { username, rescore, retailor, dryRun } = parseArgs(
+  const { username, rescore, retailor, motivation, dryRun } = parseArgs(
     process.argv.slice(2),
   );
-  if (!username || (!rescore && !retailor)) {
+  if (!username || (!rescore && !retailor && !motivation)) {
     throw new Error(
-      "Usage: npm run jobs:refresh -- <username> [--rescore] [--retailor] [--dry-run]",
+      "Usage: npm run jobs:refresh -- <username> [--rescore] [--retailor] [--motivation] [--dry-run]",
     );
   }
 
@@ -107,8 +118,11 @@ async function main(): Promise<boolean> {
   const toRetailor = retailor
     ? jobs.filter((job) => job.status === "ready")
     : [];
+  // Re-tailoring writes the 志望動機 itself, so only the rest need it here.
+  const toMotivate =
+    motivation && !retailor ? jobs.filter((job) => job.status === "ready") : [];
   console.log(
-    `"${username}": ${toRescore.length} job(s) to re-score, ${toRetailor.length} to re-tailor`,
+    `"${username}": ${toRescore.length} job(s) to re-score, ${toRetailor.length} to re-tailor, ${toMotivate.length} to check for a 志望動機`,
   );
   if (dryRun) {
     for (const job of jobs) {
@@ -158,6 +172,14 @@ async function main(): Promise<boolean> {
           failures += 1;
           console.error(`retailor failed: ${job.title}: ${result.error}`);
         }
+      }
+      for (const [index, job] of toMotivate.entries()) {
+        await refreshJobMotivationAfterTailoring(job.id, {
+          tailoringRan: false,
+        });
+        console.log(
+          `motivation ${index + 1}/${toMotivate.length}: ${job.title}`,
+        );
       }
       console.log(`Done with ${failures} failure(s)`);
       return failures === 0;

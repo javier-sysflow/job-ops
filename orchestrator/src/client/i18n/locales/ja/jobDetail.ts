@@ -433,6 +433,42 @@ const jobDetail: typeof en = {
     },
     highlights: "ハイライト",
   },
+  rirekisho: {
+    title: "履歴書",
+    description:
+      "この求人用の履歴書です。レジュメスタジオの情報と、この企業向けの志望動機で作成します。",
+    motivationLabel: "この企業への志望動機",
+    motivationPlaceholder:
+      "この企業を志望する理由を書いてください。AIに下書きを作成させることもできます。",
+    aiBadge: "AIが作成",
+    userBadge: "編集済み",
+    charCount: "{{count}}文字",
+    save: "保存",
+    saving: "保存中…",
+    generate: "AIで作成",
+    regenerate: "AIで書き直す",
+    generating: "作成中…",
+    copy: "コピー",
+    download: "履歴書をダウンロード（PDF）",
+    downloading: "準備中…",
+    empty:
+      "この企業向けの志望動機はまだありません。追加するまでは、レジュメスタジオの基本の志望動機が履歴書に入ります。",
+    rewriteConfirm: {
+      title: "志望動機を置き換えますか？",
+      description:
+        "AIが新しい下書きを作成し、編集した文章を置き換えます。元に戻すことはできません。",
+      confirm: "書き直す",
+    },
+    toasts: {
+      saved: "志望動機を保存しました",
+      saveFailed: "志望動機を保存できませんでした",
+      generated: "新しい志望動機を作成しました",
+      generateFailed: "志望動機を作成できませんでした",
+      copied: "志望動機をコピーしました",
+      copyFailed: "志望動機をコピーできませんでした",
+      downloadFailed: "履歴書を作成できませんでした",
+    },
+  },
   description: {
     helperText:
       "求人ページから抽出した求人内容です。おかしな点があれば編集できます。Ghostwriterとマッチ度の評価に使われます。",

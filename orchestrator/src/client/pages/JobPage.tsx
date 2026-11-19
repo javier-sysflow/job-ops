@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { JobBriefPane } from "@/client/components/JobBriefPane";
 import { JobDescriptionPanel } from "@/client/components/JobDescriptionPanel";
+import { JobRirekishoPane } from "@/client/components/JobRirekishoPane";
 import { invalidateJobData } from "@/client/hooks/queries/invalidate";
 import {
   useCheckSponsorMutation,
@@ -854,6 +855,8 @@ export const JobPage: React.FC = () => {
                   onDownloadDocx={() => void handleDownloadDocx()}
                   onRegeneratePdf={() => void handleRegeneratePdf()}
                 />
+
+                <JobRirekishoPane jobId={job.id} />
 
                 <JobBriefPane job={job} />
 

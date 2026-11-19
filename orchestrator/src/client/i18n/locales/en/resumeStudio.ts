@@ -15,6 +15,7 @@ const resumeStudio = {
       preparingPdf: "Preparing PDF",
       downloadDocx: "Download Word",
       preparingDocx: "Preparing Word file",
+      rirekisho: "履歴書 details",
       openMenu: "Open resume actions",
     },
     empty: {
@@ -51,6 +52,46 @@ const resumeStudio = {
       description:
         "This will replace your current Resume Studio with the latest data from RxResume. Any edits you've made here will be permanently overwritten and cannot be undone.",
       confirm: "Re-import",
+    },
+  },
+  rirekisho: {
+    title: "履歴書 details",
+    description:
+      "Fields the 履歴書 (Japanese CV form) needs that the résumé has no place for. Fields you never saved are filled in from your imported 履歴書.",
+    fields: {
+      furigana: "ふりがな (reading of your name)",
+      birthDate: "生年月日 (date of birth)",
+      gender: "性別 (gender, optional)",
+      postalCode: "郵便番号 (postal code)",
+      address: "現住所 (current address)",
+      addressFurigana: "現住所のふりがな",
+      contactPostalCode: "郵便番号",
+      contactAddress: "住所",
+      contactAddressFurigana: "住所のふりがな",
+      contactPhone: "電話",
+      contactEmail: "メール",
+      motivation: "志望動機 (base)",
+      wishes: "本人希望記入欄",
+    },
+    contactHeading:
+      "連絡先 (only if you want contact somewhere other than your address)",
+    hints: {
+      gender:
+        "Gender is optional on the 2021 form. Leave it empty if you prefer.",
+      motivation:
+        "For each job, the AI writes a 志望動機 for that company starting from this one.",
+      wishes: "Left empty, the 履歴書 says 「貴社の規定に従います。」",
+      fromResume:
+        "Name, phone, email, 学歴・職歴 and 免許・資格 come from your résumé.",
+    },
+    save: "Save",
+    saving: "Saving…",
+    download: "Download 履歴書 (PDF)",
+    downloading: "Preparing…",
+    toasts: {
+      saved: "履歴書 details saved",
+      saveFailed: "Couldn't save the 履歴書 details",
+      downloadFailed: "Couldn't create the 履歴書",
     },
   },
   nav: {

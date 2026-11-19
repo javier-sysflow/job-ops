@@ -22,11 +22,13 @@ import {
 import { PageHeader, PageMain } from "@client/components/layout";
 import { SectionWorkspacePanel } from "@client/components/section-workspace/SectionWorkspace";
 import { useDesignResumeStudio } from "@client/hooks/useDesignResumeStudio";
+import { useSettings } from "@client/hooks/useSettings";
 import type { DesignResumeJson } from "@shared/types";
 import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router-dom";
+import { RirekishoProfileDialog } from "@/client/components/design-resume/RirekishoProfileDialog";
 import {
   Download,
   FileDown,
@@ -34,6 +36,7 @@ import {
   ListPlus,
   MoreHorizontal,
   PenSquare,
+  ScrollText,
 } from "@/components/icons";
 import {
   AlertDialog,
@@ -67,6 +70,8 @@ export const DesignResumePage: React.FC = () => {
   const { t } = useTranslation(["resumeStudio", "common"]);
   const navigate = useNavigate();
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
+  const [rirekishoOpen, setRirekishoOpen] = useState(false);
+  const { settings } = useSettings();
   const {
     draft,
     dirty,
@@ -115,6 +120,9 @@ export const DesignResumePage: React.FC = () => {
     handleMobileSectionSelect,
     getDesignResumeSectionBadge,
   } = useDesignResumeStudio();
+  // Fork: 履歴書 goes with the 職務経歴書 layout.
+  const showRirekisho =
+    Boolean(status?.exists) && typstTheme === "shokumu-keirekisho";
 
   if (!activeSectionIsValid) {
     return <Navigate to="/design-resume" replace />;
@@ -251,6 +259,17 @@ export const DesignResumePage: React.FC = () => {
                   ? t("page.actions.preparingDocx")
                   : t("page.actions.downloadDocx")}
               </Button>
+
+              {showRirekisho ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setRirekishoOpen(true)}
+                >
+                  <ScrollText className="mr-2 h-4 w-4" />
+                  {t("page.actions.rirekisho")}
+                </Button>
+              ) : null}
             </div>
 
             <DropdownMenu>
@@ -304,6 +323,12 @@ export const DesignResumePage: React.FC = () => {
                     ? t("page.actions.preparingDocx")
                     : t("page.actions.downloadDocx")}
                 </DropdownMenuItem>
+                {showRirekisho ? (
+                  <DropdownMenuItem onSelect={() => setRirekishoOpen(true)}>
+                    <ScrollText className="mr-2 h-4 w-4" />
+                    {t("page.actions.rirekisho")}
+                  </DropdownMenuItem>
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -686,6 +711,15 @@ export const DesignResumePage: React.FC = () => {
                   setDialogState(null);
                 }
           }
+        />
+      ) : null}
+
+      {showRirekisho ? (
+        <RirekishoProfileDialog
+          open={rirekishoOpen}
+          onOpenChange={setRirekishoOpen}
+          resumeJson={draft?.resumeJson ?? null}
+          storedProfile={settings?.rirekishoProfile?.value ?? null}
         />
       ) : null}
 

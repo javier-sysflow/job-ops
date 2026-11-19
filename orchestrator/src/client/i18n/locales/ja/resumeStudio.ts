@@ -18,6 +18,7 @@ const resumeStudio: typeof en = {
       preparingPdf: "PDFを準備中",
       downloadDocx: "Wordをダウンロード",
       preparingDocx: "Wordファイルを準備中",
+      rirekisho: "履歴書の情報",
       openMenu: "レジュメの操作メニューを開く",
     },
     empty: {
@@ -54,6 +55,44 @@ const resumeStudio: typeof en = {
       description:
         "現在のレジュメスタジオの内容が、RxResumeの最新データで置き換えられます。ここで行った編集はすべて上書きされ、元に戻せません。",
       confirm: "再インポート",
+    },
+  },
+  rirekisho: {
+    title: "履歴書の情報",
+    description:
+      "履歴書に必要で、レジュメには入らない項目です。まだ保存していない項目には、読み込んだ履歴書の内容が入っています。",
+    fields: {
+      furigana: "ふりがな",
+      birthDate: "生年月日",
+      gender: "性別（任意）",
+      postalCode: "郵便番号",
+      address: "現住所",
+      addressFurigana: "現住所のふりがな",
+      contactPostalCode: "郵便番号",
+      contactAddress: "住所",
+      contactAddressFurigana: "住所のふりがな",
+      contactPhone: "電話",
+      contactEmail: "メール",
+      motivation: "志望動機（基本）",
+      wishes: "本人希望記入欄",
+    },
+    contactHeading: "連絡先（現住所以外に連絡を希望する場合のみ）",
+    hints: {
+      gender: "性別の記載は任意です。空欄のままでも構いません。",
+      motivation:
+        "各求人では、この文章をもとにAIが企業ごとの志望動機を作成します。",
+      wishes: "空欄の場合は「貴社の規定に従います。」と記載します。",
+      fromResume:
+        "氏名・電話・メール・学歴・職歴・免許・資格はレジュメから自動で入ります。",
+    },
+    save: "保存",
+    saving: "保存中…",
+    download: "履歴書をダウンロード（PDF）",
+    downloading: "準備中…",
+    toasts: {
+      saved: "履歴書の情報を保存しました",
+      saveFailed: "履歴書の情報を保存できませんでした",
+      downloadFailed: "履歴書を作成できませんでした",
     },
   },
   nav: {

@@ -17,7 +17,7 @@ const guide = {
         title: "Check your resume",
         body: "Your base resume drives the match scores, the tailoring and every document JobOps writes. Make sure it is complete before your first search.",
         tip1: "In Resume Studio, fill in your skills, languages and certifications.",
-        tip2: "Use the Resume layout switch above the preview: 職務経歴書 for Japanese applications, English resume for English ones.",
+        tip2: "Use the Resume layout switch above the preview: 職務経歴書 for Japanese applications, English resume for English ones. With 職務経歴書, also check 履歴書 details (ふりがな, date of birth and so on).",
         action: "Open Resume Studio",
       },
       search: {
@@ -38,7 +38,7 @@ const guide = {
         title: "Tailor and apply",
         body: "Each job in Ready has its own tailored resume PDF. Polish it, prepare your application, then apply on the company's site.",
         tip1: "Tailoring tab: adjust the summary, skills and projects for this job.",
-        tip2: "Apply tab: download the PDF and ask Ghostwriter for a cover letter or 志望動機 draft.",
+        tip2: "Documents: download the resume and 履歴書 PDFs. The AI writes the 履歴書's 志望動機 for this company, and you can edit or copy it. Ask Ghostwriter for a cover letter.",
         tip3: "Once you have applied, press Mark Applied so JobOps tracks it.",
         action: "See ready jobs",
       },

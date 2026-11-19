@@ -83,6 +83,18 @@ export async function downloadDesignResumeDocx(): Promise<string> {
   return name;
 }
 
+/** Fork: a job's 履歴書 PDF, under the file name the server picked. */
+export async function downloadJobRirekishoPdf(jobId: string): Promise<void> {
+  const { blob, fileName } = await api.getJobRirekishoPdf(jobId);
+  openBlob(blob, fileName ?? "rirekisho.pdf");
+}
+
+/** Fork: the base 履歴書 PDF from Resume Studio. */
+export async function downloadDesignRirekishoPdf(): Promise<void> {
+  const { blob, fileName } = await api.getDesignRirekishoPdf();
+  openBlob(blob, fileName ?? "rirekisho.pdf");
+}
+
 /** Download a job's tailored resume as Word under the given file name. */
 export async function downloadJobDocx(
   jobId: string,

@@ -427,6 +427,42 @@ const jobDetail = {
     },
     highlights: "Highlights",
   },
+  rirekisho: {
+    title: "履歴書 (Japanese CV form)",
+    description:
+      "The 履歴書 for this job: your Resume Studio details plus a 志望動機 written for this company.",
+    motivationLabel: "志望動機 for this company",
+    motivationPlaceholder:
+      "Why you want to work here. Write it yourself or let the AI draft it.",
+    aiBadge: "Written by AI",
+    userBadge: "Edited by you",
+    charCount: "{{count}} characters",
+    save: "Save",
+    saving: "Saving…",
+    generate: "Write with AI",
+    regenerate: "Rewrite with AI",
+    generating: "Writing…",
+    copy: "Copy",
+    download: "Download 履歴書 (PDF)",
+    downloading: "Preparing…",
+    empty:
+      "No 志望動機 for this company yet. Until you add one, the 履歴書 uses your base 志望動機 from Resume Studio.",
+    rewriteConfirm: {
+      title: "Replace your 志望動機?",
+      description:
+        "The AI will write a new draft and replace the text you edited. This can't be undone.",
+      confirm: "Rewrite",
+    },
+    toasts: {
+      saved: "志望動機 saved",
+      saveFailed: "Couldn't save the 志望動機",
+      generated: "New 志望動機 written",
+      generateFailed: "Couldn't write the 志望動機",
+      copied: "志望動機 copied",
+      copyFailed: "Couldn't copy the 志望動機",
+      downloadFailed: "Couldn't create the 履歴書",
+    },
+  },
   description: {
     helperText:
       "Base description extracted from the job listing, editable if something looks off. Used by the Ghostwriter and for fit assessment.",
