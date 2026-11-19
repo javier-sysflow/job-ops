@@ -212,3 +212,73 @@ describe("JobSpy location evidence", () => {
     expect(usJob.locationEvidence?.country).toBe("US");
   });
 });
+
+describe("JobSpy results for a city typed in Japanese", () => {
+  const intent = {
+    selectedCountry: "japan",
+    country: "japan",
+    cityLocations: ["東京"],
+    workplaceTypes: ["remote" as const, "hybrid" as const],
+    geoScope: "selected_only" as const,
+    searchScope: "selected_only" as const,
+    matchStrictness: "exact_only" as const,
+  };
+  const row = {
+    job_url: "https://example.com/job",
+    title: "Energy consultant",
+    company: "Example",
+  };
+
+  it("keeps LinkedIn jobs labelled in English", () => {
+    for (const location of [
+      "Tokyo, Tokyo, Japan",
+      "Chiyoda, Tokyo, Japan",
+      "Tokyo, Japan",
+    ]) {
+      const [job] = mapJobSpyRows(
+        [{ ...row, site: "linkedin", location }],
+        "japan",
+        "東京",
+      );
+      expect(job.locationEvidence?.city).toBeUndefined();
+      expect(matchJobLocationIntent(job, intent).matched).toBe(true);
+    }
+  });
+
+  it("keeps Indeed Japan jobs whose label names no city", () => {
+    for (const location of ["丸の内, JPC, Japan", "JPC, Japan"]) {
+      const [job] = mapJobSpyRows(
+        [{ ...row, site: "indeed", location }],
+        "japan",
+        "東京",
+      );
+      expect(job.locationEvidence?.city).toBe("東京");
+      expect(matchJobLocationIntent(job, intent).matched).toBe(true);
+    }
+  });
+
+  it("still drops Indeed Japan jobs labelled with another city", () => {
+    const [job] = mapJobSpyRows(
+      [{ ...row, site: "indeed", location: "Yokohama, Kanagawa, Japan" }],
+      "japan",
+      "東京",
+    );
+    expect(job.locationEvidence?.city).toBeUndefined();
+    expect(matchJobLocationIntent(job, intent).matched).toBe(false);
+  });
+
+  it("adds no query city outside Japan or without a city query", () => {
+    const [usJob] = mapJobSpyRows(
+      [{ ...row, site: "indeed", location: "NC, USA" }],
+      "united states",
+      "Charlotte",
+    );
+    const [countryOnly] = mapJobSpyRows(
+      [{ ...row, site: "indeed", location: "JPC, Japan" }],
+      "japan",
+      null,
+    );
+    expect(usJob.locationEvidence?.city).toBeUndefined();
+    expect(countryOnly.locationEvidence?.city).toBeUndefined();
+  });
+});

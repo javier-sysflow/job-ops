@@ -135,4 +135,23 @@ describe("search-cities", () => {
     expect(matchesRequestedCountry("Indianapolis, IN", "india")).toBe(false);
     expect(matchesRequestedCountry("IN", "india")).toBe(true);
   });
+
+  it("treats Japanese and English names of a Japanese city as the same", () => {
+    expect(matchesRequestedCity("Chiyoda, Tokyo, Japan", "東京")).toBe(true);
+    expect(matchesRequestedCity("Tokyo, Tokyo, Japan", "東京都")).toBe(true);
+    expect(matchesRequestedCity("東京都港区", "Tokyo")).toBe(true);
+    expect(matchesRequestedCity("東京都港区", "東京")).toBe(true);
+    expect(matchesRequestedCity("神奈川県横浜市", "Yokohama")).toBe(true);
+    expect(matchesRequestedCity("Osaka, Osaka, Japan", "大阪")).toBe(true);
+    expect(matchesRequestedCity("東京都港区", "京都")).toBe(false);
+    expect(matchesRequestedCity("Kyoto, Japan", "東京")).toBe(false);
+    expect(matchesRequestedCity("Yokohama, Kanagawa, Japan", "東京")).toBe(
+      false,
+    );
+  });
+
+  it("recognises a Japanese address as Japan", () => {
+    expect(matchesRequestedCountry("東京都港区", "japan")).toBe(true);
+    expect(matchesRequestedCountry("東京都港区", "united states")).toBe(false);
+  });
 });

@@ -1,4 +1,9 @@
 import {
+  containsJapanesePlaceName,
+  mentionsJapanesePrefecture,
+  resolveJapanPlace,
+} from "./japan-places.js";
+import {
   getCountryIso2Code,
   getCountryNameVariants,
   normalizeCountryKey,
@@ -90,7 +95,15 @@ export function matchesRequestedCity(
   jobLocation: string | undefined,
   requestedCity: string,
 ): boolean {
-  return matchesRequestedLocationTokens(jobLocation, requestedCity);
+  if (matchesRequestedLocationTokens(jobLocation, requestedCity)) return true;
+  // Fork: 東京 and Tokyo are the same place. Job boards label Japanese jobs
+  // in either script ("Minato, Tokyo, Japan" or 東京都港区).
+  const japanPlace = resolveJapanPlace(requestedCity);
+  if (!japanPlace) return false;
+  return (
+    matchesRequestedLocationTokens(jobLocation, japanPlace.en) ||
+    japanPlace.ja.some((name) => containsJapanesePlaceName(jobLocation, name))
+  );
 }
 
 function matchesRequestedLocationTokens(
@@ -146,6 +159,9 @@ export function matchesRequestedCountry(
 
   const iso2 = getCountryIso2Code(normalizedCountry);
   if (iso2 && matchesRequestedCountryCode(jobLocation, iso2)) return true;
+
+  // Fork: a Japanese address (東京都港区) names no country but is in Japan.
+  if (iso2 === "JP" && mentionsJapanesePrefecture(jobLocation)) return true;
 
   return getCountryNameVariants(normalizedCountry).some((candidate) =>
     matchesRequestedLocationTokens(jobLocation, candidate),

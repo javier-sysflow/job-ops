@@ -5,6 +5,10 @@ import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import {
+  mentionsKnownJapanPlace,
+  toEnglishJapanPlace,
+} from "@shared/japan-places.js";
+import {
   getCountryIso2Code,
   normalizeCountryKey,
 } from "@shared/location-support.js";
@@ -121,6 +125,7 @@ function toJsonStringOrNull(value: unknown): string | null {
 function buildLocationEvidence(
   location: string | null,
   nativeCountry: string | null,
+  queryCity: string | null = null,
 ): JobLocationEvidence | undefined {
   if (!location) return undefined;
   const parts = location.split(",").map((part) => part.trim());
@@ -136,8 +141,29 @@ function buildLocationEvidence(
   return {
     location,
     ...(country ? { country } : {}),
+    ...(queryCity ? { city: queryCity } : {}),
     source: "jobspy",
   };
+}
+
+/**
+ * Fork: Indeed Japan labels jobs like "丸の内, JPC, Japan", naming neither the
+ * prefecture nor the city, so an exact city filter dropped every one of them.
+ * Indeed already searched within the requested city, so when the label names
+ * no known Japanese place, the query city is the best city evidence there is.
+ */
+function resolveIndeedJapanQueryCity(args: {
+  source: JobSource;
+  location: string | null;
+  countryIndeed: string | null;
+  queryCity: string | null;
+}): string | null {
+  if (args.source !== "indeed" || !args.queryCity || !args.location) {
+    return null;
+  }
+  if (getCountryIso2Code(args.countryIndeed) !== "JP") return null;
+  if (mentionsKnownJapanPlace(args.location)) return null;
+  return args.queryCity;
 }
 
 function toJobSource(site: unknown): JobSource | null {
@@ -293,8 +319,10 @@ export async function runJobSpy(
         const suffix = `${runIndex}_${slugForFilename(searchTerm)}_${slugForFilename(locationToken)}`;
         const outputCsv = join(OUTPUT_DIR, `jobspy_jobs_${suffix}.csv`);
         const outputJson = join(OUTPUT_DIR, `jobspy_jobs_${suffix}.json`);
+        // Fork: boards understand "Tokyo", not 東京, so send the English name.
+        const queryLocation = location ? toEnglishJapanPlace(location) : null;
         const siteLocations = resolveJobSpySiteLocations({
-          location,
+          location: queryLocation,
           countryIndeed,
         });
 
@@ -347,7 +375,7 @@ export async function runJobSpy(
               ),
               JOBSPY_OUTPUT_CSV: outputCsv,
               JOBSPY_OUTPUT_JSON: outputJson,
-              ...(location ? { JOBSPY_LOCATION: location } : {}),
+              ...(queryLocation ? { JOBSPY_LOCATION: queryLocation } : {}),
               ...(siteLocations.linkedinLocation
                 ? { JOBSPY_LINKEDIN_LOCATION: siteLocations.linkedinLocation }
                 : {}),
@@ -398,7 +426,7 @@ export async function runJobSpy(
 
         const raw = await readFile(outputJson, "utf-8");
         const parsed = JSON.parse(raw) as Array<Record<string, unknown>>;
-        const filtered = mapJobSpyRows(parsed, countryIndeed);
+        const filtered = mapJobSpyRows(parsed, countryIndeed, location);
 
         for (const job of filtered) {
           if (seenJobUrls.has(job.jobUrl)) continue;
@@ -483,6 +511,8 @@ function slugForFilename(input: string): string {
 export function mapJobSpyRows(
   parsed: Array<Record<string, unknown>>,
   countryIndeed: string | null = null,
+  /** The city this query searched in, as the user typed it. */
+  queryCity: string | null = null,
 ): CreateJobInput[] {
   const jobs: CreateJobInput[] = [];
 
@@ -517,6 +547,12 @@ export function mapJobSpyRows(
         // LinkedIn's native query includes this country, but its result labels
         // often omit it. Explicit returned country evidence takes precedence.
         source === "linkedin" ? countryIndeed : null,
+        resolveIndeedJapanQueryCity({
+          source,
+          location: toStringOrNull(row.location),
+          countryIndeed,
+          queryCity,
+        }),
       ),
       jobDescription: toStringOrNull(row.description) ?? undefined,
       salary: salary ?? undefined,
