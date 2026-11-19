@@ -31,6 +31,64 @@ describe("map-radius location matching", () => {
   });
 });
 
+describe("remote jobs inside the selected country", () => {
+  const intent = {
+    selectedCountry: "japan",
+    country: "japan",
+    cityLocations: ["東京"],
+    workplaceTypes: ["remote" as const, "hybrid" as const],
+    geoScope: "selected_only" as const,
+    searchScope: "selected_only" as const,
+    matchStrictness: "exact_only" as const,
+    proximity: null,
+  };
+
+  it("keeps a remote job in Japan without a city when remote is ticked", () => {
+    expect(
+      matchJobLocationIntent({ location: "Remote, Japan" }, intent),
+    ).toEqual({ matched: true, reasonCode: "remote_in_country", priority: 0 });
+    expect(
+      matchJobLocationIntent({ location: "Japan", isRemote: true }, intent)
+        .matched,
+    ).toBe(true);
+    expect(
+      matchJobLocationIntent({ location: "日本（フルリモート）" }, intent)
+        .matched,
+    ).toBe(true);
+  });
+
+  it("still drops other-city and other-country jobs", () => {
+    expect(
+      matchJobLocationIntent({ location: "Osaka, Japan" }, intent).matched,
+    ).toBe(false);
+    expect(
+      matchJobLocationIntent({ location: "大阪府大阪市（リモート可）" }, intent)
+        .matched,
+    ).toBe(false);
+    expect(
+      matchJobLocationIntent({ location: "Remote, Vietnam" }, intent).matched,
+    ).toBe(false);
+  });
+
+  it("does not apply when remote is not ticked", () => {
+    expect(
+      matchJobLocationIntent(
+        { location: "Remote, Japan" },
+        { ...intent, workplaceTypes: ["hybrid" as const, "onsite" as const] },
+      ).matched,
+    ).toBe(false);
+  });
+
+  it("treats a Tokyo ward on its own as Tokyo", () => {
+    expect(
+      matchJobLocationIntent({ location: "Shibuya, Japan" }, intent),
+    ).toEqual({ matched: true, reasonCode: "selected_location", priority: 1 });
+    expect(
+      matchJobLocationIntent({ location: "Shinjuku-ku" }, intent).matched,
+    ).toBe(true);
+  });
+});
+
 function makeJob(
   overrides: Partial<{
     source: string;

@@ -1,6 +1,7 @@
 import {
   containsJapanesePlaceName,
   mentionsJapanesePrefecture,
+  namesTokyoWardOnly,
   resolveJapanPlace,
 } from "./japan-places.js";
 import {
@@ -102,7 +103,8 @@ export function matchesRequestedCity(
   if (!japanPlace) return false;
   return (
     matchesRequestedLocationTokens(jobLocation, japanPlace.en) ||
-    japanPlace.ja.some((name) => containsJapanesePlaceName(jobLocation, name))
+    japanPlace.ja.some((name) => containsJapanesePlaceName(jobLocation, name)) ||
+    (japanPlace.en === "Tokyo" && namesTokyoWardOnly(jobLocation))
   );
 }
 
@@ -162,6 +164,10 @@ export function matchesRequestedCountry(
 
   // Fork: a Japanese address (東京都港区) names no country but is in Japan.
   if (iso2 === "JP" && mentionsJapanesePrefecture(jobLocation)) return true;
+  // ...and so is a Tokyo ward on its own ("Shinjuku-ku"), or 日本 itself
+  // (日本（フルリモート）, 日本全国).
+  if (iso2 === "JP" && namesTokyoWardOnly(jobLocation)) return true;
+  if (iso2 === "JP" && jobLocation?.includes("日本")) return true;
 
   return getCountryNameVariants(normalizedCountry).some((candidate) =>
     matchesRequestedLocationTokens(jobLocation, candidate),

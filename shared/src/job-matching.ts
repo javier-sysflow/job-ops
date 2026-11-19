@@ -129,6 +129,23 @@ export function getJobLocationCandidates(job: {
   return out;
 }
 
+const REMOTE_LOCATION_PATTERN = /\bremote\b|フルリモート|完全リモート|完全在宅/iu;
+
+/**
+ * Remote by the source's flag, the location evidence, or a location label
+ * such as "Remote, Japan" / フルリモート. A label like 東京都（リモート可）
+ * means hybrid, so plain リモート does not count.
+ */
+function isRemoteJob(job: {
+  location?: string | null;
+  locationEvidence?: { workplaceType?: string | null } | null;
+  isRemote?: boolean | null;
+}): boolean {
+  if (job.isRemote === true) return true;
+  if (job.locationEvidence?.workplaceType === "remote") return true;
+  return REMOTE_LOCATION_PATTERN.test(job.location ?? "");
+}
+
 export function matchJobLocationIntent(
   job: {
     location?: string | null;
@@ -193,6 +210,13 @@ export function matchJobLocationIntent(
 
     if (cityMatched || intent.matchStrictness === "flexible") {
       return { matched: true, reasonCode: "selected_location", priority: 1 };
+    }
+
+    // Fork: a remote job inside the selected country ("Remote, Japan") needs
+    // no city. Someone who ticked remote can take it from their own city,
+    // even with "selected location only" and exact city matching.
+    if (intent.workplaceTypes.includes("remote") && isRemoteJob(job)) {
+      return { matched: true, reasonCode: "remote_in_country", priority: 0 };
     }
   }
 

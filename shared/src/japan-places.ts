@@ -262,6 +262,74 @@ export function mentionsKnownJapanPlace(
 }
 
 /**
+ * Tokyo's special wards whose names exist nowhere else in Japan. LinkedIn and
+ * others sometimes label a job with the ward alone ("Shibuya, Japan",
+ * "Shinjuku-ku"). Chuo, Minato and Kita are left out: Osaka, Nagoya, Sapporo
+ * and others have wards with the same names. Ota is left out in English
+ * because Ota City (太田市) is in Gunma.
+ */
+const TOKYO_WARDS_EN = new Set([
+  "chiyoda",
+  "shinjuku",
+  "bunkyo",
+  "taito",
+  "sumida",
+  "koto",
+  "shinagawa",
+  "meguro",
+  "setagaya",
+  "shibuya",
+  "nakano",
+  "suginami",
+  "toshima",
+  "arakawa",
+  "itabashi",
+  "nerima",
+  "adachi",
+  "katsushika",
+  "edogawa",
+]);
+
+const TOKYO_WARDS_JA = [
+  "千代田区",
+  "新宿区",
+  "文京区",
+  "台東区",
+  "墨田区",
+  "江東区",
+  "品川区",
+  "目黒区",
+  "大田区",
+  "世田谷区",
+  "渋谷区",
+  "中野区",
+  "杉並区",
+  "豊島区",
+  "荒川区",
+  "板橋区",
+  "練馬区",
+  "足立区",
+  "葛飾区",
+  "江戸川区",
+];
+
+/**
+ * True when `text` names a Tokyo ward and no other known Japanese place, so
+ * "Shibuya, Japan" counts as Tokyo but "Nakano, Nagano" does not.
+ */
+export function namesTokyoWardOnly(text: string | null | undefined): boolean {
+  if (!text) return false;
+  const tokens = text
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
+  const namesWard =
+    tokens.some((token) => TOKYO_WARDS_EN.has(token)) ||
+    TOKYO_WARDS_JA.some((ward) => text.includes(ward));
+  return namesWard && !mentionsKnownJapanPlace(text);
+}
+
+/**
  * English name for a place typed in Japanese (東京 → Tokyo), for job boards
  * that only understand English place names. Anything else is returned as is.
  */
