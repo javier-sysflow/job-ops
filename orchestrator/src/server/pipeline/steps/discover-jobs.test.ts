@@ -443,6 +443,83 @@ describe("discoverJobsStep", () => {
     );
   });
 
+  it("sends each board only the search terms it can use", async () => {
+    const settingsRepo = await import("@server/repositories/settings");
+    const registryModule = await import("@server/extractors/registry");
+    const makeManifest = (id: string, providesSources: string[]) => ({
+      id,
+      displayName: id,
+      providesSources,
+      run: vi.fn().mockResolvedValue({ success: true, jobs: [] }),
+    });
+    const jobspy = makeManifest("jobspy", ["indeed", "linkedin"]);
+    const mynavi = makeManifest("mynavi", ["mynavi"]);
+    const himalayas = makeManifest("himalayas", ["himalayas"]);
+
+    vi.mocked(settingsRepo.getAllSettings).mockResolvedValue({
+      searchTerms: JSON.stringify(["energy consultant", "脱炭素 営業"]),
+    } as any);
+    vi.mocked(registryModule.getExtractorRegistry).mockResolvedValue({
+      manifests: new Map([
+        ["jobspy", jobspy as any],
+        ["mynavi", mynavi as any],
+        ["himalayas", himalayas as any],
+      ]),
+      manifestBySource: new Map([
+        ["indeed", jobspy as any],
+        ["mynavi", mynavi as any],
+        ["himalayas", himalayas as any],
+      ]),
+      availableSources: ["indeed", "mynavi", "himalayas"],
+    } as any);
+
+    await discoverJobsStep({
+      mergedConfig: {
+        ...baseConfig,
+        sources: ["indeed", "mynavi", "himalayas"],
+      },
+    });
+
+    expect(jobspy.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        searchTerms: ["energy consultant", "脱炭素 営業"],
+      }),
+    );
+    expect(mynavi.run).toHaveBeenCalledWith(
+      expect.objectContaining({ searchTerms: ["脱炭素 営業"] }),
+    );
+    expect(himalayas.run).toHaveBeenCalledWith(
+      expect.objectContaining({ searchTerms: ["energy consultant"] }),
+    );
+  });
+
+  it("skips a board with no usable terms instead of searching everything", async () => {
+    const settingsRepo = await import("@server/repositories/settings");
+    const registryModule = await import("@server/extractors/registry");
+    const mynavi = {
+      id: "mynavi",
+      displayName: "Mynavi",
+      providesSources: ["mynavi"],
+      run: vi.fn().mockResolvedValue({ success: true, jobs: [] }),
+    };
+
+    vi.mocked(settingsRepo.getAllSettings).mockResolvedValue({
+      searchTerms: JSON.stringify(["renewable energy consultant"]),
+    } as any);
+    vi.mocked(registryModule.getExtractorRegistry).mockResolvedValue({
+      manifests: new Map([["mynavi", mynavi as any]]),
+      manifestBySource: new Map([["mynavi", mynavi as any]]),
+      availableSources: ["mynavi"],
+    } as any);
+
+    await expect(
+      discoverJobsStep({
+        mergedConfig: { ...baseConfig, sources: ["mynavi"] },
+      }),
+    ).rejects.toThrow("None of the selected sources can use these search terms");
+    expect(mynavi.run).not.toHaveBeenCalled();
+  });
+
   it("streams extractor progress detail while discovery is still running", async () => {
     const settingsRepo = await import("@server/repositories/settings");
     const registryModule = await import("@server/extractors/registry");

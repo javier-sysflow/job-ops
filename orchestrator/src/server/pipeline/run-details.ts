@@ -2,6 +2,7 @@ import {
   createLocationIntentFromLegacyInputs,
   planLocationSources,
 } from "@shared/location-domain.js";
+import { describeNoUsableTerms } from "@shared/search-term-script.js";
 import { formatCountryLabel } from "@shared/location-support.js";
 import { parseSearchCitiesSetting } from "@shared/search-cities.js";
 import type {
@@ -71,8 +72,20 @@ function buildEffectiveConfigSnapshot(args: {
     intent: args.locationIntent,
     sources: args.requestedConfig.sources,
   });
-  const compatibleSources = args.requestedConfig.sources.filter((source) =>
-    sourcePlans.compatibleSources.includes(source),
+  const locationCompatibleSources = args.requestedConfig.sources.filter(
+    (source) => sourcePlans.compatibleSources.includes(source),
+  );
+  // Fork: mirror discover-jobs, which skips a board that can't use any of the
+  // search terms (Mynavi with only English phrases, and so on).
+  const searchTerms = args.settings.searchTerms.value;
+  const termSkipReasons = new Map(
+    locationCompatibleSources.flatMap((source) => {
+      const reason = describeNoUsableTerms(source, searchTerms);
+      return reason ? [[source, reason] as const] : [];
+    }),
+  );
+  const compatibleSources = locationCompatibleSources.filter(
+    (source) => !termSkipReasons.has(source),
   );
   const country = args.locationIntent.selectedCountry;
   const countryLabel = country ? formatCountryLabel(country) || country : null;
@@ -91,9 +104,11 @@ function buildEffectiveConfigSnapshot(args: {
       .map((source) => ({
         source,
         reason:
-          sourcePlans.plans
+          termSkipReasons.get(source) ??
+          (sourcePlans.plans
             .find((plan) => plan.source === source)
-            ?.reasons.join(" ") || "Not available for the selected location",
+            ?.reasons.join(" ") ||
+            "Not available for the selected location"),
       })),
     blockedCompanyKeywordsCount:
       args.settings.blockedCompanyKeywords.value.length,

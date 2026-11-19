@@ -28,6 +28,7 @@ import {
   planLocationSource,
 } from "@shared/location-domain.js";
 import { formatCountryLabel } from "@shared/location-support.js";
+import { filterSearchTermsForSource } from "@shared/search-term-script.js";
 import { normalizeStringArray } from "@shared/normalize-string-array.js";
 import {
   type CreateJobInput,
@@ -285,8 +286,14 @@ export async function discoverJobsStep(args: {
 
   const groupedByManifest = new Map<
     string,
-    { sources: string[]; detail: string; termsTotal?: number }
+    {
+      sources: string[];
+      detail: string;
+      termsTotal?: number;
+      searchTerms: string[];
+    }
   >();
+  const sourcesWithoutUsableTerms: string[] = [];
 
   for (const source of compatibleSources) {
     const manifest = registry.manifestBySource.get(source);
@@ -295,17 +302,47 @@ export async function discoverJobsStep(args: {
       continue;
     }
 
+    // Fork: only the terms this board can use (no English phrases on
+    // Mynavi, no Japanese on English-only boards). A board left with none
+    // is skipped: several extractors search everything when given no terms.
+    const sourceTerms = filterSearchTermsForSource(source, searchTerms);
+    if (searchTerms.length > 0 && sourceTerms.length === 0) {
+      sourcesWithoutUsableTerms.push(source);
+      continue;
+    }
+
     const existing = groupedByManifest.get(manifest.id);
     if (existing) {
       existing.sources.push(source);
+      for (const term of sourceTerms) {
+        if (!existing.searchTerms.includes(term)) existing.searchTerms.push(term);
+      }
+      existing.termsTotal = existing.searchTerms.length;
       continue;
     }
 
     groupedByManifest.set(manifest.id, {
       sources: [source],
-      termsTotal: searchTerms.length,
+      termsTotal: sourceTerms.length,
+      searchTerms: sourceTerms,
       detail: `${manifest.displayName}: fetching jobs...`,
     });
+  }
+
+  if (sourcesWithoutUsableTerms.length > 0) {
+    logger.info("Skipping sources with no usable search terms", {
+      step: "discover-jobs",
+      sources: sourcesWithoutUsableTerms,
+      searchTermsCount: searchTerms.length,
+    });
+    if (
+      groupedByManifest.size === 0 &&
+      (args.mergedConfig.watchlistSelectedSourceIds ?? []).length === 0
+    ) {
+      throw new Error(
+        `None of the selected sources can use these search terms (${sourcesWithoutUsableTerms.join(", ")}). Add a Japanese term for Mynavi or an English term for the English-only boards.`,
+      );
+    }
   }
 
   const sourceTasks: DiscoverySourceTask[] = [];
@@ -340,7 +377,7 @@ export async function discoverJobsStep(args: {
           source: grouped.sources[0],
           selectedSources: grouped.sources,
           settings: filteredSettings,
-          searchTerms,
+          searchTerms: grouped.searchTerms,
           selectedCountry: getLegacyLocationSelection(locationIntent),
           cookieStorageDir: getPrivateCloudflareCookieStorageDir(),
           browserPageReader:
@@ -368,8 +405,8 @@ export async function discoverJobsStep(args: {
           onProgress: (event) => {
             if (shouldCancel()) return;
             const role =
-              searchTerms.find((term) => event.currentUrl === term) ??
-              searchTerms.find((term) =>
+              grouped.searchTerms.find((term) => event.currentUrl === term) ??
+              grouped.searchTerms.find((term) =>
                 event.currentUrl?.startsWith(`${term} @`),
               );
             if (event.termsProcessed !== undefined && role) {
