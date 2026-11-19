@@ -34,7 +34,7 @@ describe("getWritingStyle", () => {
       formality: "medium",
       constraints: "",
       doNotUse: "",
-      languageMode: "manual",
+      languageMode: "match-job-description",
       manualLanguage: "english",
       summaryMaxWords: null,
       maxKeywordsPerSkill: null,
