@@ -206,7 +206,12 @@ ARG GITHUB_TOKEN
 # Fetch target-platform Camoufox binaries after production dependencies are
 # installed so arm64 images do not inherit x64 browser assets from build stages.
 COPY scripts/camoufox-fetch.mjs ./scripts/camoufox-fetch.mjs
-RUN node ./scripts/camoufox-fetch.mjs
+# Fork: best-effort. Camoufox's GitHub releases started returning 404 on
+# 2026-11-19, which failed every build. Only the browser-based extractors
+# (Gradcracker, Naukri, UK Visa Jobs) need it; the build continues without.
+RUN node ./scripts/camoufox-fetch.mjs \
+    || echo "WARNING: Camoufox download failed; Gradcracker, Naukri and UK Visa Jobs will not work in this image." \
+    && mkdir -p /root/.cache/camoufox
 
 FROM runtime-base AS tectonic
 
