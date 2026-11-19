@@ -882,11 +882,14 @@ export const SettingsPage: React.FC = () => {
   const nextScheduled = backupsQuery.data?.nextScheduled ?? null;
   const isLoadingBackups = backupsQuery.isLoading;
   // Fork: in self-hosted mode only system admins manage the server-wide AI
-  // provider and key; regular users use the admin's configuration.
+  // provider and key; regular users use the admin's configuration. When the
+  // provider and key come from environment variables, nobody picks a model
+  // here (admins change it in the env), so the section is hidden for all.
   const canEditLlmSettings = isHostedMode
     ? (billingQuery.data?.userEditableLlmSettings ?? false)
     : (appStatusQuery.data?.capabilities.userEditableLlmSettings ?? true) &&
-      currentUserQuery.data?.isSystemAdmin !== false;
+      currentUserQuery.data?.isSystemAdmin !== false &&
+      appStatusQuery.data?.capabilities.llmPreconfigured !== true;
   useQueryErrorToast(appStatusQuery.error, t("toasts.loadAppStatusFailed"));
   useQueryErrorToast(backupsQuery.error, t("toasts.loadBackupsFailed"));
   useQueryErrorToast(billingQuery.error, t("toasts.loadBillingFailed"));

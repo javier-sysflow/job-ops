@@ -626,7 +626,8 @@ async function migrateLegacyOnboardingState(args: {
 /**
  * Fork: when the operator configured the AI provider and key through
  * environment variables (LLM_PROVIDER + LLM_API_KEY), nobody has to choose an
- * AI connection during onboarding. Admins can still change it in Settings.
+ * AI connection during onboarding. Settings hides the model section too
+ * (capability `llmPreconfigured`); change the model in the env instead.
  */
 function isServerLlmPreconfigured(): boolean {
   return Boolean(

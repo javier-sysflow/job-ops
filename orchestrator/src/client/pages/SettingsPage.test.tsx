@@ -292,6 +292,28 @@ describe("SettingsPage", () => {
     );
   });
 
+  it("hides AI model settings from admins when the env preconfigures the LLM", async () => {
+    vi.mocked(api.getAppStatus).mockResolvedValue({
+      ...localAppStatus,
+      capabilities: { ...localAppStatus.capabilities, llmPreconfigured: true },
+    });
+    vi.mocked(api.getSettings).mockResolvedValue(baseSettings);
+    render(
+      <MemoryRouter initialEntries={["/settings#model"]}>
+        <SettingsPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(api.getAppStatus).toHaveBeenCalled());
+    await openNavGroup(/^ai$/i);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Models" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByRole("button", { name: /models/i })).toBeNull();
+  });
+
   it("hides installation-wide database clearing from non-admin users", async () => {
     mockNonAdminUser();
     vi.mocked(api.getSettings).mockResolvedValue(baseSettings);

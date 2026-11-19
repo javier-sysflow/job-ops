@@ -56,6 +56,7 @@ function buildCapabilities(args: {
   signupInviteCodeConfigured: boolean;
   hostedPlatformLlmEnabled: boolean;
   hostedQuotasEnabled: boolean;
+  llmEnvConfigured: boolean;
 }): JobOpsAppCapabilities {
   const hostedMode = args.appMode === "hosted";
   const platformLlm = hostedMode && args.hostedPlatformLlmEnabled;
@@ -70,6 +71,7 @@ function buildCapabilities(args: {
     platformLlm,
     quotas: hostedMode && args.hostedQuotasEnabled,
     userEditableLlmSettings: !platformLlm,
+    llmPreconfigured: !hostedMode && args.llmEnvConfigured,
   };
 }
 
@@ -98,6 +100,10 @@ export function getJobOpsAppConfig(
       HOSTED_PLATFORM_LLM_ENV_KEY,
     ),
     hostedQuotasEnabled: parseBooleanFlag(env, HOSTED_QUOTAS_ENV_KEY),
+    // Same check onboarding uses (isServerLlmPreconfigured).
+    llmEnvConfigured: Boolean(
+      readTrimmedEnv(env, "LLM_PROVIDER") && readTrimmedEnv(env, "LLM_API_KEY"),
+    ),
   });
 
   return {

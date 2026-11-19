@@ -11,6 +11,12 @@ export interface JobOpsAppCapabilities {
   platformLlm: boolean;
   quotas: boolean;
   userEditableLlmSettings: boolean;
+  /**
+   * Fork: local mode with the AI provider and key set through environment
+   * variables (LLM_PROVIDER + LLM_API_KEY). Settings then hides the AI model
+   * section for everyone, admins included; change the model in the env.
+   */
+  llmPreconfigured?: boolean;
 }
 
 export interface JobOpsAppStatusResponse {

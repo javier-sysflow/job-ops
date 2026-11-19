@@ -12,9 +12,30 @@ describe("hosted app-mode config", () => {
         platformLlm: false,
         quotas: false,
         userEditableLlmSettings: true,
+        llmPreconfigured: false,
       },
       hostedTenantConfigured: false,
     });
+  });
+
+  it("flags an LLM preconfigured by env only in local mode with provider and key", () => {
+    const env = { LLM_PROVIDER: "anthropic", LLM_API_KEY: "sk-test" };
+    expect(getJobOpsAppStatus(env).capabilities.llmPreconfigured).toBe(true);
+    expect(
+      getJobOpsAppStatus({ LLM_PROVIDER: "anthropic" }).capabilities
+        .llmPreconfigured,
+    ).toBe(false);
+    expect(
+      getJobOpsAppStatus({ ...env, LLM_API_KEY: "  " }).capabilities
+        .llmPreconfigured,
+    ).toBe(false);
+    expect(
+      getJobOpsAppStatus({
+        ...env,
+        JOBOPS_APP_MODE: "hosted",
+        JOBOPS_HOSTED_TENANT_ID: "tenant_hosted",
+      }).capabilities.llmPreconfigured,
+    ).toBe(false);
   });
 
   it("requires a hosted tenant id in hosted mode", () => {
@@ -68,6 +89,7 @@ describe("hosted app-mode config", () => {
         platformLlm: false,
         quotas: false,
         userEditableLlmSettings: true,
+        llmPreconfigured: false,
       },
       hostedTenantConfigured: false,
     });
@@ -88,6 +110,7 @@ describe("hosted app-mode config", () => {
         platformLlm: true,
         quotas: true,
         userEditableLlmSettings: false,
+        llmPreconfigured: false,
       },
       hostedTenantConfigured: true,
     });
