@@ -832,12 +832,14 @@ export const settingsRegistry = {
   chatStyleLanguageMode: {
     kind: "typed" as const,
     schema: z.enum(CHAT_STYLE_LANGUAGE_MODE_VALUES),
+    // Fork: write in the job ad's language (Japanese ads get a Japanese
+    // 職務要約), falling back to the résumé's language. Upstream: "manual".
     default: (): ChatStyleLanguageMode =>
       parseChatStyleLanguageModeOrNull(
         typeof process !== "undefined"
           ? process.env.CHAT_STYLE_LANGUAGE_MODE
           : undefined,
-      ) ?? "manual",
+      ) ?? "match-job-description",
     parse: parseChatStyleLanguageModeOrNull,
     serialize: (
       value: ChatStyleLanguageMode | null | undefined,

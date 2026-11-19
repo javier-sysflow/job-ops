@@ -268,7 +268,7 @@ describe("settingsRegistry helpers", () => {
   });
 
   describe("writing-style language settings", () => {
-    it("defaults to manual english", () => {
+    it("defaults to matching the job description, manual language english", () => {
       const previousLanguageMode = process.env.CHAT_STYLE_LANGUAGE_MODE;
       const previousManualLanguage = process.env.CHAT_STYLE_MANUAL_LANGUAGE;
 
@@ -276,7 +276,9 @@ describe("settingsRegistry helpers", () => {
       delete process.env.CHAT_STYLE_MANUAL_LANGUAGE;
 
       try {
-        expect(settingsRegistry.chatStyleLanguageMode.default()).toBe("manual");
+        expect(settingsRegistry.chatStyleLanguageMode.default()).toBe(
+          "match-job-description",
+        );
         expect(settingsRegistry.chatStyleManualLanguage.default()).toBe(
           "english",
         );

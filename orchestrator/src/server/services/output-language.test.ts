@@ -106,6 +106,24 @@ describe("resolveWritingOutputLanguage", () => {
     });
   });
 
+  it("uses the résumé language when the job description language is unclear", () => {
+    const result = resolveWritingOutputLanguage({
+      style: {
+        languageMode: "match-job-description",
+        manualLanguage: "english",
+      },
+      profile: {
+        basics: {
+          summary:
+            "半導体商社での法人営業と、ベトナムでの日系製造業向け太陽光の提案を担当してきました。",
+        },
+      },
+      jobDescription: "",
+    });
+
+    expect(result).toEqual({ language: "japanese", source: "detected" });
+  });
+
   it("falls back to english when job description language detection is weak", () => {
     const result = resolveWritingOutputLanguage({
       style: {

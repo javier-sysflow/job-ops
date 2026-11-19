@@ -38,9 +38,12 @@ export function resolveWritingOutputLanguage(args: {
     };
   }
 
+  // Fork: when the job ad's language can't be told (short or missing
+  // description), the résumé's language is a better guess than English.
   const detectedLanguage =
     args.style.languageMode === "match-job-description"
-      ? detectJobDescriptionLanguage(args.jobDescription)
+      ? (detectJobDescriptionLanguage(args.jobDescription) ??
+        detectProfileLanguage(args.profile))
       : detectProfileLanguage(args.profile);
   if (detectedLanguage) {
     return {
@@ -69,7 +72,8 @@ export function resolveWritingOutputLanguageForResumeJson(args: {
 
   const detectedLanguage =
     args.style.languageMode === "match-job-description"
-      ? detectJobDescriptionLanguage(args.jobDescription)
+      ? (detectJobDescriptionLanguage(args.jobDescription) ??
+        detectReactiveResumeV5Language(args.resumeJson))
       : detectReactiveResumeV5Language(args.resumeJson);
   if (detectedLanguage) {
     return {
