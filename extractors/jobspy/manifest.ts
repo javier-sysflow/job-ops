@@ -10,7 +10,7 @@ import { runJobSpy } from "./src/run";
 
 type JobSpySite = NonNullable<Parameters<typeof runJobSpy>[0]["sites"]>[number];
 
-const JOBSPY_SOURCES = new Set<JobSpySite>(["indeed", "linkedin", "glassdoor"]);
+const JOBSPY_SOURCES = new Set<JobSpySite>(["indeed", "glassdoor"]);
 
 function isJobSpySite(source: string): source is JobSpySite {
   return JOBSPY_SOURCES.has(source as JobSpySite);
@@ -19,11 +19,12 @@ function isJobSpySite(source: string): source is JobSpySite {
 export const manifest: ExtractorManifest = {
   id: "jobspy",
   displayName: "JobSpy",
-  providesSources: ["indeed", "linkedin", "glassdoor"],
+  // Fork: LinkedIn comes from extractors/linkedin-apify (an Apify actor),
+  // because LinkedIn answers JobSpy's requests from Railway with HTTP 429.
+  providesSources: ["indeed", "glassdoor"],
   capabilities: { locationEvidence: true },
   locationCapabilities: {
     indeed: { supportedCountryKeys: JOBSPY_SUPPORTED_COUNTRY_KEYS },
-    linkedin: { supportedCountryKeys: JOBSPY_SUPPORTED_COUNTRY_KEYS },
     glassdoor: {
       supportedCountryKeys: GLASSDOOR_SUPPORTED_COUNTRY_KEYS,
       requiresCityLocations: true,

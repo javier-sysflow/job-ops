@@ -98,6 +98,7 @@ COPY extractors/freehire/package*.json ./extractors/freehire/
 COPY extractors/himalayas/package*.json ./extractors/himalayas/
 COPY extractors/japandev/package*.json ./extractors/japandev/
 COPY extractors/mynavi/package*.json ./extractors/mynavi/
+COPY extractors/linkedin-apify/package*.json ./extractors/linkedin-apify/
 COPY extractors/browser-utils/package*.json ./extractors/browser-utils/
 
 # Install build-time Node dependencies on the native builder platform. The
@@ -131,6 +132,7 @@ COPY extractors/freehire ./extractors/freehire
 COPY extractors/himalayas ./extractors/himalayas
 COPY extractors/japandev ./extractors/japandev
 COPY extractors/mynavi ./extractors/mynavi
+COPY extractors/linkedin-apify ./extractors/linkedin-apify
 COPY extractors/browser-utils ./extractors/browser-utils
 
 # ============================================================================
@@ -187,6 +189,7 @@ COPY extractors/freehire/package*.json ./extractors/freehire/
 COPY extractors/himalayas/package*.json ./extractors/himalayas/
 COPY extractors/japandev/package*.json ./extractors/japandev/
 COPY extractors/mynavi/package*.json ./extractors/mynavi/
+COPY extractors/linkedin-apify/package*.json ./extractors/linkedin-apify/
 COPY extractors/browser-utils/package*.json ./extractors/browser-utils/
 
 # Install production Node dependencies only.
@@ -296,6 +299,7 @@ COPY extractors/freehire ./extractors/freehire
 COPY extractors/himalayas ./extractors/himalayas
 COPY extractors/japandev ./extractors/japandev
 COPY extractors/mynavi ./extractors/mynavi
+COPY extractors/linkedin-apify ./extractors/linkedin-apify
 COPY extractors/browser-utils ./extractors/browser-utils
 
 # Create runtime directories.

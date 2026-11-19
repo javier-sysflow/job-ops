@@ -59,6 +59,7 @@ jobs:
           - himalayas-extractor
           - japandev-extractor
           - mynavi-extractor
+          - linkedin-apify-extractor
           - ukvisajobs-extractor
     steps:
       - uses: actions/checkout@v4
