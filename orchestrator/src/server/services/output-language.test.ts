@@ -106,22 +106,34 @@ describe("resolveWritingOutputLanguage", () => {
     });
   });
 
-  it("uses the résumé language when the job description language is unclear", () => {
-    const result = resolveWritingOutputLanguage({
-      style: {
-        languageMode: "match-job-description",
-        manualLanguage: "english",
+  it("uses the résumé language when the job has no description", () => {
+    const japaneseProfile = {
+      basics: {
+        summary:
+          "半導体商社での法人営業と、ベトナムでの日系製造業向け太陽光の提案を担当してきました。",
       },
-      profile: {
-        basics: {
-          summary:
-            "半導体商社での法人営業と、ベトナムでの日系製造業向け太陽光の提案を担当してきました。",
-        },
-      },
-      jobDescription: "",
-    });
+    };
+    const style = {
+      languageMode: "match-job-description" as const,
+      manualLanguage: "english" as const,
+    };
 
-    expect(result).toEqual({ language: "japanese", source: "detected" });
+    expect(
+      resolveWritingOutputLanguage({
+        style,
+        profile: japaneseProfile,
+        jobDescription: "",
+      }),
+    ).toEqual({ language: "japanese", source: "detected" });
+
+    // A short English ad that can't be told stays English, not Japanese.
+    expect(
+      resolveWritingOutputLanguage({
+        style,
+        profile: japaneseProfile,
+        jobDescription: "Renewable energy sales manager, Tokyo.",
+      }),
+    ).toEqual({ language: "english", source: "fallback" });
   });
 
   it("falls back to english when job description language detection is weak", () => {

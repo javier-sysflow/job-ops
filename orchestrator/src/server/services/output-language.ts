@@ -26,6 +26,10 @@ export type ResolvedWritingLanguage = {
   source: "manual" | "detected" | "fallback";
 };
 
+function hasText(value: string | null | undefined): boolean {
+  return Boolean(value?.trim());
+}
+
 export function resolveWritingOutputLanguage(args: {
   style: WritingLanguageConfig;
   profile: ResumeProfile;
@@ -38,12 +42,15 @@ export function resolveWritingOutputLanguage(args: {
     };
   }
 
-  // Fork: when the job ad's language can't be told (short or missing
-  // description), the résumé's language is a better guess than English.
+  // Fork: a job with no description at all gets the résumé's language. A
+  // short description that can't be told is almost always English (Japanese
+  // is spotted from a few kana), so that case still falls back to English.
   const detectedLanguage =
     args.style.languageMode === "match-job-description"
       ? (detectJobDescriptionLanguage(args.jobDescription) ??
-        detectProfileLanguage(args.profile))
+        (hasText(args.jobDescription)
+          ? null
+          : detectProfileLanguage(args.profile)))
       : detectProfileLanguage(args.profile);
   if (detectedLanguage) {
     return {
@@ -73,7 +80,9 @@ export function resolveWritingOutputLanguageForResumeJson(args: {
   const detectedLanguage =
     args.style.languageMode === "match-job-description"
       ? (detectJobDescriptionLanguage(args.jobDescription) ??
-        detectReactiveResumeV5Language(args.resumeJson))
+        (hasText(args.jobDescription)
+          ? null
+          : detectReactiveResumeV5Language(args.resumeJson)))
       : detectReactiveResumeV5Language(args.resumeJson);
   if (detectedLanguage) {
     return {
