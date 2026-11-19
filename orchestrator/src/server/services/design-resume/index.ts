@@ -1197,6 +1197,14 @@ export async function designResumeToProfile(
         name: toText(experience.title, "Experience"),
         items: asArray(experience.items).map((item) => {
           const record = asRecord(item) ?? {};
+          const roles = asArray(record.roles)
+            .map((role) => asRecord(role) ?? {})
+            .map((role) => ({
+              position: toText(role.position),
+              period: toText(role.period),
+              description: toText(role.description),
+            }))
+            .filter((role) => role.position || role.period || role.description);
           return {
             id: toText(record.id, createId()),
             company: toText(record.company),
@@ -1205,10 +1213,88 @@ export async function designResumeToProfile(
             date: toText(record.period),
             summary: toText(record.description),
             visible: !toBoolean(record.hidden, false),
+            ...(roles.length > 0 ? { roles } : {}),
           };
         }),
       },
+      // Fork: the scorer, Jev and tailoring read these too. Without them a
+      // candidate's English level, degrees and certifications never counted,
+      // which mattered most for bilingual roles.
+      languages: profileSection(sections, "languages", "Languages", (r) => ({
+        language: toText(r.language),
+        fluency: toText(r.fluency),
+        level: toNumber(r.level, 0),
+      })),
+      education: profileSection(sections, "education", "Education", (r) => ({
+        school: toText(r.school),
+        degree: toText(r.degree),
+        area: toText(r.area),
+        grade: toText(r.grade),
+        location: toText(r.location),
+        date: toText(r.period),
+        summary: toText(r.description),
+      })),
+      certifications: profileSection(
+        sections,
+        "certifications",
+        "Certifications",
+        (r) => ({
+          title: toText(r.title),
+          issuer: toText(r.issuer),
+          date: toText(r.date),
+          summary: toText(r.description),
+        }),
+      ),
+      awards: profileSection(sections, "awards", "Awards", (r) => ({
+        title: toText(r.title),
+        awarder: toText(r.awarder),
+        date: toText(r.date),
+        summary: toText(r.description),
+      })),
+      publications: profileSection(
+        sections,
+        "publications",
+        "Publications",
+        (r) => ({
+          title: toText(r.title),
+          publisher: toText(r.publisher),
+          date: toText(r.date),
+          summary: toText(r.description),
+        }),
+      ),
+      volunteer: profileSection(sections, "volunteer", "Volunteer", (r) => ({
+        organization: toText(r.organization),
+        location: toText(r.location),
+        date: toText(r.period),
+        summary: toText(r.description),
+      })),
+      interests: profileSection(sections, "interests", "Interests", (r) => ({
+        name: toText(r.name),
+        keywords: asArray(r.keywords).map((value) => toText(value)),
+      })),
     },
+  };
+}
+
+function profileSection(
+  sections: Record<string, unknown>,
+  key: string,
+  fallbackName: string,
+  mapItem: (record: Record<string, unknown>) => Record<string, unknown>,
+) {
+  const section = asRecord(sections[key]) ?? {};
+  return {
+    id: key,
+    visible: !toBoolean(section.hidden, false),
+    name: toText(section.title, fallbackName),
+    items: asArray(section.items).map((item) => {
+      const record = asRecord(item) ?? {};
+      return {
+        id: toText(record.id, createId()),
+        ...mapItem(record),
+        visible: !toBoolean(record.hidden, false),
+      };
+    }),
   };
 }
 
