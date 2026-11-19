@@ -22,6 +22,11 @@ import {
 } from "./output-language";
 import { renderPromptTemplate } from "./prompt-templates";
 import { filterProfileProjectsForAi } from "./resumeProjects";
+import {
+  describeTargetLocationForPrompt,
+  getCandidateTargetLocation,
+  withTargetWorkLocation,
+} from "./candidate-target-location";
 import { getEffectiveSettings } from "./settings";
 import { getWritingStyle } from "./writing-style";
 
@@ -55,6 +60,8 @@ type ScoringPreferences = {
   instructions: string;
   promptTemplate: string;
   outputLanguage?: string;
+  /** Fork: appended after the template so custom templates get it too. */
+  targetLocationText?: string;
 };
 
 type ProfileRecord = Record<string, unknown>;
@@ -284,12 +291,14 @@ export async function scoreJobSuitability(
     }));
   }
 
-  const [model, settings, aiProfile, writingStyle] = await Promise.all([
-    resolveLlmModel("scoring"),
-    getEffectiveSettings(),
-    filterProfileProjectsForAi(profile),
-    getWritingStyle(),
-  ]);
+  const [model, settings, aiProfile, writingStyle, targetLocation] =
+    await Promise.all([
+      resolveLlmModel("scoring"),
+      getEffectiveSettings(),
+      filterProfileProjectsForAi(profile),
+      getWritingStyle(),
+      getCandidateTargetLocation(),
+    ]);
   // Score reasons and job briefs follow the same output-language setting as
   // tailoring (e.g. Japanese for a Japanese job ad in match-job-description).
   const outputLanguage = getWritingLanguageLabel(
@@ -305,13 +314,18 @@ export async function scoreJobSuitability(
     ? (options.scoringInstructions ?? "")
     : (settings.scoringInstructions?.value ?? "");
 
-  const prompt = buildScoringPrompt(job, sanitizeProfileForPrompt(aiProfile), {
-    instructions: scoringInstructions,
-    outputLanguage,
-    promptTemplate:
-      settings.scoringPromptTemplate?.value ??
-      getDefaultPromptTemplate("scoringPromptTemplate"),
-  });
+  const prompt = buildScoringPrompt(
+    job,
+    withTargetWorkLocation(sanitizeProfileForPrompt(aiProfile), targetLocation),
+    {
+      instructions: scoringInstructions,
+      outputLanguage,
+      targetLocationText: describeTargetLocationForPrompt(targetLocation),
+      promptTemplate:
+        settings.scoringPromptTemplate?.value ??
+        getDefaultPromptTemplate("scoringPromptTemplate"),
+    },
+  );
 
   const llm = await createConfiguredLlmService("scoring");
   const result = await llm.callJson<{
@@ -527,7 +541,7 @@ function buildScoringPrompt(
     scoringInstructionsText: preferences.instructions
       ? preferences.instructions
       : "No additional custom scoring instructions.",
-  })}\n\nJOB DATA (JSON):\n${jobJson}\n\n${SCORING_OUTPUT_INSTRUCTIONS}${buildOutputLanguageInstruction(preferences.outputLanguage)}`;
+  })}${preferences.targetLocationText ? `\n\n${preferences.targetLocationText}` : ""}\n\nJOB DATA (JSON):\n${jobJson}\n\n${SCORING_OUTPUT_INSTRUCTIONS}${buildOutputLanguageInstruction(preferences.outputLanguage)}`;
 }
 
 function buildOutputLanguageInstruction(outputLanguage?: string): string {

@@ -763,6 +763,52 @@ describe("salary penalty", () => {
     });
   });
 
+  describe("target location", () => {
+    beforeEach(() => {
+      getEffectiveSettingsMock.mockResolvedValue({
+        penalizeMissingSalary: { value: false, default: false, override: null },
+        missingSalaryPenalty: { value: 10, default: 10, override: null },
+        scoringInstructions: { value: "", default: "", override: null },
+        rxresumeBaseResumeId: "base-resume-123",
+      } as any);
+    });
+
+    it("scores location against the search location, not the résumé address", async () => {
+      const { scoreJobSuitability } = await import("./scorer");
+      getSettingMock.mockImplementation(async (key: string) => {
+        if (key === "jobspyCountryIndeed") return "japan";
+        if (key === "searchCities") return "東京";
+        if (key === "workplaceTypes") return '["remote","hybrid"]';
+        return null;
+      });
+
+      await scoreJobSuitability(createJob({ id: "target-location-job" }), {
+        basics: {
+          headline: "法人営業",
+          location: { address: "Ho Chi Minh City, Vietnam" },
+        },
+      });
+
+      const prompt = getScoringPrompt();
+      expect(getPromptProfile().basics.location).toBe("東京, Japan");
+      expect(prompt).not.toContain("Ho Chi Minh City");
+      expect(prompt).toContain("CANDIDATE TARGET LOCATION");
+      expect(prompt).toContain("- Cities: 東京");
+      expect(prompt.indexOf("CANDIDATE TARGET LOCATION")).toBeLessThan(
+        prompt.indexOf("JOB DATA (JSON):"),
+      );
+    });
+
+    it("leaves the prompt alone when no search location is set", async () => {
+      const { scoreJobSuitability } = await import("./scorer");
+      await scoreJobSuitability(createJob({ id: "no-target-job" }), {
+        basics: { location: { address: "Berlin" } },
+      });
+      expect(getScoringPrompt()).not.toContain("CANDIDATE TARGET LOCATION");
+      expect(getPromptProfile().basics.location).toEqual({ address: "Berlin" });
+    });
+  });
+
   describe("penalty application", () => {
     it("includes custom scoring instructions in the scorer prompt", async () => {
       const { scoreJobSuitability } = await import("./scorer");

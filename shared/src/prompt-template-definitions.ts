@@ -109,9 +109,9 @@ OUTPUT FORMAT (JSON):
 You are evaluating a job listing for a candidate. Score how suitable this job is for the candidate on a scale of 0-100.
 
 SCORING CRITERIA:
-- Skills match (technologies, frameworks, languages): 0-30 points
-- Experience level match: 0-25 points
-- Location/remote work alignment: 0-15 points
+- Skills match (the skills, tools, domain knowledge, qualifications and spoken languages the role asks for, in any profession): 0-30 points
+- Experience match (relevant work experience and seniority): 0-25 points
+- Location/work arrangement fit with where the candidate wants to work: 0-15 points
 - Industry/domain fit: 0-15 points
 - Career growth potential: 0-15 points
 
