@@ -24,6 +24,7 @@ import { SectionWorkspacePanel } from "@client/components/section-workspace/Sect
 import { useDesignResumeStudio } from "@client/hooks/useDesignResumeStudio";
 import type { DesignResumeJson } from "@shared/types";
 import type React from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router-dom";
 import {
@@ -65,6 +66,9 @@ import { formatUserFacingError } from "../lib/error-format";
 export const DesignResumePage: React.FC = () => {
   const { t } = useTranslation(["resumeStudio", "common"]);
   const navigate = useNavigate();
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(
+    null,
+  );
   const {
     draft,
     dirty,
@@ -179,7 +183,15 @@ export const DesignResumePage: React.FC = () => {
         className="hidden"
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];
-          if (file) {
+          // Let the same file be picked again after a cancel.
+          event.currentTarget.value = "";
+          if (!file) return;
+          // Fork: an import replaces every section, so a 職務経歴書 uploaded
+          // after a 履歴書 silently dropped the 履歴書's education and
+          // certifications. Ask first when there is already a résumé.
+          if (status?.exists) {
+            setPendingImportFile(file);
+          } else {
             void handleImportFile(file);
           }
         }}
@@ -678,6 +690,38 @@ export const DesignResumePage: React.FC = () => {
           }
         />
       ) : null}
+
+      <AlertDialog
+        open={pendingImportFile !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingImportFile(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("page.replaceWithFile.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("page.replaceWithFile.description", {
+                fileName: pendingImportFile?.name ?? "",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-[#F1703E] text-white hover:bg-[#d9612f]"
+              onClick={() => {
+                const file = pendingImportFile;
+                setPendingImportFile(null);
+                if (file) void handleImportFile(file);
+              }}
+            >
+              <Import className="mr-2 h-4 w-4" />
+              {t("page.replaceWithFile.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={showReimportConfirm}

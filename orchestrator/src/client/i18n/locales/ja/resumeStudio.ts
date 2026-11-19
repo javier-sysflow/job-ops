@@ -43,6 +43,12 @@ const resumeStudio: typeof en = {
     autosaved: "自動保存済み",
     dialogAdd: "{{item}}を追加",
     dialogEdit: "{{item}}を編集",
+    replaceWithFile: {
+      title: "このファイルでレジュメを置き換えますか？",
+      description:
+        "「{{fileName}}」の内容で、レジュメスタジオのすべての項目が置き換わります。ファイルにない項目（以前に取り込んだ学歴や資格など）も消え、ここで行った編集は元に戻せません。残したい場合はキャンセルして、必要な部分だけを手で追加してください。",
+      confirm: "置き換える",
+    },
     reimport: {
       title: "RxResumeから再インポートしますか？",
       description:

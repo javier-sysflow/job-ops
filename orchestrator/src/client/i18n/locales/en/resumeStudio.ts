@@ -40,6 +40,12 @@ const resumeStudio = {
     autosaved: "Autosaved",
     dialogAdd: "Add {{item}}",
     dialogEdit: "Edit {{item}}",
+    replaceWithFile: {
+      title: "Replace your résumé with this file?",
+      description:
+        "{{fileName}} will replace everything in Resume Studio, including sections the file doesn't have (for example education or certifications from an earlier import). Edits you made here will be lost and can't be undone. To keep them, cancel and copy what you need from the file by hand.",
+      confirm: "Replace",
+    },
     reimport: {
       title: "Re-import from RxResume?",
       description:
